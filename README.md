@@ -9,3 +9,8 @@ ImageMagick 7 port to Android. current version is 7.0.5.2
  
 #for Java users
 Please, use https://github.com/paulasiimwe/Android-ImageMagick port of ImageMagick 6 - it's include Java interface
+
+#rebuild
+ndk10 supported due to getdtablesize() removed from ndk11
+- change directory to jni
+- run path-to-your-ndk/ndk-build -j 4 
