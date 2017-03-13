@@ -61,7 +61,7 @@
 #include "MagickCore/module.h"
 #include "MagickCore/type.h"
 #include "MagickCore/module.h"
-#include "MagickWand/MagickWand.h"
+//#include "MagickWand/MagickWand.h"
 
 #if defined(__CYGWIN__)
 #undef MAGICKCORE_SANS_DELEGATE 
