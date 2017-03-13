@@ -15,9 +15,9 @@
 /* #undef BUILD_MODULES */
 
 /* Define if you have the bzip2 library */
-#ifndef MAGICKCORE_BZLIB_DELEGATE
-#define MAGICKCORE_BZLIB_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_BZLIB_DELEGATE
+//#define MAGICKCORE_BZLIB_DELEGATE 1
+//#endif
 
 /* Define if you have CAIRO library */
 /* #undef CAIRO_DELEGATE */
@@ -47,9 +47,9 @@
 #endif
 
 /* Define if you have DJVU library */
-#ifndef MAGICKCORE_DJVU_DELEGATE
-#define MAGICKCORE_DJVU_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_DJVU_DELEGATE
+//#define MAGICKCORE_DJVU_DELEGATE 1
+//#endif
 
 /* Directory where ImageMagick documents live. */
 #ifndef MAGICKCORE_DOCUMENTATION_PATH
@@ -68,9 +68,9 @@
 #endif
 
 /* Define if you have FFTW library */
-#ifndef MAGICKCORE_FFTW_DELEGATE
-#define MAGICKCORE_FFTW_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_FFTW_DELEGATE
+//#define MAGICKCORE_FFTW_DELEGATE 1
+//#endif
 
 /* filter subdirectory. */
 #ifndef MAGICKCORE_FILTER_DIRNAME
@@ -81,17 +81,17 @@
 /* #undef FLIF_DELEGATE */
 
 /* Define if you have FONTCONFIG library */
-#ifndef MAGICKCORE_FONTCONFIG_DELEGATE
-#define MAGICKCORE_FONTCONFIG_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_FONTCONFIG_DELEGATE
+//#define MAGICKCORE_FONTCONFIG_DELEGATE 1
+//#endif
 
 /* Define if you have FlashPIX library */
 /* #undef FPX_DELEGATE */
 
 /* Define if you have FREETYPE library */
-#ifndef MAGICKCORE_FREETYPE_DELEGATE
-#define MAGICKCORE_FREETYPE_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_FREETYPE_DELEGATE
+//#define MAGICKCORE_FREETYPE_DELEGATE 1
+//#endif
 
 /* Define if you have Ghostscript library or framework */
 /* #undef GS_DELEGATE */
@@ -242,9 +242,9 @@
 /* #undef HAVE_DOPRNT */
 
 /* Define to 1 if the system has the type `double_t'. */
-#ifndef MAGICKCORE_HAVE_DOUBLE_T
-#define MAGICKCORE_HAVE_DOUBLE_T 1
-#endif
+//#ifndef MAGICKCORE_HAVE_DOUBLE_T
+//#define MAGICKCORE_HAVE_DOUBLE_T 1
+//#endif
 
 /* Define to 1 if you have the `erf' function. */
 #ifndef MAGICKCORE_HAVE_ERF
@@ -272,9 +272,9 @@
 #endif
 
 /* Define to 1 if the system has the type `float_t'. */
-#ifndef MAGICKCORE_HAVE_FLOAT_T
-#define MAGICKCORE_HAVE_FLOAT_T 1
-#endif
+//#ifndef MAGICKCORE_HAVE_FLOAT_T
+//#define MAGICKCORE_HAVE_FLOAT_T 1
+//#endif
 
 /* Define to 1 if you have the `floor' function. */
 #ifndef MAGICKCORE_HAVE_FLOOR
@@ -407,14 +407,14 @@
 /* #undef HAVE_LLTOSTR */
 
 /* Define to 1 if you have the <locale.h> header file. */
-#ifndef MAGICKCORE_HAVE_LOCALE_H
-#define MAGICKCORE_HAVE_LOCALE_H 1
-#endif
+//#ifndef MAGICKCORE_HAVE_LOCALE_H
+//#define MAGICKCORE_HAVE_LOCALE_H 1
+//#endif
 
 /* Define to 1 if the system has the type `locale_t'. */
-#ifndef MAGICKCORE_HAVE_LOCALE_T
-#define MAGICKCORE_HAVE_LOCALE_T 1
-#endif
+//#ifndef MAGICKCORE_HAVE_LOCALE_T
+//#define MAGICKCORE_HAVE_LOCALE_T 1
+//#endif
 
 /* Define to 1 if you have the `localtime_r' function. */
 #ifndef MAGICKCORE_HAVE_LOCALTIME_R
@@ -507,9 +507,9 @@
 #endif
 
 /* Define to 1 if you have the `newlocale' function. */
-#ifndef MAGICKCORE_HAVE_NEWLOCALE
-#define MAGICKCORE_HAVE_NEWLOCALE 1
-#endif
+//#ifndef MAGICKCORE_HAVE_NEWLOCALE
+//#define MAGICKCORE_HAVE_NEWLOCALE 1
+//#endif
 
 /* Define to 1 if you have the <OpenCL/cl.h> header file. */
 /* #undef HAVE_OPENCL_CL_H */
@@ -538,9 +538,9 @@
 #endif
 
 /* Define to 1 if you have the `posix_fallocate' function. */
-#ifndef MAGICKCORE_HAVE_POSIX_FALLOCATE
-#define MAGICKCORE_HAVE_POSIX_FALLOCATE 1
-#endif
+//#ifndef MAGICKCORE_HAVE_POSIX_FALLOCATE
+//#define MAGICKCORE_HAVE_POSIX_FALLOCATE 1
+//#endif
 
 /* Define to 1 if you have the `posix_madvise' function. */
 #ifndef MAGICKCORE_HAVE_POSIX_MADVISE
@@ -548,9 +548,9 @@
 #endif
 
 /* Define to 1 if you have the `posix_memalign' function. */
-#ifndef MAGICKCORE_HAVE_POSIX_MEMALIGN
-#define MAGICKCORE_HAVE_POSIX_MEMALIGN 1
-#endif
+//#ifndef MAGICKCORE_HAVE_POSIX_MEMALIGN
+//#define MAGICKCORE_HAVE_POSIX_MEMALIGN 1
+//#endif
 
 /* Define to 1 if you have the `posix_spawnp' function. */
 #ifndef MAGICKCORE_HAVE_POSIX_SPAWNP
@@ -1059,9 +1059,9 @@
 #endif
 
 /* Define to 1 if you have the <xlocale.h> header file. */
-#ifndef MAGICKCORE_HAVE_XLOCALE_H
-#define MAGICKCORE_HAVE_XLOCALE_H 1
-#endif
+//#ifndef MAGICKCORE_HAVE_XLOCALE_H
+//#define MAGICKCORE_HAVE_XLOCALE_H 0
+//#endif
 
 /* Define to 1 if you have the `_aligned_malloc' function. */
 /* #undef HAVE__ALIGNED_MALLOC */
@@ -1123,9 +1123,9 @@
 #endif
 
 /* Define if you have JBIG library */
-#ifndef MAGICKCORE_JBIG_DELEGATE
-#define MAGICKCORE_JBIG_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_JBIG_DELEGATE
+//#define MAGICKCORE_JBIG_DELEGATE 1
+//#endif
 
 /* Define if you have JPEG library */
 #ifndef MAGICKCORE_JPEG_DELEGATE
@@ -1133,14 +1133,14 @@
 #endif
 
 /* Define if you have LCMS library */
-#ifndef MAGICKCORE_LCMS_DELEGATE
-#define MAGICKCORE_LCMS_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_LCMS_DELEGATE
+//#define MAGICKCORE_LCMS_DELEGATE 1
+//#endif
 
 /* Define if you have OPENJP2 library */
-#ifndef MAGICKCORE_LIBOPENJP2_DELEGATE
-#define MAGICKCORE_LIBOPENJP2_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_LIBOPENJP2_DELEGATE
+//#define MAGICKCORE_LIBOPENJP2_DELEGATE 1
+//#endif
 
 /* Directory where architecture-dependent files live. */
 #ifndef MAGICKCORE_LIBRARY_PATH
@@ -1171,9 +1171,9 @@
 #endif
 
 /* Define if you have LZMA library */
-#ifndef MAGICKCORE_LZMA_DELEGATE
-#define MAGICKCORE_LZMA_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_LZMA_DELEGATE
+//#define MAGICKCORE_LZMA_DELEGATE 1
+//#endif
 
 /* Define to prepend to default font search path. */
 /* #undef MAGICK_FONT_PATH */
@@ -1208,9 +1208,9 @@
 /* #undef NDEBUG */
 
 /* Define if you have OPENEXR library */
-#ifndef MAGICKCORE_OPENEXR_DELEGATE
-#define MAGICKCORE_OPENEXR_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_OPENEXR_DELEGATE
+//#define MAGICKCORE_OPENEXR_DELEGATE 1
+//#endif
 
 /* Name of package */
 #ifndef MAGICKCORE_PACKAGE
@@ -1229,7 +1229,7 @@
 
 /* Define to the full name and version of this package. */
 #ifndef MAGICKCORE_PACKAGE_STRING
-#define MAGICKCORE_PACKAGE_STRING "ImageMagick 7.0.5-2"
+#define MAGICKCORE_PACKAGE_STRING "ImageMagick 7.0.5-0"
 #endif
 
 /* Define to the one symbol short name of this package. */
@@ -1244,13 +1244,13 @@
 
 /* Define to the version of this package. */
 #ifndef MAGICKCORE_PACKAGE_VERSION
-#define MAGICKCORE_PACKAGE_VERSION "7.0.5-2"
+#define MAGICKCORE_PACKAGE_VERSION "7.0.5-0"
 #endif
 
 /* Define if you have PANGOCAIRO library */
-#ifndef MAGICKCORE_PANGOCAIRO_DELEGATE
-#define MAGICKCORE_PANGOCAIRO_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_PANGOCAIRO_DELEGATE
+//#define MAGICKCORE_PANGOCAIRO_DELEGATE 1
+//#endif
 
 /* Define if you have PANGO library */
 #ifndef MAGICKCORE_PANGO_DELEGATE
@@ -1426,9 +1426,9 @@
 #endif
 
 /* Define if you have TIFF library */
-#ifndef MAGICKCORE_TIFF_DELEGATE
-#define MAGICKCORE_TIFF_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_TIFF_DELEGATE
+//#define MAGICKCORE_TIFF_DELEGATE 1
+//#endif
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #ifndef MAGICKCORE_TIME_WITH_SYS_TIME
@@ -1462,13 +1462,13 @@
 
 /* Version number of package */
 #ifndef MAGICKCORE_VERSION
-#define MAGICKCORE_VERSION "7.0.5-2"
+#define MAGICKCORE_VERSION "7.0.5-0"
 #endif
 
 /* Define if you have WEBP library */
-#ifndef MAGICKCORE_WEBP_DELEGATE
-#define MAGICKCORE_WEBP_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_WEBP_DELEGATE
+//#define MAGICKCORE_WEBP_DELEGATE 1
+//#endif
 
 /* Define to use the Windows GDI32 library */
 /* #undef WINGDI32_DELEGATE */
@@ -1477,9 +1477,9 @@
 /* #undef WITH_DMALLOC */
 
 /* Define if you have WMF library */
-#ifndef MAGICKCORE_WMF_DELEGATE
-#define MAGICKCORE_WMF_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_WMF_DELEGATE
+//#define MAGICKCORE_WMF_DELEGATE 1
+//#endif
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -1499,14 +1499,14 @@
 #endif
 
 /* Define if you have X11 library */
-#ifndef MAGICKCORE_X11_DELEGATE
-#define MAGICKCORE_X11_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_X11_DELEGATE
+//#define MAGICKCORE_X11_DELEGATE 1
+//#endif
 
 /* Define if you have XML library */
-#ifndef MAGICKCORE_XML_DELEGATE
-#define MAGICKCORE_XML_DELEGATE 1
-#endif
+//#ifndef MAGICKCORE_XML_DELEGATE
+//#define MAGICKCORE_XML_DELEGATE 1
+//#endif
 
 /* Define to 1 if the X Window System is missing or not being used. */
 /* #undef X_DISPLAY_MISSING */
