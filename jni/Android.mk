@@ -61,7 +61,8 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := imagemagick
-
+LOCAL_CFLAGS += -fopenmp
+LOCAL_LDFLAGS += -fopenmp
 LOCAL_C_INCLUDES  :=  \
 	$(IMAGE_MAGICK) \
 	$(IMAGE_MAGICK)MagickCore \
