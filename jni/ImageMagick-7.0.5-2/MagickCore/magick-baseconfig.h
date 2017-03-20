@@ -312,10 +312,10 @@
 #endif
 
 /* Define to 1 if you have the `getdtablesize' function. */
-#ifndef MAGICKCORE_HAVE_GETDTABLESIZE
+/*#ifndef MAGICKCORE_HAVE_GETDTABLESIZE
 #define MAGICKCORE_HAVE_GETDTABLESIZE 1
 #endif
-
+*/
 /* Define to 1 if you have the `getexecname' function. */
 /* #undef HAVE_GETEXECNAME */
 
@@ -864,10 +864,10 @@
 /* #undef HAVE_SYS_SYSLIMITS_H */
 
 /* Define to 1 if you have the <sys/timeb.h> header file. */
-#ifndef MAGICKCORE_HAVE_SYS_TIMEB_H
+/*#ifndef MAGICKCORE_HAVE_SYS_TIMEB_H
 #define MAGICKCORE_HAVE_SYS_TIMEB_H 1
 #endif
-
+*/
 /* Define to 1 if you have the <sys/times.h> header file. */
 #ifndef MAGICKCORE_HAVE_SYS_TIMES_H
 #define MAGICKCORE_HAVE_SYS_TIMES_H 1
