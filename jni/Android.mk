@@ -1,6 +1,7 @@
 IMAGE_MAGICK		:= ImageMagick-7.0.5-2/
 JPEG_SRC_PATH 		:= jpeg-9b/
 PNG_SRC_PATH 		:= libpng-1.5.28/
+TIFF_SRC_PATH 		:= tiff-4.0.7/libtiff/
 
 LOCAL_PATH := $(call my-dir)
 
@@ -26,6 +27,56 @@ LOCAL_SRC_FILES := \
 include $(BUILD_STATIC_LIBRARY)  
 #libjpeg ---------------------------------------------------------------
 
+#libtiff +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
+
+LOCAL_MODULE    := libtiff
+LOCAL_MODULE_FILENAME := libtiffobj
+LOCAL_C_INCLUDES  :=  \
+	${TIFF_SRC_PATH} \
+	${JPEG_SRC_PATH} 
+
+LOCAL_SRC_FILES := \
+	${TIFF_SRC_PATH}tif_dir.c \
+	${TIFF_SRC_PATH}tif_codec.c \
+	${TIFF_SRC_PATH}tif_predict.c \
+	${TIFF_SRC_PATH}tif_tile.c \
+	${TIFF_SRC_PATH}tif_version.c \
+	${TIFF_SRC_PATH}tif_unix.c \
+	${TIFF_SRC_PATH}tif_swab.c \
+	${TIFF_SRC_PATH}tif_thunder.c \
+	${TIFF_SRC_PATH}tif_next.c \
+	${TIFF_SRC_PATH}tif_strip.c \
+	${TIFF_SRC_PATH}tif_extension.c \
+	${TIFF_SRC_PATH}tif_error.c \
+	${TIFF_SRC_PATH}tif_dirwrite.c \
+	${TIFF_SRC_PATH}tif_fax3sm.c \
+	${TIFF_SRC_PATH}tif_ojpeg.c \
+	${TIFF_SRC_PATH}tif_flush.c \
+	${TIFF_SRC_PATH}tif_warning.c \
+	${TIFF_SRC_PATH}tif_fax3.c \
+	${TIFF_SRC_PATH}tif_jbig.c \
+	${TIFF_SRC_PATH}tif_open.c \
+	${TIFF_SRC_PATH}tif_write.c \
+	${TIFF_SRC_PATH}tif_packbits.c \
+	${TIFF_SRC_PATH}tif_compress.c \
+	${TIFF_SRC_PATH}tif_color.c \
+	${TIFF_SRC_PATH}tif_print.c \
+	${TIFF_SRC_PATH}tif_zip.c \
+	${TIFF_SRC_PATH}tif_aux.c \
+	${TIFF_SRC_PATH}tif_dumpmode.c \
+	${TIFF_SRC_PATH}tif_dirread.c \
+	${TIFF_SRC_PATH}tif_getimage.c \
+	${TIFF_SRC_PATH}tif_jpeg.c \
+	${TIFF_SRC_PATH}tif_close.c \
+	${TIFF_SRC_PATH}tif_read.c \
+	${TIFF_SRC_PATH}tif_luv.c \
+	${TIFF_SRC_PATH}tif_dirinfo.c \
+	${TIFF_SRC_PATH}tif_lzw.c \
+	${TIFF_SRC_PATH}tif_pixarlog.c \
+#	${TIFF_SRC_PATH}port/lfind.c
+#include $(BUILD_STATIC_LIBRARY) 	
+#libtiff ---------------------------------------------------------------
 
 #libpng ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 include $(CLEAR_VARS)
@@ -60,9 +111,8 @@ include $(BUILD_STATIC_LIBRARY)
 #Image Magick dynamic +++++++++++++++++++++++++++++++++++++++++++++++++++
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := imagemagick
-LOCAL_CFLAGS += -fopenmp
-LOCAL_LDFLAGS += -fopenmp
+LOCAL_MODULE    := MagickCore-7
+
 LOCAL_C_INCLUDES  :=  \
 	$(IMAGE_MAGICK) \
 	$(IMAGE_MAGICK)MagickCore \
@@ -295,7 +345,56 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := \
     libpng \
     libjpeg \
+    libtiff
 
 #include $(BUILD_STATIC_LIBRARY)
 include $(BUILD_SHARED_LIBRARY)
 #Image Magick dynamic --------------------------------------------------
+
+#Image MagickWand dynamic ++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
+
+LOCAL_MODULE    := MagickWand-7
+
+LOCAL_C_INCLUDES  :=  \
+	$(IMAGE_MAGICK) \
+	$(IMAGE_MAGICK)MagickCore \
+	$(IMAGE_MAGICK)MagickWand \
+	${PNG_SRC_PATH} \
+	${JPEG_SRC_PATH} \
+
+
+LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
+
+LOCAL_SRC_FILES := \
+	$(IMAGE_MAGICK)MagickWand/animate.c \
+	$(IMAGE_MAGICK)MagickWand/compare.c \
+	$(IMAGE_MAGICK)MagickWand/composite.c \
+	$(IMAGE_MAGICK)MagickWand/conjure.c \
+	$(IMAGE_MAGICK)MagickWand/convert.c \
+	$(IMAGE_MAGICK)MagickWand/deprecate.c \
+	$(IMAGE_MAGICK)MagickWand/display.c \
+	$(IMAGE_MAGICK)MagickWand/drawing-wand.c \
+	$(IMAGE_MAGICK)MagickWand/identify.c \
+	$(IMAGE_MAGICK)MagickWand/import.c \
+	$(IMAGE_MAGICK)MagickWand/magick-cli.c \
+	$(IMAGE_MAGICK)MagickWand/magick-image.c \
+	$(IMAGE_MAGICK)MagickWand/magick-property.c \
+	$(IMAGE_MAGICK)MagickWand/magick-wand.c \
+	$(IMAGE_MAGICK)MagickWand/mogrify.c \
+	$(IMAGE_MAGICK)MagickWand/montage.c \
+	$(IMAGE_MAGICK)MagickWand/operation.c \
+	$(IMAGE_MAGICK)MagickWand/pixel-iterator.c \
+	$(IMAGE_MAGICK)MagickWand/pixel-wand.c \
+	$(IMAGE_MAGICK)MagickWand/script-token.c \
+	$(IMAGE_MAGICK)MagickWand/stream.c \
+	$(IMAGE_MAGICK)MagickWand/wand.c \
+	$(IMAGE_MAGICK)MagickWand/wandcli.c \
+	$(IMAGE_MAGICK)MagickWand/wand-view.c \
+	
+LOCAL_SHARED_LIBRARIES := \
+    MagickCore-7 
+
+
+include $(BUILD_SHARED_LIBRARY)	
+#Image MagickWand dynamic ----------------------------------------------
