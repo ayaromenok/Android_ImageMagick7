@@ -7,20 +7,20 @@ ImageMagick 7 port to Android.
  - MagickWand build added to original MagickCore
  - Magick++ support with STLPort. if you use another STL implementation - may be you need to rebuild lib
 
-#why? 
+# Why? 
  - ImageMagick7 is not fully compatible with early versions
  - build with OpenMP (DistortImage on 4core/armv7a get 3.597 speedup factor)
  - smaller binary size in case of using only MagickCore
  - Magick++ support for C++ code
  
-#for C/C++ users
+# For C/C++ users
  - number of file formats disabled for now(tiff, exr, svg, jpeg2000, webp)
  - MagickWand and Magick++ added as separate Shared Objects
  
-#for Java users
+# For Java users
  Please, use https://github.com/paulasiimwe/Android-ImageMagick port of ImageMagick 6 - it's include Java interface
 
-#rebuild
+# Rebuild
  - change directory to jni
  - for Magick++ check STL version in Application.mk
  - run path-to-your-ndk/ndk-build -j 4 
