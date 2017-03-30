@@ -18,8 +18,10 @@ ImageMagick 7 port to Android.
  - MagickWand and Magick++ added as separate Shared Objects
  
 #for Java users
-Please, use https://github.com/paulasiimwe/Android-ImageMagick port of ImageMagick 6 - it's include Java interface
+ Please, use https://github.com/paulasiimwe/Android-ImageMagick port of ImageMagick 6 - it's include Java interface
 
 #rebuild
-- change directory to jni
-- run path-to-your-ndk/ndk-build -j 4 
+ - change directory to jni
+ - for Magick++ check STL version in Application.mk
+ - run path-to-your-ndk/ndk-build -j 4 
+
