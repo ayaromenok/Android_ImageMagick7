@@ -399,3 +399,51 @@ LOCAL_SHARED_LIBRARIES := \
 
 include $(BUILD_SHARED_LIBRARY)	
 #Image MagickWand dynamic ----------------------------------------------
+
+
+#Image Magick++ dynamic ++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
+
+LOCAL_MODULE    := Magick++-7
+LOCAL_CFLAGS += -fexceptions
+LOCAL_LDFLAGS += -fexceptions
+
+LOCAL_C_INCLUDES  :=  \
+	$(IMAGE_MAGICK) \
+	$(IMAGE_MAGICK)MagickCore \
+	$(IMAGE_MAGICK)MagickWand \
+	$(IMAGE_MAGICK)Magick++/lib \
+	${PNG_SRC_PATH} \
+	${JPEG_SRC_PATH} \
+
+
+LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
+
+LOCAL_SRC_FILES := \
+	$(IMAGE_MAGICK)Magick++/lib/Blob.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/BlobRef.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/CoderInfo.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Color.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Drawable.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Exception.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Functions.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Geometry.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Image.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/ImageRef.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Montage.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Options.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Pixels.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/ResourceLimits.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Statistic.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/STL.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/Thread.cpp \
+	$(IMAGE_MAGICK)Magick++/lib/TypeMetric.cpp \
+	
+	
+LOCAL_SHARED_LIBRARIES := \
+    MagickCore-7 \
+    MagickWand-7
+
+
+include $(BUILD_SHARED_LIBRARY)	
+#Image Magick++ dynamic ----------------------------------------------

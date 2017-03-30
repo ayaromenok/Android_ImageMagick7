@@ -4,6 +4,7 @@ ImageMagick 7 port to Android. current version is 7.0.5.2
  - builds for armv7/x86/mips can be found at Android_ImageMagick7/tree/master/libs
  - OpenMP build by default since 20170314
  - MagickWand build added to original MagickCore
+ - Magick++ support with STLPort. if you use another STL implementation - may be you need to rebuild lib
 
 #why? 
  - include only minimal C code - smaller size (~2.5MB for armv7a);
@@ -18,6 +19,5 @@ ImageMagick 7 port to Android. current version is 7.0.5.2
 Please, use https://github.com/paulasiimwe/Android-ImageMagick port of ImageMagick 6 - it's include Java interface
 
 #rebuild
-ndk10 supported due to getdtablesize() removed from ndk11
 - change directory to jni
 - run path-to-your-ndk/ndk-build -j 4 
