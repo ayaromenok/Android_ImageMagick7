@@ -5,6 +5,7 @@
  - OpenMP build by default (with gcc 4.9)
  - MagickWand
  - Magick++ support with STLPort. for other STL's see Rebuild section
+ - binaries available here: [v0.2.7052](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.2.7052)
 
 # Why? 
  - ImageMagick7 is not fully compatible with early versions
