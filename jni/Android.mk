@@ -444,6 +444,34 @@ LOCAL_SHARED_LIBRARIES := \
     MagickCore-7 \
     MagickWand-7
 
-
-include $(BUILD_SHARED_LIBRARY)	
+#20170412 disable due to crash
+#include $(BUILD_SHARED_LIBRARY)	
 #Image Magick++ dynamic ----------------------------------------------
+#Image util dynamic ++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
+
+LOCAL_MODULE    := magick
+LOCAL_CFLAGS += -fexceptions
+LOCAL_LDFLAGS += -fexceptions
+
+LOCAL_C_INCLUDES  :=  \
+	$(IMAGE_MAGICK) \
+	$(IMAGE_MAGICK)MagickCore \
+	$(IMAGE_MAGICK)MagickWand \
+	$(IMAGE_MAGICK)Magick++/lib \
+	${PNG_SRC_PATH} \
+	${JPEG_SRC_PATH} \
+
+
+LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
+LOCAL_SRC_FILES := \
+	$(IMAGE_MAGICK)utilites/magick.c \
+
+LOCAL_SHARED_LIBRARIES := \
+    MagickCore-7 \
+    MagickWand-7
+
+
+include $(BUILD_EXECUTABLE)	
+
+#---------------

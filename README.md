@@ -4,14 +4,13 @@
  - builds for armv7/x86/mips can be found at Android_ImageMagick7/tree/master/libs
  - OpenMP build by default (with gcc 4.9)
  - MagickWand
- - Magick++ support with STLPort. for other STL's see Rebuild section
+ - Magick++ disable due to crash
  - binaries available here: [v0.2.7052](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.2.7052)
 
 # Why? 
  - ImageMagick7 is not fully compatible with early versions
  - build with OpenMP (DistortImage on 4core/armv7a get 3.597 speedup factor)
  - smaller binary size in case of using only MagickCore
- - Magick++ support for C++ code
  
 # For C/C++ users
  - number of file formats disabled for now(tiff, exr, svg, jpeg2000, webp)
