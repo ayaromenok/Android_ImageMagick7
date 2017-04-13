@@ -1,7 +1,7 @@
 IMAGE_MAGICK		:= ImageMagick-7.0.5-2/
 JPEG_SRC_PATH 		:= jpeg-9b/
 PNG_SRC_PATH 		:= libpng-1.5.28/
-TIFF_SRC_PATH 		:= tiff-4.0.7/libtiff/
+TIFF_SRC_PATH 		:= tiff-3.9.7/libtiff/
 
 LOCAL_PATH := $(call my-dir)
 
@@ -15,15 +15,53 @@ LOCAL_C_INCLUDES  :=  \
 	${JPEG_SRC_PATH} 
 
 LOCAL_SRC_FILES := \
-        ${JPEG_SRC_PATH}jcapimin.c ${JPEG_SRC_PATH}jcapistd.c ${JPEG_SRC_PATH}jccoefct.c ${JPEG_SRC_PATH}jccolor.c ${JPEG_SRC_PATH}jcdctmgr.c ${JPEG_SRC_PATH}jchuff.c \
-        ${JPEG_SRC_PATH}jcinit.c ${JPEG_SRC_PATH}jcmainct.c ${JPEG_SRC_PATH}jcmarker.c ${JPEG_SRC_PATH}jcmaster.c ${JPEG_SRC_PATH}jcomapi.c ${JPEG_SRC_PATH}jcparam.c \
-        ${JPEG_SRC_PATH}jcprepct.c ${JPEG_SRC_PATH}jcsample.c ${JPEG_SRC_PATH}jctrans.c ${JPEG_SRC_PATH}jdapimin.c ${JPEG_SRC_PATH}jdapistd.c \
-        ${JPEG_SRC_PATH}jdatadst.c ${JPEG_SRC_PATH}jdatasrc.c ${JPEG_SRC_PATH}jdcoefct.c ${JPEG_SRC_PATH}jdcolor.c ${JPEG_SRC_PATH}jddctmgr.c ${JPEG_SRC_PATH}jdhuff.c \
-        ${JPEG_SRC_PATH}jdinput.c ${JPEG_SRC_PATH}jdmainct.c ${JPEG_SRC_PATH}jdmarker.c ${JPEG_SRC_PATH}jdmaster.c ${JPEG_SRC_PATH}jdmerge.c \
-        ${JPEG_SRC_PATH}jdpostct.c ${JPEG_SRC_PATH}jdsample.c ${JPEG_SRC_PATH}jdtrans.c ${JPEG_SRC_PATH}jerror.c ${JPEG_SRC_PATH}jfdctflt.c ${JPEG_SRC_PATH}jfdctfst.c \
-        ${JPEG_SRC_PATH}jfdctint.c ${JPEG_SRC_PATH}jidctflt.c ${JPEG_SRC_PATH}jidctfst.c ${JPEG_SRC_PATH}jidctint.c ${JPEG_SRC_PATH}jquant1.c \
-        ${JPEG_SRC_PATH}jquant2.c ${JPEG_SRC_PATH}jutils.c ${JPEG_SRC_PATH}jmemmgr.c ${JPEG_SRC_PATH}jcarith.c ${JPEG_SRC_PATH}jdarith.c ${JPEG_SRC_PATH}jaricom.c \
-        ${JPEG_SRC_PATH}jmemnobs.c
+	${JPEG_SRC_PATH}jcapimin.c \
+	${JPEG_SRC_PATH}jcapistd.c \
+	${JPEG_SRC_PATH}jccoefct.c \
+	${JPEG_SRC_PATH}jccolor.c \
+	${JPEG_SRC_PATH}jcdctmgr.c \
+	${JPEG_SRC_PATH}jchuff.c \
+	${JPEG_SRC_PATH}jcinit.c \
+	${JPEG_SRC_PATH}jcmainct.c \
+	${JPEG_SRC_PATH}jcmarker.c \
+	${JPEG_SRC_PATH}jcmaster.c \
+	${JPEG_SRC_PATH}jcomapi.c \
+	${JPEG_SRC_PATH}jcparam.c \
+	${JPEG_SRC_PATH}jcprepct.c \
+	${JPEG_SRC_PATH}jcsample.c \
+	${JPEG_SRC_PATH}jctrans.c \
+	${JPEG_SRC_PATH}jdapimin.c \
+	${JPEG_SRC_PATH}jdapistd.c \
+	${JPEG_SRC_PATH}jdatadst.c \
+	${JPEG_SRC_PATH}jdatasrc.c \
+	${JPEG_SRC_PATH}jdcoefct.c \
+	${JPEG_SRC_PATH}jdcolor.c \
+	${JPEG_SRC_PATH}jddctmgr.c \
+	${JPEG_SRC_PATH}jdhuff.c \
+	${JPEG_SRC_PATH}jdinput.c \
+	${JPEG_SRC_PATH}jdmainct.c \
+	${JPEG_SRC_PATH}jdmarker.c \
+	${JPEG_SRC_PATH}jdmaster.c \
+	${JPEG_SRC_PATH}jdmerge.c \
+	${JPEG_SRC_PATH}jdpostct.c \
+	${JPEG_SRC_PATH}jdsample.c \
+	${JPEG_SRC_PATH}jdtrans.c \
+	${JPEG_SRC_PATH}jerror.c \
+	${JPEG_SRC_PATH}jfdctflt.c \
+	${JPEG_SRC_PATH}jfdctfst.c \
+	${JPEG_SRC_PATH}jfdctint.c \
+	${JPEG_SRC_PATH}jidctflt.c \
+	${JPEG_SRC_PATH}jidctfst.c \
+	${JPEG_SRC_PATH}jidctint.c \
+	${JPEG_SRC_PATH}jquant1.c \
+	${JPEG_SRC_PATH}jquant2.c \
+	${JPEG_SRC_PATH}jutils.c \
+	${JPEG_SRC_PATH}jmemmgr.c \
+	${JPEG_SRC_PATH}jcarith.c \
+	${JPEG_SRC_PATH}jdarith.c \
+	${JPEG_SRC_PATH}jaricom.c \
+	${JPEG_SRC_PATH}jmemnobs.c
+	
 include $(BUILD_STATIC_LIBRARY)  
 #libjpeg ---------------------------------------------------------------
 
@@ -37,45 +75,47 @@ LOCAL_C_INCLUDES  :=  \
 	${JPEG_SRC_PATH} 
 
 LOCAL_SRC_FILES := \
-	${TIFF_SRC_PATH}tif_dir.c \
+	${TIFF_SRC_PATH}mkg3states.c \
+	${TIFF_SRC_PATH}tif_aux.c \
+	${TIFF_SRC_PATH}tif_close.c \
 	${TIFF_SRC_PATH}tif_codec.c \
+	${TIFF_SRC_PATH}tif_color.c \
+	${TIFF_SRC_PATH}tif_compress.c \
+	${TIFF_SRC_PATH}tif_dir.c \
+	${TIFF_SRC_PATH}tif_dirinfo.c \
+	${TIFF_SRC_PATH}tif_dirread.c \
+	${TIFF_SRC_PATH}tif_dirwrite.c \
+	${TIFF_SRC_PATH}tif_dumpmode.c \
+	${TIFF_SRC_PATH}tif_error.c \
+	${TIFF_SRC_PATH}tif_extension.c \
+	${TIFF_SRC_PATH}tif_fax3.c \
+	${TIFF_SRC_PATH}tif_fax3sm.c \
+	${TIFF_SRC_PATH}tif_flush.c \
+	${TIFF_SRC_PATH}tif_getimage.c \
+	${TIFF_SRC_PATH}tif_jbig.c \
+	${TIFF_SRC_PATH}tif_jpeg.c \
+	${TIFF_SRC_PATH}tif_luv.c \
+	${TIFF_SRC_PATH}tif_lzw.c \
+	${TIFF_SRC_PATH}tif_next.c \
+	${TIFF_SRC_PATH}tif_ojpeg.c \
+	${TIFF_SRC_PATH}tif_open.c \
+	${TIFF_SRC_PATH}tif_packbits.c \
+	${TIFF_SRC_PATH}tif_pixarlog.c \
 	${TIFF_SRC_PATH}tif_predict.c \
-	${TIFF_SRC_PATH}tif_tile.c \
-	${TIFF_SRC_PATH}tif_version.c \
-	${TIFF_SRC_PATH}tif_unix.c \
+	${TIFF_SRC_PATH}tif_print.c \
+	${TIFF_SRC_PATH}tif_read.c \
+	${TIFF_SRC_PATH}tif_strip.c \
 	${TIFF_SRC_PATH}tif_swab.c \
 	${TIFF_SRC_PATH}tif_thunder.c \
-	${TIFF_SRC_PATH}tif_next.c \
-	${TIFF_SRC_PATH}tif_strip.c \
-	${TIFF_SRC_PATH}tif_extension.c \
-	${TIFF_SRC_PATH}tif_error.c \
-	${TIFF_SRC_PATH}tif_dirwrite.c \
-	${TIFF_SRC_PATH}tif_fax3sm.c \
-	${TIFF_SRC_PATH}tif_ojpeg.c \
-	${TIFF_SRC_PATH}tif_flush.c \
+	${TIFF_SRC_PATH}tif_tile.c \
+	${TIFF_SRC_PATH}tif_unix.c \
+	${TIFF_SRC_PATH}tif_version.c \
 	${TIFF_SRC_PATH}tif_warning.c \
-	${TIFF_SRC_PATH}tif_fax3.c \
-	${TIFF_SRC_PATH}tif_jbig.c \
-	${TIFF_SRC_PATH}tif_open.c \
 	${TIFF_SRC_PATH}tif_write.c \
-	${TIFF_SRC_PATH}tif_packbits.c \
-	${TIFF_SRC_PATH}tif_compress.c \
-	${TIFF_SRC_PATH}tif_color.c \
-	${TIFF_SRC_PATH}tif_print.c \
 	${TIFF_SRC_PATH}tif_zip.c \
-	${TIFF_SRC_PATH}tif_aux.c \
-	${TIFF_SRC_PATH}tif_dumpmode.c \
-	${TIFF_SRC_PATH}tif_dirread.c \
-	${TIFF_SRC_PATH}tif_getimage.c \
-	${TIFF_SRC_PATH}tif_jpeg.c \
-	${TIFF_SRC_PATH}tif_close.c \
-	${TIFF_SRC_PATH}tif_read.c \
-	${TIFF_SRC_PATH}tif_luv.c \
-	${TIFF_SRC_PATH}tif_dirinfo.c \
-	${TIFF_SRC_PATH}tif_lzw.c \
-	${TIFF_SRC_PATH}tif_pixarlog.c \
-#	${TIFF_SRC_PATH}port/lfind.c
-#include $(BUILD_STATIC_LIBRARY) 	
+	${TIFF_SRC_PATH}../port/lfind.c
+	
+include $(BUILD_STATIC_LIBRARY) 
 #libtiff ---------------------------------------------------------------
 
 #libpng ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -119,6 +159,7 @@ LOCAL_C_INCLUDES  :=  \
 	$(IMAGE_MAGICK)MagickCore \
 	${PNG_SRC_PATH} \
 	${JPEG_SRC_PATH} \
+	${TIFF_SRC_PATH}
 
 
 LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
@@ -213,6 +254,7 @@ LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)coders/svg.c \
 	$(IMAGE_MAGICK)coders/tga.c \
 	$(IMAGE_MAGICK)coders/thumbnail.c \
+	$(IMAGE_MAGICK)coders/tiff.c \
 	$(IMAGE_MAGICK)coders/tile.c \
 	$(IMAGE_MAGICK)coders/tim.c \
 	$(IMAGE_MAGICK)coders/ttf.c \

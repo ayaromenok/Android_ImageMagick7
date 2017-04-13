@@ -1426,9 +1426,9 @@
 #endif
 
 /* Define if you have TIFF library */
-//#ifndef MAGICKCORE_TIFF_DELEGATE
-//#define MAGICKCORE_TIFF_DELEGATE 1
-//#endif
+#ifndef MAGICKCORE_TIFF_DELEGATE
+#define MAGICKCORE_TIFF_DELEGATE 1
+#endif
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #ifndef MAGICKCORE_TIME_WITH_SYS_TIME
