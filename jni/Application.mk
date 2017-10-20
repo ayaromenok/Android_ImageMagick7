@@ -2,8 +2,8 @@
 # https://developer.android.com/ndk/guides/application_mk.html
 APP_ABI := all 
 #APP_ABI := armeabi-v7a
-APP_PLATFORM := android-12
-NDK_TOOLCHAIN_VERSION := 4.9
+APP_PLATFORM := android-19
+# NDK_TOOLCHAIN_VERSION := 4.9
 # list of build-in STL's supported by NDK. 
 # switch to clang STL in case of using this compiler
 # https://developer.android.com/ndk/guides/cpp-support.html#runtimes
