@@ -162,7 +162,7 @@ LOCAL_C_INCLUDES  :=  \
 	${TIFF_SRC_PATH}
 
 
-LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
+LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz -latomic
 
 LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)coders/aai.c \

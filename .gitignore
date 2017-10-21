@@ -1,2 +1,4 @@
 obj
 release
+libs.gcc
+libs.clang
