@@ -1,14 +1,19 @@
-# ImageMagick 7 port to Android. 
+# ImageMagick 7 port to Android.
+## Last changes
+ - clang toolchain supported. 
+	required Android NDK r15 to build (early versions had issues with OpenMP support)
+ - all binaries moved to [github release section](https://github.com/ayaromenok/Android_ImageMagick7/releases)
+
+# General
  - MagickCore 7.0.5.2
  - 3rd party libs actual at 20170313
- - builds for armv7/x86/mips can be found at Android_ImageMagick7/tree/master/libs
- - OpenMP build by default (with gcc 4.9)
+ - OpenMP build by default (with gcc 4.9 and clang 5.0.3)
  - MagickWand
  - Magick++ disable due to crash
- - binaries available here: [v0.2.7052](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.2.7052)
+ - latest binaries: [v0.3.7052](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.3.7052)
 
 # Why? 
- - ImageMagick7 is not fully compatible with early versions
+ - ImageMagick7 is not fully compatible with early(6) version
  - build with OpenMP (DistortImage on 4core/armv7a get 3.597 speedup factor)
  - smaller binary size in case of using only MagickCore
  
@@ -20,13 +25,10 @@
  Please, use https://github.com/paulasiimwe/Android-ImageMagick port of ImageMagick 6 - it's include Java interface
 
 # Rebuild
- - change directory to jni
- - for Magick++ check STL version in Application.mk
+ - change directory to Android_ImageMagick7/jni
  - run path-to-your-ndk/ndk-build -j 4 
  
 # OpenMP 
  - depends from Application.mk details
- - Android NDK(current version 13) support OpenMP only when build with gcc toolchain
- - switching to clang toolchain or use default values (for NDK 13 and above) will disable OpenMP support
- 
+ - Android NDK(current version 15) support OpenMP with both clang and gcc toolchain (binaries provided for both) 
 
