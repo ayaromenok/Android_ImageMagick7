@@ -1,0 +1,25 @@
+# list of supported architectures 
+# https://developer.android.com/ndk/guides/application_mk.html
+
+# mips32 have a bug with 64bit atomic counter, so if you need 
+# this platform - plz, use gcc build
+APP_ABI := armeabi-v7a arm64-v8a x86_64 x86 armeabi mips64
+APP_PLATFORM := android-21
+NDK_TOOLCHAIN_VERSION := clang
+
+# list of build-in STL's supported by NDK. 
+# switch to clang STL in case of using this compiler
+# https://developer.android.com/ndk/guides/cpp-support.html#runtimes
+
+# Until NDK r16, the NDK's libc++ is only of beta quality. 
+# Beginning with NDK r16, libc++ will be the preferred STL. 
+# A future NDK release will remove the other options.
+APP_STL := c++_shared
+
+APP_CFLAGS += \
+    -DMAGICKCORE_HDRI_ENABLE=0 \
+    -DMAGICKCORE_QUANTUM_DEPTH=8
+
+APP_CPPFLAGS += \
+    -DMAGICKCORE_HDRI_ENABLE=0 \
+    -DMAGICKCORE_QUANTUM_DEPTH=8
