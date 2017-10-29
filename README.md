@@ -16,6 +16,11 @@
  - ImageMagick7 is not fully compatible with early(6) version
  - build with OpenMP (DistortImage on 4core/armv7a get 3.597 speedup factor)
  - smaller binary size in case of using only MagickCore
+
+# Test for ImageMagick 7/Android
+ - demonstrtate OpenMP advantage on multi-core CPU in modern smartphones
+ - support armv7/x86 as app in Google Play
+ - console 
  
 # For C/C++ users
  - number of file formats disabled for now(tiff, exr, svg, jpeg2000, webp)
