@@ -2,7 +2,7 @@ IMAGE_MAGICK		:= ImageMagick-7.0.5-2/
 JPEG_SRC_PATH 		:= jpeg-9b/
 PNG_SRC_PATH 		:= libpng-1.5.28/
 TIFF_SRC_PATH 		:= tiff-3.9.7/libtiff/
-OPENCL_PATH		:= opencl
+OPENCL_PATH			:= opencl
 
 LOCAL_PATH := $(call my-dir)
 
@@ -149,7 +149,16 @@ LOCAL_SRC_FILES := \
 include $(BUILD_STATIC_LIBRARY)	
 #libpng ----------------------------------------------------------------
 
-#Image Magick dynamic +++++++++++++++++++++++++++++++++++++++++++++++++++
+#libopencl +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
+LOCAL_MODULE    := OpenCL
+#LOCAL_MODULE_FILENAME := libopenclobj
+LOCAL_SRC_FILES = $(OPENCL_PATH)/lib/libopencl.so
+#LOCAL_LD_FLAGS := -L$(OPENCL_PATH)/lib -lopencl
+include $(PREBUILT_SHARED_LIBRARY)
+#libopencl -------------------------------------------------------------
+
+#Image Magick dynamic ++++++++++++++++++++++++++++++++++++++++++++++++++
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := MagickCore-7
@@ -165,7 +174,7 @@ LOCAL_C_INCLUDES  :=  \
 
 
 
-LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz -latomic -L$(OPENCL_PATH)/lib -lopencl
+LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz -latomic 
 
 LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)coders/aai.c \
@@ -392,7 +401,7 @@ LOCAL_STATIC_LIBRARIES := \
     libpng \
     libjpeg \
     libtiff
-
+LOCAL_SHARED_LIBRARIES := OpenCL
 #include $(BUILD_STATIC_LIBRARY)
 include $(BUILD_SHARED_LIBRARY)
 #Image Magick dynamic --------------------------------------------------
@@ -411,7 +420,7 @@ LOCAL_C_INCLUDES  :=  \
 	${OPENCL_PATH}/include
 
 
-LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz -L$(OPENCL_PATH)/lib -lopencl
+LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
 
 LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)MagickWand/animate.c \
@@ -440,7 +449,8 @@ LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)MagickWand/wand-view.c \
 	
 LOCAL_SHARED_LIBRARIES := \
-    MagickCore-7 
+    MagickCore-7 \
+    OpenCL
 
 
 include $(BUILD_SHARED_LIBRARY)	
@@ -488,7 +498,8 @@ LOCAL_SRC_FILES := \
 	
 LOCAL_SHARED_LIBRARIES := \
     MagickCore-7 \
-    MagickWand-7
+    MagickWand-7 \
+    OpenCL
 
 #20170412 disable due to crash
 #include $(BUILD_SHARED_LIBRARY)	
@@ -510,13 +521,14 @@ LOCAL_C_INCLUDES  :=  \
 	${OPENCL_PATH}/include
 
 
-LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz -L$(OPENCL_PATH)/lib -lopencl
+LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
 LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)utilites/magick.c \
 
 LOCAL_SHARED_LIBRARIES := \
     MagickCore-7 \
-    MagickWand-7
+    MagickWand-7 \
+    OpenCL
 
 
 include $(BUILD_EXECUTABLE)	

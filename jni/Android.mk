@@ -1,1 +1,1 @@
-Android.mk.opencl
+./Android.mk.opencl
