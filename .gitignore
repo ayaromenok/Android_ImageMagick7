@@ -1,4 +1,6 @@
 obj
 release
+libs
 libs.gcc
 libs.clang
+libs.gcc.opencl
