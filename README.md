@@ -19,9 +19,8 @@
 
 # Test for ImageMagick 7/Android
  - demonstrtate OpenMP advantage on multi-core CPU in modern smartphones
- - support armv7/x86 as app in Google Play
- - console 
- 
+ - GUI version published to [google play](https://play.google.com/store/apps/details?id=info.yaromenok.IM7Test) for armv7 and x86 
+
 # For C/C++ users
  - number of file formats disabled for now(tiff, exr, svg, jpeg2000, webp)
  - MagickWand and Magick++ added as separate Shared Objects
