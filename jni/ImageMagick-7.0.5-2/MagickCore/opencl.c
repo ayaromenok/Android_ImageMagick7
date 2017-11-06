@@ -2473,8 +2473,9 @@ MagickPrivate void OpenCLTerminus()
     RelinquishSemaphoreInfo(&openCL_lock);
   if (openCL_library != (MagickLibrary *) NULL)
     {
-      if (openCL_library->library != (void *) NULL)
-        (void) lt_dlclose(openCL_library->library);
+// potential memleak. need to handle correct ltdl lib, like in modules.c
+//      if (openCL_library->library != (void *) NULL)
+//        (void) lt_dlclose(openCL_library->library);
       openCL_library=(MagickLibrary *) RelinquishMagickMemory(openCL_library);
     }
 }
