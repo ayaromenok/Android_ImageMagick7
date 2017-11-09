@@ -1,1 +1,0 @@
-magick-baseconfig.h.opencl
