@@ -15,7 +15,7 @@ rm -f magick-baseconfig.h
 ln -s magick-baseconfig.h.openmp magick-baseconfig.h
 cd ../..
 
-$ANDROID_SDK_PATH/ndk-bundle/ndk-build
+$ANDROID_SDK_PATH/ndk-bundle/ndk-build -j 4
 
 cd ..
 mv libs libs.gcc
