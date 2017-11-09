@@ -1,0 +1,8 @@
+www
+PerlMagick
+images
+tests
+m4
+Makefile.*
+Install-*
+*.sh
