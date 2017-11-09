@@ -6,11 +6,11 @@ rm -f -r libs
 cd ./jni
 
 rm -f ./Application.mk
-ln -s ./Application.mk.gcc ./Application.mk
+ln -s ./Application.mk.gcc.opencl ./Application.mk
 rm -f ./Android.mk
 ln -s ./Android.mk.opencl ./Android.mk
 
-cd ./ImageMagick-7.0.5-2/MagickCore
+cd ./ImageMagick/MagickCore
 rm -f magick-baseconfig.h
 ln -s magick-baseconfig.h.opencl magick-baseconfig.h
 cd ../..

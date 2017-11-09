@@ -10,7 +10,7 @@ ln -s ./Application.mk.gcc ./Application.mk
 rm -f ./Android.mk
 ln -s ./Android.mk.openmp ./Android.mk
 
-cd ./ImageMagick-7.0.5-2/MagickCore
+cd ./ImageMagick/MagickCore
 rm -f magick-baseconfig.h
 ln -s magick-baseconfig.h.openmp magick-baseconfig.h
 cd ../..

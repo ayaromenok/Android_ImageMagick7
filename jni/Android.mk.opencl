@@ -1,4 +1,4 @@
-IMAGE_MAGICK		:= ImageMagick-7.0.5-2/
+IMAGE_MAGICK		:= ImageMagick/
 JPEG_SRC_PATH 		:= jpeg-9b/
 PNG_SRC_PATH 		:= libpng-1.5.28/
 TIFF_SRC_PATH 		:= tiff-3.9.7/libtiff/
@@ -531,6 +531,6 @@ LOCAL_SHARED_LIBRARIES := \
     OpenCL
 
 
-include $(BUILD_EXECUTABLE)	
+#include $(BUILD_EXECUTABLE)	
 
 #---------------

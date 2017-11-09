@@ -1,0 +1,1 @@
+magick-baseconfig.h.openmp
