@@ -1,16 +1,17 @@
 # ImageMagick 7 port to Android.
 ## Last changes
+ - Image Magick updated to latest version
  - clang toolchain supported. 
 	required Android NDK r15 to build (early versions had issues with OpenMP support)
  - all binaries moved to [github release section](https://github.com/ayaromenok/Android_ImageMagick7/releases)
 
 # General
- - MagickCore 7.0.5.2
- - 3rd party libs actual at 20170313
+ - MagickCore 7.0.7.10 (actual at 2017.11)
+ - 3rd party libs actual at 2017.03
  - OpenMP build by default (with gcc 4.9 and clang 5.0.3)
  - MagickWand
  - Magick++ disable due to crash
- - latest binaries: [v0.3.7052](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.3.7052)
+ - latest binaries: [v0.4.70710](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70710)
 
 # Why? 
  - ImageMagick7 is not fully compatible with early(6) version
@@ -36,3 +37,6 @@
  - depends from Application.mk details
  - Android NDK(current version 15) support OpenMP with both clang and gcc toolchain (binaries provided for both) 
 
+# OpenCL
+ - can me much faster on certain operation (blur etc)
+ - not working correctrly for now
