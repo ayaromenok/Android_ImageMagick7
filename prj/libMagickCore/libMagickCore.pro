@@ -14,9 +14,17 @@ INCLUDEPATH += ../../jni/ImageMagick/coders
 INCLUDEPATH += ../../jni/ImageMagick/filters
 INCLUDEPATH += ../../jni/ImageMagick/MagickCore
 
-LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
-LIBS += -L../libcoders -lcoders
-
+#linux:!android {
+    LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
+    LIBS += -L../libcoders -lcoders
+#}
+#android {
+#    contains(ANDROID_TARGET_ARCH,armeabi-v7a) {
+#        message("MagickCore/Android/armv7")
+#        LIBS += ../libjpeg/libjpeg.a ../libpng/libpng.a ../libtiff/libtiff.a
+#        LIBS += ../libcoders/libcoders.a
+#    }
+#}
 include(../include/files_core.pri)
 
 unix {

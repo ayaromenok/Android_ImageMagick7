@@ -2,7 +2,7 @@ QT       -= core gui
 
 TARGET = jpeg
 TEMPLATE = lib
-CONFIG += staticlib
+#CONFIG += staticlib
 
 include("../include/files_jpeg.pri")
 
