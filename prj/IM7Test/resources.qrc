@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/20171026_093526_2048.jpg</file>
+        <file>res/resourcesUI.txt</file>
+        <file>res/resourcesConsole.txt</file>
+        <file>res/results.txt</file>
+        <file>program_version.txt</file>
+    </qresource>
+</RCC>
