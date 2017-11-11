@@ -1,4 +1,5 @@
 INCLUDEPATH += ../../jni/tiff-3.9.7/libtiff/
+INCLUDEPATH += ../../jni/jpeg-9b
 SOURCES += \
     ../../jni/tiff-3.9.7/libtiff/mkg3states.c \
     ../../jni/tiff-3.9.7/libtiff/tif_aux.c \
