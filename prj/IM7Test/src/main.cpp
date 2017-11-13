@@ -16,10 +16,10 @@ int main(int argc, char *argv[])
     imt.getResources();
     imt.testCore(true);
     imt.testWand(true);
-//    imt.testOpenMP(0, true);
-//    imt.testOpenMP(1, true);
-//    imt.testOpenCL(true, true);
-//    imt.testOpenCL(false, true);
+    imt.testOpenMP(0, true);
+    imt.testOpenMP(1, true);
+    imt.testOpenCL(true, true);
+    imt.testOpenCL(false, true);
     //imt.removeResources(); //\todo switch ON later
 
     return a.exec();
