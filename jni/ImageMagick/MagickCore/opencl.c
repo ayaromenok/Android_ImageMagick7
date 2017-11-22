@@ -1363,7 +1363,8 @@ static MagickBooleanType CompileOpenCLKernel(MagickCLDevice device,
   {
     if ((*ptr == ' ') || (*ptr == '\\') || (*ptr == '/') || (*ptr == ':') ||
         (*ptr == '*') || (*ptr == '?') || (*ptr == '"') || (*ptr == '<') ||
-        (*ptr == '>' || *ptr == '|'))
+        (*ptr == '>') || (*ptr == '|'))
+        /* possible #19 || ( *ptr == '(')  || (*ptr == ')') || (*ptr == ' ')) */
       *ptr = '_';
     ptr++;
   }
@@ -1371,7 +1372,10 @@ static MagickBooleanType CompileOpenCLKernel(MagickCLDevice device,
     "%s%s%s_%s_%08x_%.20g.bin",GetOpenCLCacheDirectory(),
     DirectorySeparator,"magick_opencl",deviceName,signature,
     (double) sizeof(char*)*8);
-  loaded=LoadCachedOpenCLKernel(device,filename);
+
+  // #19 crash\exception on load from file, try to compile directly
+  //loaded=LoadCachedOpenCLKernel(device,filename);
+  loaded=MagickFalse;
   if (loaded == MagickFalse)
     {
       /* Binary CL program unavailable, compile the program from source */
@@ -1393,8 +1397,9 @@ static MagickBooleanType CompileOpenCLKernel(MagickCLDevice device,
   }
 
   /* Save the binary to a file to avoid re-compilation of the kernels */
-  if (loaded == MagickFalse)
-    CacheOpenCLKernel(device,filename,exception);
+  //#19 to not load from file, recompile on every app start for now
+//  if (loaded == MagickFalse)
+//    CacheOpenCLKernel(device,filename,exception);
 
   return(MagickTrue);
 }
@@ -2222,10 +2227,18 @@ static cl_uint GetOpenCLDeviceCount(MagickCLEnv clEnv,cl_platform_id platform)
   if (clEnv->library->clGetPlatformInfo(platform,CL_PLATFORM_VERSION,
         MagickPathExtent,version,NULL) != CL_SUCCESS)
     return(0);
-  if (strncmp(version, "OpenCL 1.0 ", 11) == 0)
-    return(0);
+  //OpenCl 1.x
+  //add OpenCL 2.x
+  if (strncmp(version, "OpenCL 1.", 9) == 0)
+      if (strncmp(version, "OpenCL 2.", 9) == 0)
+            return(0);
+  cl_int      _status;
+  _status = clEnv->library->clGetDeviceIDs(platform,
+                                           CL_DEVICE_TYPE_ALL,
+                                           0, NULL, &num);
   if (clEnv->library->clGetDeviceIDs(platform,
-        CL_DEVICE_TYPE_CPU|CL_DEVICE_TYPE_GPU,0,NULL,&num) != CL_SUCCESS)
+//        CL_DEVICE_TYPE_CPU|CL_DEVICE_TYPE_GPU,0,NULL,&num) != CL_SUCCESS)
+          CL_DEVICE_TYPE_ALL,0,NULL,&num) != CL_SUCCESS)
     return(0);
   return(num);
 }
@@ -2315,8 +2328,12 @@ static void LoadOpenCLDevices(MagickCLEnv clEnv)
     if (platforms[i] == (cl_platform_id) NULL)
       continue;
 
-    status=clEnv->library->clGetDeviceIDs(platforms[i],CL_DEVICE_TYPE_CPU | 
-      CL_DEVICE_TYPE_GPU,(cl_uint) clEnv->number_devices,devices,&number_devices);
+//    status=clEnv->library->clGetDeviceIDs(platforms[i],CL_DEVICE_TYPE_CPU |
+//      CL_DEVICE_TYPE_GPU,(cl_uint) clEnv->number_devices,devices,&number_devices);
+    status=clEnv->library->clGetDeviceIDs(platforms[i],CL_DEVICE_TYPE_ALL,
+                                          (cl_uint) clEnv->number_devices,
+                                          devices, &number_devices);
+
     if (status != CL_SUCCESS)
       continue;
 
