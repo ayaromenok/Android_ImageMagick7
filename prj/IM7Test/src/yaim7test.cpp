@@ -219,7 +219,7 @@ YaIM7Test::testOpenXX(int numOfThreads, bool useOpenCL, bool useGPU,
     //blur supported by both OpenMP and OpenCL
 
     t.start();
-    imagew = BlurImage(image,16,4.5,exception);
+    imagew = BlurImage(image,8,4.5,exception);
     _result = t.elapsed();
 
     qDebug() << "image blured on device:"<< device << ":\t" << _result << "msec";
