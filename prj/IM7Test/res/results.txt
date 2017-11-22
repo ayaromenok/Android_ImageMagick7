@@ -1,0 +1,4 @@
+version 0.3.0
+testMethod: blur
+testImage: 2048x1152
+results: 273 920 474 275 277

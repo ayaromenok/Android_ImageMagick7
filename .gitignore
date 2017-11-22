@@ -4,3 +4,4 @@ libs
 libs.gcc
 libs.clang
 libs.gcc.opencl
+build-*
