@@ -1,1 +1,1 @@
-magick-baseconfig.h.openmp
+magick-baseconfig.h.opencl

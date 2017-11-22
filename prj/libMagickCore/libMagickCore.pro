@@ -15,6 +15,12 @@ INCLUDEPATH += ../../jni/ImageMagick/coders
 INCLUDEPATH += ../../jni/ImageMagick/filters
 INCLUDEPATH += ../../jni/ImageMagick/MagickCore
 
+INCLUDEPATH += ../../jni/opencl/include
+LIBS += -lOpenCL
+contains(ANDROID_TARGET_ARCH,armeabi-v7a) {
+    LIBS += -L../../jni/opencl/lib
+}
+
 #linux:!android {
     LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
     LIBS += -L../libcoders -lcoders
