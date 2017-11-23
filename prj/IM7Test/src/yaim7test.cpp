@@ -159,26 +159,28 @@ YaIM7Test::testWand(bool writeToFile)
 }
 
 int
-YaIM7Test::testOpenMP(int numOfThreads, bool writeToFile)
+YaIM7Test::testOpenMP(opCL op, int numOfThreads, bool writeToFile)
 {
-    qDebug() << "testOpenMP, #:" << numOfThreads
+    qDebug() << "testOpenMP, op:" << op
+             <<"#:" << numOfThreads
              <<", write to file:" << writeToFile;
 
-    testOpenXX(numOfThreads, false, false, writeToFile);
+    testOpenXX(op, numOfThreads, false, false, writeToFile);
 
     return _result;
 }
 
 int
-YaIM7Test::testOpenCL(bool isGPU, bool writeToFile)
+YaIM7Test::testOpenCL(opCL op, bool isGPU, bool writeToFile)
 {
-    qDebug() << "testOpenCL, GPU#:" << isGPU
+    qDebug() << "testOpenCL op:" << op
+             << "GPU#:" << isGPU
              <<", write to file:" << writeToFile;
-    testOpenXX(0, true, isGPU, writeToFile);
+    testOpenXX(op, 0, true, isGPU, writeToFile);
     return _result;
 }
 int
-YaIM7Test::testOpenXX(int numOfThreads, bool useOpenCL, bool useGPU,
+YaIM7Test::testOpenXX(opCL op, int numOfThreads, bool useOpenCL, bool useGPU,
                       bool writeToFile)
 {
     Image *image, *imagew;
@@ -219,7 +221,14 @@ YaIM7Test::testOpenXX(int numOfThreads, bool useOpenCL, bool useGPU,
     //blur supported by both OpenMP and OpenCL
 
     t.start();
-    imagew = BlurImage(image,8,4.5,exception);
+    switch (op){
+        case opCL::blur:{
+            imagew = BlurImage(image,8,4.5,exception);
+        break;
+        }
+    default:
+        qDebug() << "required operation NOT implemented";
+    }
     _result = t.elapsed();
 
     qDebug() << "image blured on device:"<< device << ":\t" << _result << "msec";
