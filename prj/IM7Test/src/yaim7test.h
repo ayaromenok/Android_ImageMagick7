@@ -2,6 +2,7 @@
 #define YAIM7TEST_H
 
 #include <QObject>
+class QFile;
 
 class YaIM7Test : public QObject
 {
@@ -54,6 +55,8 @@ private:
     int             _maxNumOfThreads;
     QStringList     _resList;
     QStringList     _testList;    
+    QFile           *_resFile;
+    bool            _canWriteResToFile;
 };
 
 #endif // YAIM7TEST_H

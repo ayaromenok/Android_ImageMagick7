@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFile>
 #include <QTime>
+#include <QTextStream>
 #include <MagickCore/MagickCore.h>
 #include <MagickWand/MagickWand.h>
 
@@ -12,11 +13,21 @@ YaIM7Test::YaIM7Test(bool isUI, int maxNumOfThreads)
     _isUI = isUI;
     _maxNumOfThreads = maxNumOfThreads;
     qDebug() << "UI:" << _isUI << "max # of threads" << _maxNumOfThreads;
+    _resFile = new QFile("/mnt/sdcard/im7cl/results.txt");
+    if (_resFile->exists())
+        _resFile->remove();
+    if (!_resFile->open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+      qDebug() << "can't write results to file, exiting";
+      exit(-1);
+    }
 }
 
 YaIM7Test::~YaIM7Test()
 {
-
+    _resFile->flush();
+    _resFile->close();
+    delete _resFile;
 }
 
 void
@@ -188,6 +199,9 @@ YaIM7Test::testOpenXX(opCL op, int numOfThreads, bool useOpenCL, bool useGPU,
     ExceptionInfo *exception;
     QTime t;
     QString device;
+    QString opStr;
+
+    QTextStream resStream(_resFile);
 
     if (useOpenCL){
         if (useGPU){
@@ -224,6 +238,7 @@ YaIM7Test::testOpenXX(opCL op, int numOfThreads, bool useOpenCL, bool useGPU,
     switch (op){
         case opCL::blur:{
             imagew = BlurImage(image,8,4.5,exception);
+            opStr.append("blur");
         break;
         }
     default:
@@ -232,6 +247,7 @@ YaIM7Test::testOpenXX(opCL op, int numOfThreads, bool useOpenCL, bool useGPU,
     _result = t.elapsed();
 
     qDebug() << "image blured on device:"<< device << ":\t" << _result << "msec";
+    resStream << device << " "<< opStr << " " << QString::number(_result)<< "\n";
 
     if (writeToFile) {
         ImageInfo *write_info;
