@@ -1364,7 +1364,6 @@ static MagickBooleanType CompileOpenCLKernel(MagickCLDevice device,
     if ((*ptr == ' ') || (*ptr == '\\') || (*ptr == '/') || (*ptr == ':') ||
         (*ptr == '*') || (*ptr == '?') || (*ptr == '"') || (*ptr == '<') ||
         (*ptr == '>') || (*ptr == '|'))
-        /* possible #19 || ( *ptr == '(')  || (*ptr == ')') || (*ptr == ' ')) */
       *ptr = '_';
     ptr++;
   }
@@ -1373,9 +1372,10 @@ static MagickBooleanType CompileOpenCLKernel(MagickCLDevice device,
     DirectorySeparator,"magick_opencl",deviceName,signature,
     (double) sizeof(char*)*8);
 
-  // #19 crash\exception on load from file, try to compile directly
-  //loaded=LoadCachedOpenCLKernel(device,filename);
-  loaded=MagickFalse;
+  /* on Android need to setup MAGICK_OPENCL_CACHE_DIR to application local dir
+     to avoid issues with I/O permissions */
+
+  loaded=LoadCachedOpenCLKernel(device,filename);
   if (loaded == MagickFalse)
     {
       /* Binary CL program unavailable, compile the program from source */
@@ -1397,9 +1397,8 @@ static MagickBooleanType CompileOpenCLKernel(MagickCLDevice device,
   }
 
   /* Save the binary to a file to avoid re-compilation of the kernels */
-  //#19 to not load from file, recompile on every app start for now
-//  if (loaded == MagickFalse)
-//    CacheOpenCLKernel(device,filename,exception);
+  if (loaded == MagickFalse)
+    CacheOpenCLKernel(device,filename,exception);
 
   return(MagickTrue);
 }
