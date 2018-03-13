@@ -1,8 +1,13 @@
 # ImageMagick 7 port to Android.
+## Binaries
+ - latest binaries for arm-v7a/arm64-v8a/x86/x86-64: [v0.4.70710.17b1](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70710.17b1)
+ - latest binaries for mips32/misp64 and armv5: [v0.4.70710](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70710)
+
 ## Last changes
  - Image Magick updated to latest version
  - clang toolchain supported. 
 	required Android NDK r15 to build (early versions had issues with OpenMP support)
+ - NDK r17beta1 drop support of mips32/64 and arm v5. 
  - all binaries moved to [github release section](https://github.com/ayaromenok/Android_ImageMagick7/releases)
 
 # General
@@ -11,7 +16,6 @@
  - OpenMP build by default (with gcc 4.9 and clang 5.0.3)
  - MagickWand
  - Magick++ disable due to crash
- - latest binaries: [v0.4.70710](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70710)
 
 # Why? 
  - ImageMagick7 is not fully compatible with early(6) version
