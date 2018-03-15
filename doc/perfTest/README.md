@@ -1,10 +1,21 @@
 ﻿## Perfomance Tests of ImageMagick 7 /Android
 
 ### Table of Contest
-1. [gcc at arm-v7a](#gcc_at_arm-v7a)
-2. [clang at arm-v7a](#clang_at_arm-v7a)
-3. [32 bit vs 64 bit](#32bit_vs_64bit)
-4. [ndk r15 vs r17b1](#ndk_r15_vs_r17b1)
+1. [Introduction](#intro) 
+2. [gcc at arm-v7a](#gcc_at_arm-v7a)
+3. [clang at arm-v7a](#clang_at_arm-v7a)
+4. [32 bit vs 64 bit](#32bit_vs_64bit)
+5. [ndk r15 vs r17b1](#ndk_r15_vs_r17b1)
+
+### Intoduction <a name="intro"> </a>
+Due to a huge combination of different hardware, compilers and architecture width (32 and 64 bit) dramatically affect a performance of applications and libraries, like ImageMagick in this particular case.
+
+Tests below show some key difference based in BlureImage function form ImageMagick core. 
+Biggest performance difference achieved: 
+* 64/32bit: ~ +70% - between ndk15/gcc4.9/arm-v7a/32bit and ndk17b1/clang/arm-v8a/64bit at (Samsung Enynos 8895/Galaxy S8).  
+* for 32bit only:   ~ +40% between ndk15/gcc4.9/arm-v7a and ndk17b1/clang/arm-v7a - at NVidia K1/32bit/Shield tablet
+* also some architectures required older builds for better performance: ~ -33% drop at ndk15/gcc4.9/arm-v7a and ndk17b1/clang/arm-v7a for Quallcom Snapdragon S4 Pro/Google Nexus 7/2013
+* also some hardware/software have a issues(bugs) in OpenMP implementation of clang: Quallcom Snapdragon 652 at LG G5 SE - difference between 1 and 4/8 threads about 2 times only in case of ndk15/clang.
 
 ### gcc at arm-v7a <a name="gcc_at_arm-v7a"> </a>
 
