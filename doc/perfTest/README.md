@@ -49,6 +49,7 @@ OMP_1|16665|13185|	27914|24754
 OMP_2|8377|6618|14012|12449
 OMP_4|4278|3770|7209|6302
 OMP_8|4029|3881|6294|6258
+
 ![Samsung E8895: 32 bit vs 64 bit, gcc vs clang](https://github.com/ayaromenok/Android_ImageMagick7/blob/master/doc/perfTest/res/E8895_gcc_clang_32b_64b.png)
 
 ### NDK r15 vs r17b1 <a name ="ndk_r15_vs_r17b1"> </a>
@@ -60,6 +61,7 @@ OMP_1|24754|13185|23172|12420
 OMP_2|12449|6618|11771|6461
 OMP_4|6302|3770|6025|3585
 OMP_8|6258|3881|5587|3748
+
 ![clang: NDK r15 vs r17beta1](https://github.com/ayaromenok/Android_ImageMagick7/blob/master/doc/perfTest/res/clang_ndk15_ndk17b1.png)
 
 ### Conclusion <a name="conclusion"> </a>
