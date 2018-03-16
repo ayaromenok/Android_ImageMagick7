@@ -6,6 +6,7 @@
 3. [clang at arm-v7a](#clang_at_arm-v7a)
 4. [32 bit vs 64 bit](#32bit_vs_64bit)
 5. [ndk r15 vs r17b1](#ndk_r15_vs_r17b1)
+6. [Conclusion](#conclusion)
 
 ### Intoduction <a name="intro"> </a>
 Due to a huge combination of different hardware, compilers and architecture width (32 and 64 bit) dramatically affect a performance of applications and libraries, like ImageMagick in this particular case.
@@ -60,3 +61,13 @@ OMP_2|12449|6618|11771|6461
 OMP_4|6302|3770|6025|3585
 OMP_8|6258|3881|5587|3748
 ![clang: NDK r15 vs r17beta1](https://github.com/ayaromenok/Android_ImageMagick7/blob/master/doc/perfTest/res/clang_ndk15_ndk17b1.png)
+
+### Conclusion <a name="conclusion"> </a>
+It is no "universal" solution exist in deeply fragmented Android world, so minimizing number of target hardware\software only a solution. 
+
+Typically, newest clang work better for newest hw\sw, while for oldest hw\sw a gcc 4.9 from ndk 15(or even early) is a good choice.
+
+For 32+64bit APK can be used  combination of both type from above:
+	
+ - for 32bit: gcc 4.9\ndk 15
+ - for 64bit: clang\ndk17b1+
