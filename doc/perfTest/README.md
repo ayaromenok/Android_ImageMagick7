@@ -30,11 +30,33 @@ Biggest performance difference achieved:
 ![gcc at arm-v7a](https://github.com/ayaromenok/Android_ImageMagick7/blob/master/doc/perfTest/res/armv7a_gcc49_ndk15.png)
 
 ### clang at arm-v7a <a name="clang_at_arm-v7a"> </a>
+|clang| E8895 | S652 | TegraK1 | S4 |
+| -- | -- | -- | -- | -- | 	
+|OMP_Auto|	5963|13527|8323|21035|
+|OMP_1|24754|23387|27808|80884|
+|OMP_2|12449|11820|14071|43264|
+|OMP_4|6302|11380|8268|21511|
+|OMP_8|6258|11054|8099|21873|
+
 ![clang at arm v7a](https://github.com/ayaromenok/Android_ImageMagick7/blob/master/doc/perfTest/res/armv7a_clang503_ndk15.png)
 
 ### 32 bit vs 64 bit, clang vs gcc <a name="32bit_vs_64bit"> </a>
+|E8895| gcc64|clang64|gcc32|clang32|
+| -- | -- | -- | -- | -- | 	
+OMP_Auto|3934|3810|6260|5963|
+OMP_1|16665|13185|	27914|24754
+OMP_2|8377|6618|14012|12449
+OMP_4|4278|3770|7209|6302
+OMP_8|4029|3881|6294|6258
 ![Samsung E8895: 32 bit vs 64 bit, gcc vs clang](https://github.com/ayaromenok/Android_ImageMagick7/blob/master/doc/perfTest/res/E8895_gcc_clang_32b_64b.png)
 
 ### NDK r15 vs r17b1 <a name ="ndk_r15_vs_r17b1"> </a>
 
+|E8895|clang32\R15|clang64\R15|clang32\R17b1|clang64\R17b1|
+| -- | -- | -- | -- | -- | 	
+OMP_Auto|5963|3810|5760|3675
+OMP_1|24754|13185|23172|12420
+OMP_2|12449|6618|11771|6461
+OMP_4|6302|3770|6025|3585
+OMP_8|6258|3881|5587|3748
 ![clang: NDK r15 vs r17beta1](https://github.com/ayaromenok/Android_ImageMagick7/blob/master/doc/perfTest/res/clang_ndk15_ndk17b1.png)
