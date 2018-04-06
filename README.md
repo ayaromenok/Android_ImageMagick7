@@ -1,6 +1,6 @@
 # ImageMagick 7 port to Android.
 ## Binaries 
- - latest binaries for arm-v7a/arm64-v8a/x86/x86-64: [v0.4.70728.17b1](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.5.70728.17b1)
+ - latest binaries for arm-v7a/arm64-v8a/x86/x86-64: [v0.4.70728.17b1](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70728.17b1)
  - latest binaries for mips32/misp64 and armv5: [v0.4.70710](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70710)
 
 ## Last changes
