@@ -17,7 +17,7 @@
 %                                September 2002                               %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -311,7 +311,7 @@ static LinkedListInfo *AcquireLogCache(const char *filename,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",p->filename);
         continue;
       }
-    (void) ResetMagickMemory(log_info,0,sizeof(*log_info));
+    (void) memset(log_info,0,sizeof(*log_info));
     log_info->path=ConstantString("[built-in]");
     GetTimerInfo((TimerInfo *) &log_info->timer);
     log_info->event_mask=p->event_mask;
@@ -1510,7 +1510,7 @@ static MagickBooleanType LoadLogCache(LinkedListInfo *cache,const char *xml,
           GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeElementNestedTooDeeply","`%s'",token);
               else
@@ -1545,7 +1545,7 @@ static MagickBooleanType LoadLogCache(LinkedListInfo *cache,const char *xml,
           Allocate memory for the log list.
         */
         log_info=(LogInfo *) AcquireCriticalMemory(sizeof(*log_info));
-        (void) ResetMagickMemory(log_info,0,sizeof(*log_info));
+        (void) memset(log_info,0,sizeof(*log_info));
         log_info->path=ConstantString(filename);
         GetTimerInfo((TimerInfo *) &log_info->timer);
         log_info->signature=MagickCoreSignature;

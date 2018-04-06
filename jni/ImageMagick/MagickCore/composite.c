@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -153,10 +153,10 @@
    Most functions use a blending mode of over (X=1,Y=1,Z=1) this results in
    the following optimizations...
       gamma = Sa+Da-Sa*Da;
-      gamma = 1 - QuantiumScale*alpha * QuantiumScale*beta;
-      opacity = QuantiumScale*alpha*beta;  // over blend, optimized 1-Gamma
+      gamma = 1 - QuantumScale*alpha * QuantumScale*beta;
+      opacity = QuantumScale*alpha*beta;  // over blend, optimized 1-Gamma
 
-   The above SVG definitions also definate that Mathematical Composition
+   The above SVG definitions also define that Mathematical Composition
    methods should use a 'Over' blending mode for Alpha Channel.
    It however was not applied for composition modes of 'Plus', 'Minus',
    the modulus versions of 'Add' and 'Subtract'.
@@ -321,7 +321,7 @@ static MagickBooleanType CompositeOverImage(Image *image,
   source_view=AcquireVirtualCacheView(source_image,exception);
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(source_image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -495,7 +495,7 @@ static MagickBooleanType CompositeOverImage(Image *image,
             /*
               Copy channel.
             */
-            q[i]=Sc;
+            q[i]=ClampToQuantum(Sc);
             continue;
           }
         /*
@@ -626,7 +626,7 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
       source_view=AcquireVirtualCacheView(source_image,exception);
       image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         magick_number_threads(source_image,image,source_image->rows,1)
 #endif
       for (y=0; y < (ssize_t) source_image->rows; y++)
@@ -715,7 +715,7 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
       source_view=AcquireVirtualCacheView(source_image,exception);
       image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         magick_number_threads(source_image,image,source_image->rows,1)
 #endif
       for (y=0; y < (ssize_t) source_image->rows; y++)
@@ -1110,9 +1110,11 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
             (((MagickRealType) QuantumRange+1.0)/2.0)))/(((MagickRealType)
             QuantumRange+1.0)/2.0)+center.y+((compose == DisplaceCompositeOp) ?
             y : 0);
-          (void) InterpolatePixelInfo(image,image_view,
+          status=InterpolatePixelInfo(image,image_view,
             UndefinedInterpolatePixel,(double) offset.x,(double) offset.y,
             &pixel,exception);
+          if (status == MagickFalse)
+            break;
           /*
             Mask with the 'invalid pixel mask' in alpha channel.
           */
@@ -1122,6 +1124,8 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
           p+=GetPixelChannels(source_image);
           q+=GetPixelChannels(canvas_image);
         }
+        if (x < (ssize_t) source_image->columns)
+          break;
         sync=SyncCacheViewAuthenticPixels(canvas_view,exception);
         if (sync == MagickFalse)
           break;
@@ -1231,7 +1235,7 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
   source_view=AcquireVirtualCacheView(source_image,exception);
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(source_image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1308,7 +1312,9 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
         Da,
         Dc,
         Dca,
+        DcaDa,
         Sa,
+        SaSca,
         Sc,
         Sca;
 
@@ -1532,9 +1538,6 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
         PixelTrait source_traits=GetPixelChannelTraits(source_image,channel);
         if (traits == UndefinedPixelTrait)
           continue;
-        if ((source_traits == UndefinedPixelTrait) &&
-            (channel != AlphaPixelChannel))
-          continue;
         if (channel == AlphaPixelChannel)
           {
             /*
@@ -1642,6 +1645,11 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
                 pixel=QuantumRange*Da;
                 break;
               }
+              case MultiplyCompositeOp:
+              {
+                pixel=QuantumRange*Sa*Da;
+                break;
+              }
               default:
               {
                 pixel=QuantumRange*alpha;
@@ -1652,6 +1660,8 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
               ClampToQuantum(pixel);
             continue;
           }
+        if (source_traits == UndefinedPixelTrait)
+          continue;
         /*
           Sc: source color.
           Dc: canvas color.
@@ -1663,7 +1673,7 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
             /*
               Copy channel.
             */
-            q[i]=Sc;
+            q[i]=ClampToQuantum(Dc);
             continue;
           }
         /*
@@ -1673,6 +1683,8 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
         */
         Sca=QuantumScale*Sa*Sc;
         Dca=QuantumScale*Da*Dc;
+        SaSca=Sa*PerceptibleReciprocal(Sca);
+        DcaDa=Dca*PerceptibleReciprocal(Da);
         switch (compose)
         {
           case DarkenCompositeOp:
@@ -1753,8 +1765,8 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
                 pixel=QuantumRange*gamma*(Dca*(1.0-Sa));
                 break;
               }
-            pixel=QuantumRange*gamma*(Sa*Da-Sa*Da*MagickMin(1.0,(1.0-Dca/Da)*Sa/
-              Sca)+Sca*(1.0-Da)+Dca*(1.0-Sa));
+            pixel=QuantumRange*gamma*(Sa*Da-Sa*Da*MagickMin(1.0,(1.0-DcaDa)*
+              SaSca)+Sca*(1.0-Da)+Dca*(1.0-Sa));
             break;
           }
           case ColorDodgeCompositeOp:
@@ -1762,8 +1774,8 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
             if ((Sca*Da+Dca*Sa) >= Sa*Da)
               pixel=QuantumRange*gamma*(Sa*Da+Sca*(1.0-Da)+Dca*(1.0-Sa));
             else
-              pixel=QuantumRange*gamma*(Dca*Sa*Sa/(Sa-Sca)+Sca*(1.0-Da)+Dca*
-                (1.0-Sa));
+              pixel=QuantumRange*gamma*(Dca*Sa*Sa*PerceptibleReciprocal(Sa-Sca)+
+                Sca*(1.0-Da)+Dca*(1.0-Sa));
             break;
           }
           case ColorizeCompositeOp:
@@ -1886,7 +1898,7 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
                 pixel=QuantumRange*gamma*(Da*Sa+Dca*(1.0-Sa)+Sca*(1.0-Da));
                 break;
               }
-            pixel=QuantumRange*gamma*(Dca*Sa*Sa/Sca+Dca*(1.0-Sa)+Sca*(1.0-Da));
+            pixel=QuantumRange*gamma*(Dca*Sa*SaSca+Dca*(1.0-Sa)+Sca*(1.0-Da));
             break;
           }
           case DstAtopCompositeOp:
@@ -2249,19 +2261,25 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
           {
             if ((2.0*Sca) < Sa)
               {
-                pixel=QuantumRange*gamma*(Dca*(Sa+(2.0*Sca-Sa)*(1.0-(Dca/Da)))+
+                pixel=QuantumRange*gamma*(Dca*(Sa+(2.0*Sca-Sa)*(1.0-DcaDa))+
                   Sca*(1.0-Da)+Dca*(1.0-Sa));
                 break;
               }
             if (((2.0*Sca) > Sa) && ((4.0*Dca) <= Da))
               {
-                pixel=QuantumRange*gamma*(Dca*Sa+Da*(2.0*Sca-Sa)*(4.0*(Dca/Da)*
-                  (4.0*(Dca/Da)+1.0)*((Dca/Da)-1.0)+7.0*(Dca/Da))+Sca*(1.0-Da)+
+                pixel=QuantumRange*gamma*(Dca*Sa+Da*(2.0*Sca-Sa)*(4.0*DcaDa*
+                  (4.0*DcaDa+1.0)*(DcaDa-1.0)+7.0*DcaDa)+Sca*(1.0-Da)+
                   Dca*(1.0-Sa));
                 break;
               }
-            pixel=QuantumRange*gamma*(Dca*Sa+Da*(2.0*Sca-Sa)*(pow((Dca/Da),0.5)-
-              (Dca/Da))+Sca*(1.0-Da)+Dca*(1.0-Sa));
+            pixel=QuantumRange*gamma*(Dca*Sa+Da*(2.0*Sca-Sa)*(pow(DcaDa,0.5)-
+              DcaDa)+Sca*(1.0-Da)+Dca*(1.0-Sa));
+            break;
+          }
+          case StereoCompositeOp:
+          {
+            if (channel == RedPixelChannel)
+              pixel=(MagickRealType) GetPixelRed(source_image,p);
             break;
           }
           case ThresholdCompositeOp:
@@ -2294,12 +2312,12 @@ MagickExport MagickBooleanType CompositeImage(Image *image,
               }
             if ((2.0*Sca) <= Sa)
               {
-                pixel=QuantumRange*gamma*(Sa*(Da+Sa*(Dca-Da)/(2.0*Sca))+Sca*
-                  (1.0-Da)+Dca*(1.0-Sa));
+                pixel=QuantumRange*gamma*(Sa*(Da+Sa*(Dca-Da)*
+                  PerceptibleReciprocal(2.0*Sca))+Sca*(1.0-Da)+Dca*(1.0-Sa));
                 break;
               }
-            pixel=QuantumRange*gamma*(Dca*Sa*Sa/(2.0*(Sa-Sca))+Sca*(1.0-Da)+Dca*
-              (1.0-Sa));
+            pixel=QuantumRange*gamma*(Dca*Sa*Sa*PerceptibleReciprocal(2.0*
+              (Sa-Sca))+Sca*(1.0-Da)+Dca*(1.0-Sa));
             break;
           }
           case XorCompositeOp:
@@ -2457,7 +2475,7 @@ MagickExport MagickBooleanType TextureImage(Image *image,const Image *texture,
   texture_view=AcquireVirtualCacheView(texture_image,exception);
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(texture_image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)

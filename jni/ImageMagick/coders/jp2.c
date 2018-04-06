@@ -17,7 +17,7 @@
 %                                 June 2001                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -387,8 +387,6 @@ static Image *ReadJP2Image(const ImageInfo *image_info,ExceptionInfo *exception)
   for (i=0; i < (ssize_t) jp2_image->numcomps; i++)
   {
     if ((jp2_image->comps[0].dx == 0) || (jp2_image->comps[0].dy == 0) ||
-        (jp2_image->comps[0].dx != jp2_image->comps[i].dx) ||
-        (jp2_image->comps[0].dy != jp2_image->comps[i].dy) ||
         (jp2_image->comps[0].prec != jp2_image->comps[i].prec) ||
         (jp2_image->comps[0].sgnd != jp2_image->comps[i].sgnd) ||
         ((image->ping == MagickFalse) && (jp2_image->comps[i].data == NULL)))
@@ -947,7 +945,7 @@ static MagickBooleanType WriteJP2Image(const ImageInfo *image_info,Image *image,
         channels++;
     }
   parameters.tcp_mct=channels == 3 ? 1 : 0;
-  ResetMagickMemory(jp2_info,0,sizeof(jp2_info));
+  memset(jp2_info,0,sizeof(jp2_info));
   for (i=0; i < (ssize_t) channels; i++)
   {
     jp2_info[i].prec=(OPJ_UINT32) image->depth;

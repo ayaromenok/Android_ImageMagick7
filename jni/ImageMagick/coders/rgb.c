@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -149,7 +149,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
           image=DestroyImageList(image);
           return((Image *) NULL);
         }
-      if (DiscardBlobBytes(image,image->offset) == MagickFalse)
+      if (DiscardBlobBytes(image,(MagickSizeType) image->offset) == MagickFalse)
         ThrowFileException(exception,CorruptImageError,"UnexpectedEndOfFile",
           image->filename);
     }
@@ -164,7 +164,10 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
     exception);
   quantum_info=AcquireQuantumInfo(image_info,canvas_image);
   if (quantum_info == (QuantumInfo *) NULL)
-    ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+    {
+      canvas_image=DestroyImage(canvas_image);
+      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+    }
   quantum_type=RGBQuantum;
   if (LocaleCompare(image_info->magick,"RGBA") == 0)
     {
@@ -198,6 +201,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
   count=0;
   length=0;
   scene=0;
+  status=MagickTrue;
   do
   {
     /*
@@ -208,7 +212,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
         break;
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
-      return(DestroyImageList(image));
+      break;
     switch (image_info->interlace)
     {
       case NoInterlace:
@@ -236,6 +240,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           if (count != (ssize_t) length)
             {
+              status=MagickFalse;
               ThrowFileException(exception,CorruptImageError,
                 "UnexpectedEndOfFile",image->filename);
               break;
@@ -307,23 +312,24 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
           }
         for (y=0; y < (ssize_t) image->extract_info.height; y++)
         {
-          register const Quantum
-            *magick_restrict p;
-
-          register Quantum
-            *magick_restrict q;
-
-          register ssize_t
-            x;
-
-          if (count != (ssize_t) length)
-            {
-              ThrowFileException(exception,CorruptImageError,
-                "UnexpectedEndOfFile",image->filename);
-              break;
-            }
           for (i=0; i < (ssize_t) (image->alpha_trait != UndefinedPixelTrait ? 4 : 3); i++)
           {
+            register const Quantum
+              *magick_restrict p;
+
+            register Quantum
+              *magick_restrict q;
+
+            register ssize_t
+              x;
+
+            if (count != (ssize_t) length)
+              {
+                status=MagickFalse;
+                ThrowFileException(exception,CorruptImageError,
+                  "UnexpectedEndOfFile",image->filename);
+                break;
+              }
             quantum_type=quantum_types[i];
             q=GetAuthenticPixels(canvas_image,0,0,canvas_image->columns,1,
               exception);
@@ -363,7 +369,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
                     }
                     case OpacityQuantum:
                     {
-                      SetPixelAlpha(image,GetPixelAlpha(canvas_image,p),q);
+                      SetPixelOpacity(image,GetPixelOpacity(canvas_image,p),q);
                       break;
                     }
                     case AlphaQuantum:
@@ -417,6 +423,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           if (count != (ssize_t) length)
             {
+              status=MagickFalse;
               ThrowFileException(exception,CorruptImageError,
                 "UnexpectedEndOfFile",image->filename);
               break;
@@ -469,6 +476,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           if (count != (ssize_t) length)
             {
+              status=MagickFalse;
               ThrowFileException(exception,CorruptImageError,
                 "UnexpectedEndOfFile",image->filename);
               break;
@@ -521,6 +529,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           if (count != (ssize_t) length)
             {
+            status=MagickFalse;
               ThrowFileException(exception,CorruptImageError,
                 "UnexpectedEndOfFile",image->filename);
               break;
@@ -556,12 +565,6 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
         }
         if (image->previous == (Image *) NULL)
           {
-            status=SetImageProgress(image,LoadImageTag,3,6);
-            if (status == MagickFalse)
-              break;
-          }
-        if (image->previous == (Image *) NULL)
-          {
             status=SetImageProgress(image,LoadImageTag,4,6);
             if (status == MagickFalse)
               break;
@@ -581,6 +584,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
               if (count != (ssize_t) length)
                 {
+                  status=MagickFalse;
                   ThrowFileException(exception,CorruptImageError,
                     "UnexpectedEndOfFile",image->filename);
                   break;
@@ -638,27 +642,27 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
         AppendImageFormat("R",image->filename);
         status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
         if (status == MagickFalse)
+          break;
+        if (DiscardBlobBytes(image,(MagickSizeType) image->offset) == MagickFalse)
           {
-            canvas_image=DestroyImageList(canvas_image);
-            image=DestroyImageList(image);
-            return((Image *) NULL);
+            status=MagickFalse;
+            ThrowFileException(exception,CorruptImageError,"UnexpectedEndOfFile",
+              image->filename);
+            break;
           }
-        if (DiscardBlobBytes(image,image->offset) == MagickFalse)
-          ThrowFileException(exception,CorruptImageError,"UnexpectedEndOfFile",
-            image->filename);
         length=GetQuantumExtent(canvas_image,quantum_info,RedQuantum);
         for (i=0; i < (ssize_t) scene; i++)
+        {
           for (y=0; y < (ssize_t) image->extract_info.height; y++)
           {
             pixels=(const unsigned char *) ReadBlobStream(image,length,
               GetQuantumPixels(quantum_info),&count);
             if (count != (ssize_t) length)
-              {
-                ThrowFileException(exception,CorruptImageError,
-                  "UnexpectedEndOfFile",image->filename);
-                break;
-              }
+              break;
           }
+          if (count != (ssize_t) length)
+            break;
+        }
         pixels=(const unsigned char *) ReadBlobStream(image,length,
           GetQuantumPixels(quantum_info),&count);
         for (y=0; y < (ssize_t) image->extract_info.height; y++)
@@ -674,6 +678,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           if (count != (ssize_t) length)
             {
+              status=MagickFalse;
               ThrowFileException(exception,CorruptImageError,
                 "UnexpectedEndOfFile",image->filename);
               break;
@@ -717,24 +722,20 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
         AppendImageFormat("G",image->filename);
         status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
         if (status == MagickFalse)
-          {
-            canvas_image=DestroyImageList(canvas_image);
-            image=DestroyImageList(image);
-            return((Image *) NULL);
-          }
+          break;
         length=GetQuantumExtent(canvas_image,quantum_info,GreenQuantum);
         for (i=0; i < (ssize_t) scene; i++)
+        {
           for (y=0; y < (ssize_t) image->extract_info.height; y++)
           {
             pixels=(const unsigned char *) ReadBlobStream(image,length,
               GetQuantumPixels(quantum_info),&count);
             if (count != (ssize_t) length)
-              {
-                ThrowFileException(exception,CorruptImageError,
-                  "UnexpectedEndOfFile",image->filename);
-                break;
-              }
+              break;
           }
+          if (count != (ssize_t) length)
+            break;
+        }
         pixels=(const unsigned char *) ReadBlobStream(image,length,
           GetQuantumPixels(quantum_info),&count);
         for (y=0; y < (ssize_t) image->extract_info.height; y++)
@@ -750,6 +751,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           if (count != (ssize_t) length)
             {
+              status=MagickFalse;
               ThrowFileException(exception,CorruptImageError,
                 "UnexpectedEndOfFile",image->filename);
               break;
@@ -793,24 +795,20 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
         AppendImageFormat("B",image->filename);
         status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
         if (status == MagickFalse)
-          {
-            canvas_image=DestroyImageList(canvas_image);
-            image=DestroyImageList(image);
-            return((Image *) NULL);
-          }
+          break;
         length=GetQuantumExtent(canvas_image,quantum_info,BlueQuantum);
         for (i=0; i < (ssize_t) scene; i++)
+        {
           for (y=0; y < (ssize_t) image->extract_info.height; y++)
           {     
             pixels=(const unsigned char *) ReadBlobStream(image,length,
               GetQuantumPixels(quantum_info),&count);
             if (count != (ssize_t) length)
-              {
-                ThrowFileException(exception,CorruptImageError,
-                  "UnexpectedEndOfFile",image->filename);
-                break;
-              }
-          }     
+              break;
+          }
+          if (count != (ssize_t) length)
+            break;
+        }
         pixels=(const unsigned char *) ReadBlobStream(image,length,
           GetQuantumPixels(quantum_info),&count);
         for (y=0; y < (ssize_t) image->extract_info.height; y++)
@@ -826,6 +824,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           if (count != (ssize_t) length)
             {
+              status=MagickFalse;
               ThrowFileException(exception,CorruptImageError,
                 "UnexpectedEndOfFile",image->filename);
               break;
@@ -871,24 +870,20 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
             AppendImageFormat("A",image->filename);
             status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
             if (status == MagickFalse)
-              {
-                canvas_image=DestroyImageList(canvas_image);
-                image=DestroyImageList(image);
-                return((Image *) NULL);
-              }
+              break;
             length=GetQuantumExtent(canvas_image,quantum_info,AlphaQuantum);
             for (i=0; i < (ssize_t) scene; i++)
+            {
               for (y=0; y < (ssize_t) image->extract_info.height; y++)
               {
                 pixels=(const unsigned char *) ReadBlobStream(image,length,
                   GetQuantumPixels(quantum_info),&count);
                 if (count != (ssize_t) length)
-                  {
-                    ThrowFileException(exception,CorruptImageError,
-                      "UnexpectedEndOfFile",image->filename);
-                    break;
-                  }
+                  break;
               }
+              if (count != (ssize_t) length)
+                break;
+            }
             pixels=(const unsigned char *) ReadBlobStream(image,length,
               GetQuantumPixels(quantum_info),&count);
             for (y=0; y < (ssize_t) image->extract_info.height; y++)
@@ -904,6 +899,7 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
               if (count != (ssize_t) length)
                 {
+                  status=MagickFalse;
                   ThrowFileException(exception,CorruptImageError,
                     "UnexpectedEndOfFile",image->filename);
                   break;
@@ -954,6 +950,8 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
         break;
       }
     }
+    if (status == MagickFalse)
+      break;
     SetQuantumImageType(image,quantum_type);
     /*
       Proceed to next image.
@@ -983,6 +981,8 @@ static Image *ReadRGBImage(const ImageInfo *image_info,ExceptionInfo *exception)
   quantum_info=DestroyQuantumInfo(quantum_info);
   canvas_image=DestroyImage(canvas_image);
   (void) CloseBlob(image);
+  if (status == MagickFalse)
+      return(DestroyImageList(image));
   return(GetFirstImageInList(image));
 }
 

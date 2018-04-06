@@ -17,7 +17,7 @@
 %                                 July 1998                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -568,7 +568,7 @@ MagickExport MagickBooleanType GradientImage(Image *image,
         }
       if (LocaleCompare(artifact,"Diagonal") == 0)
         {
-          gradient->radii.x=(double) (sqrt((image->columns-1.0)*
+          gradient->radii.x=(double) (sqrt((double) (image->columns-1.0)*
             (image->columns-1.0)+(image->rows-1.0)*(image->rows-1.0)))/2.0;
           gradient->radii.y=gradient->radii.x;
         }
@@ -605,7 +605,7 @@ MagickExport MagickBooleanType GradientImage(Image *image,
   if (gradient->stops == (StopInfo *) NULL)
     ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
       image->filename);
-  (void) CopyMagickMemory(gradient->stops,stops,(size_t) number_stops*
+  (void) memcpy(gradient->stops,stops,(size_t) number_stops*
     sizeof(*stops));
   /*
     Draw a gradient on the image.
@@ -673,7 +673,7 @@ static size_t **AcquireHistogramThreadSet(const size_t count)
   histogram=(size_t **) AcquireQuantumMemory(number_threads,sizeof(*histogram));
   if (histogram == (size_t **) NULL)
     return((size_t **) NULL);
-  (void) ResetMagickMemory(histogram,0,number_threads*sizeof(*histogram));
+  (void) memset(histogram,0,number_threads*sizeof(*histogram));
   for (i=0; i < (ssize_t) number_threads; i++)
   {
     histogram[i]=(size_t *) AcquireQuantumMemory(count,sizeof(**histogram));
@@ -754,7 +754,7 @@ MagickExport Image *OilPaintImage(const Image *image,const double radius,
   image_view=AcquireVirtualCacheView(linear_image,exception);
   paint_view=AcquireAuthenticCacheView(paint_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(linear_image,paint_image,linear_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) linear_image->rows; y++)
@@ -804,7 +804,7 @@ MagickExport Image *OilPaintImage(const Image *image,const double radius,
       k=0;
       j=0;
       count=0;
-      (void) ResetMagickMemory(histogram,0,NumberPaintBins* sizeof(*histogram));
+      (void) memset(histogram,0,NumberPaintBins* sizeof(*histogram));
       for (v=0; v < (ssize_t) width; v++)
       {
         for (u=0; u < (ssize_t) width; u++)
@@ -945,7 +945,7 @@ MagickExport MagickBooleanType OpaquePaintImage(Image *image,
   GetPixelInfo(image,&zero);
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -983,19 +983,19 @@ MagickExport MagickBooleanType OpaquePaintImage(Image *image,
 
           traits=GetPixelChannelTraits(image,RedPixelChannel);
           if ((traits & UpdatePixelTrait) != 0)
-            SetPixelRed(image,conform_fill.red,q);
+            SetPixelRed(image,(Quantum) conform_fill.red,q);
           traits=GetPixelChannelTraits(image,GreenPixelChannel);
           if ((traits & UpdatePixelTrait) != 0)
-            SetPixelGreen(image,conform_fill.green,q);
+            SetPixelGreen(image,(Quantum) conform_fill.green,q);
           traits=GetPixelChannelTraits(image,BluePixelChannel);
           if ((traits & UpdatePixelTrait) != 0)
-            SetPixelBlue(image,conform_fill.blue,q);
+            SetPixelBlue(image,(Quantum) conform_fill.blue,q);
           traits=GetPixelChannelTraits(image,BlackPixelChannel);
           if ((traits & UpdatePixelTrait) != 0)
-            SetPixelBlack(image,conform_fill.black,q);
+            SetPixelBlack(image,(Quantum) conform_fill.black,q);
           traits=GetPixelChannelTraits(image,AlphaPixelChannel);
           if ((traits & UpdatePixelTrait) != 0)
-            SetPixelAlpha(image,conform_fill.alpha,q);
+            SetPixelAlpha(image,(Quantum) conform_fill.alpha,q);
         }
       q+=GetPixelChannels(image);
     }
@@ -1096,7 +1096,7 @@ MagickExport MagickBooleanType TransparentPaintImage(Image *image,
   GetPixelInfo(image,&zero);
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1228,7 +1228,7 @@ MagickExport MagickBooleanType TransparentPaintImageChroma(Image *image,
   progress=0;
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)

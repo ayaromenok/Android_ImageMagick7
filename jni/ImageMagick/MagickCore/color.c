@@ -16,7 +16,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -881,7 +881,7 @@ static LinkedListInfo *AcquireColorCache(const char *filename,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",p->name);
         continue;
       }
-    (void) ResetMagickMemory(color_info,0,sizeof(*color_info));
+    (void) memset(color_info,0,sizeof(*color_info));
     color_info->path=(char *) "[built-in]";
     color_info->name=(char *) p->name;
     GetPixelInfo((Image *) NULL,&color_info->color);
@@ -1589,7 +1589,8 @@ MagickExport void GetColorTuple(const PixelInfo *pixel,
   if (color.alpha_trait != UndefinedPixelTrait)
     (void) ConcatenateMagickString(tuple,"a",MagickPathExtent);
   (void) ConcatenateMagickString(tuple,"(",MagickPathExtent);
-  if (color.colorspace == GRAYColorspace)
+  if ((color.colorspace == LinearGRAYColorspace) ||
+      (color.colorspace == GRAYColorspace))
     ConcatenateColorComponent(&color,GrayPixelChannel,SVGCompliance,tuple);
   else
     {
@@ -2065,7 +2066,7 @@ static MagickBooleanType LoadColorCache(LinkedListInfo *cache,const char *xml,
           GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeElementNestedTooDeeply","`%s'",token);
               else
@@ -2100,7 +2101,7 @@ static MagickBooleanType LoadColorCache(LinkedListInfo *cache,const char *xml,
           Color element.
         */
         color_info=(ColorInfo *) AcquireCriticalMemory(sizeof(*color_info));
-        (void) ResetMagickMemory(color_info,0,sizeof(*color_info));
+        (void) memset(color_info,0,sizeof(*color_info));
         color_info->path=ConstantString(filename);
         color_info->exempt=MagickFalse;
         color_info->signature=MagickCoreSignature;
@@ -2265,7 +2266,7 @@ MagickExport MagickBooleanType QueryColorCompliance(const char *name,
       /*
         Parse hex color.
       */
-      (void) ResetMagickMemory(&pixel,0,sizeof(pixel));
+      (void) memset(&pixel,0,sizeof(pixel));
       name++;
       for (n=0; isxdigit((int) ((unsigned char) name[n])) != 0; n++) ;
       if ((n % 3) == 0)
@@ -2344,7 +2345,7 @@ MagickExport MagickBooleanType QueryColorCompliance(const char *name,
   if (strchr(name,'(') != (char *) NULL)
     {
       char
-        colorspace[MagickPathExtent];
+        colorspace[2*MagickPathExtent];
 
       MagickBooleanType
         icc_color;
@@ -2352,6 +2353,7 @@ MagickExport MagickBooleanType QueryColorCompliance(const char *name,
       /*
         Parse color of the form rgb(100,255,0).
       */
+      (void) memset(colorspace,0,sizeof(colorspace));
       (void) CopyMagickString(colorspace,name,MagickPathExtent);
       for (i=0; colorspace[i] != '\0'; i++)
         if (colorspace[i] == '(')
@@ -2455,13 +2457,18 @@ MagickExport MagickBooleanType QueryColorCompliance(const char *name,
             }
           if (LocaleCompare(colorspace,"gray") == 0)
             {
-              color->colorspace=GRAYColorspace;
               color->green=color->red;
               color->blue=color->red;
               if (((flags & SigmaValue) != 0) &&
                   (color->alpha_trait != UndefinedPixelTrait))
                 color->alpha=(double) ClampToQuantum(QuantumRange*
                   geometry_info.sigma);
+              if ((icc_color == MagickFalse) &&
+                  (color->colorspace == LinearGRAYColorspace))
+                {
+                  color->colorspace=GRAYColorspace;
+                  color->depth=8;
+                }
             }
           if ((LocaleCompare(colorspace,"HCL") == 0) ||
               (LocaleCompare(colorspace,"HSB") == 0) ||
@@ -2522,6 +2529,9 @@ MagickExport MagickBooleanType QueryColorCompliance(const char *name,
   if (p == (const ColorInfo *) NULL)
     return(MagickFalse);
   color->colorspace=sRGBColorspace;
+  if ((LocaleNCompare(name,"gray",4) == 0) || 
+      (LocaleNCompare(name,"grey",4) == 0))
+    color->colorspace=GRAYColorspace;
   color->depth=8;
   color->alpha_trait=p->color.alpha != OpaqueAlpha ? BlendPixelTrait :
     UndefinedPixelTrait;

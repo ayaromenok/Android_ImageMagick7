@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -362,7 +362,7 @@ static Image *ReadICONImage(const ImageInfo *image_info,
         png=(unsigned char *) AcquireQuantumMemory(length+16,sizeof(*png));
         if (png == (unsigned char *) NULL)
           ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
-        (void) CopyMagickMemory(png,"\211PNG\r\n\032\n\000\000\000\015",12);
+        (void) memcpy(png,"\211PNG\r\n\032\n\000\000\000\015",12);
         png[12]=(unsigned char) icon_info.planes;
         png[13]=(unsigned char) (icon_info.planes >> 8);
         png[14]=(unsigned char) icon_info.bits_per_pixel;
@@ -398,6 +398,8 @@ static Image *ReadICONImage(const ImageInfo *image_info,
         icon_info.x_pixels=ReadBlobLSBLong(image);
         icon_info.y_pixels=ReadBlobLSBLong(image);
         icon_info.number_colors=ReadBlobLSBLong(image);
+        if (icon_info.number_colors > GetBlobSize(image))
+          ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
         icon_info.colors_important=ReadBlobLSBLong(image);
         image->alpha_trait=BlendPixelTrait;
         image->columns=(size_t) icon_file.directory[i].width;
@@ -448,6 +450,9 @@ static Image *ReadICONImage(const ImageInfo *image_info,
           /*
             Read Icon raster colormap.
           */
+          if (image->colors > GetBlobSize(image))
+            ThrowReaderException(CorruptImageError,
+              "InsufficientImageDataInFile");
           if (AcquireImageColormap(image,image->colors,exception) ==
               MagickFalse)
             ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
@@ -615,7 +620,7 @@ static Image *ReadICONImage(const ImageInfo *image_info,
               for (x=0; x < (ssize_t) image->columns; x++)
               {
                 byte=(size_t) ReadBlobByte(image);
-                byte|=(size_t) (ReadBlobByte(image) << 8);
+                byte|=((size_t) ReadBlobByte(image) << 8);
                 SetPixelIndex(image,(Quantum) byte,q);
                 q+=GetPixelChannels(image);
               }
@@ -945,8 +950,8 @@ static MagickBooleanType WriteICONImage(const ImageInfo *image_info,
   (void) WriteBlobLSBShort(image,0);
   (void) WriteBlobLSBShort(image,1);
   (void) WriteBlobLSBShort(image,(unsigned char) scene);
-  (void) ResetMagickMemory(&icon_file,0,sizeof(icon_file));
-  (void) ResetMagickMemory(&icon_info,0,sizeof(icon_info));
+  (void) memset(&icon_file,0,sizeof(icon_file));
+  (void) memset(&icon_info,0,sizeof(icon_info));
   scene=0;
   next=(images != (Image *) NULL) ? images : image;
   do
@@ -1117,7 +1122,7 @@ static MagickBooleanType WriteICONImage(const ImageInfo *image_info,
             images=DestroyImageList(images);
             ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
           }
-        (void) ResetMagickMemory(pixels,0,(size_t) icon_info.image_size);
+        (void) memset(pixels,0,(size_t) icon_info.image_size);
         switch (icon_info.bits_per_pixel)
         {
           case 1:

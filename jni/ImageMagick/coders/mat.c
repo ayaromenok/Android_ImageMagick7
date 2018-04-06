@@ -217,7 +217,7 @@ static void InsertComplexDoubleRow(Image *image,double *p,int y,double MinVal,
     }
     if (*p < 0)
     {
-      f = (*p / MaxVal) * (QuantumRange-GetPixelBlue(image,q));
+      f = (*p / MinVal) * (QuantumRange-GetPixelBlue(image,q));
       if (f+GetPixelBlue(image,q) > QuantumRange)
         SetPixelBlue(image,QuantumRange,q);
       else
@@ -556,7 +556,7 @@ ssize_t TotalSize = 0;
     if ((zip_status != Z_OK) && (zip_status != Z_STREAM_END))
       break;
 
-    *Size -= magick_size;
+    *Size -= (unsigned int) magick_size;
   }
 DblBreak:
 
@@ -602,7 +602,7 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
     endian;
 
   Image
-    *rotate_image;
+    *rotated_image;
 
   MagickBooleanType
     status;
@@ -686,17 +686,20 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
     }
     image->columns=(size_t) HDR.nRows;
     image->rows=(size_t) HDR.nCols;
-    SetImageColorspace(image,GRAYColorspace,exception);
     if (image_info->ping != MagickFalse)
       {
         Swap(image->columns,image->rows);
         if(HDR.imagf==1) ldblk *= 2;
         SeekBlob(image, HDR.nCols*ldblk, SEEK_CUR);
+        if ((image->columns == 0) || (image->rows == 0)) 
+          return(image->previous == (Image *) NULL ? (Image *) NULL : image);
         goto skip_reading_current;
       }
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
       return((Image *) NULL);
+    (void) SetImageBackgroundColor(image,exception);
+    (void) SetImageColorspace(image,GRAYColorspace,exception);
     quantum_info=AcquireQuantumInfo(image_info,image);
     if (quantum_info == (QuantumInfo *) NULL)
       return((Image *) NULL);
@@ -777,17 +780,22 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
       }
     if (quantum_info != (QuantumInfo *) NULL)
       quantum_info=DestroyQuantumInfo(quantum_info);
-    rotate_image=RotateImage(image,90.0,exception);
-    if (rotate_image != (Image *) NULL)
-      {
-        image=DestroyImage(image);
-        image=rotate_image;
-      }
     if (EOFBlob(image) != MagickFalse)
       {
         ThrowFileException(exception,CorruptImageError,"UnexpectedEndOfFile",
           image->filename);
         break;
+      }
+    rotated_image=RotateImage(image,90.0,exception);
+    if (rotated_image != (Image *) NULL)
+      {
+        rotated_image->page.x=0;
+        rotated_image->page.y=0;
+        rotated_image->colors = image->colors;
+        DestroyBlob(rotated_image);
+        rotated_image->blob=ReferenceBlob(image->blob);
+        AppendImageToList(&image,rotated_image);
+        DeleteImageFromList(&image);
       }
     /*
       Proceed to next image.
@@ -866,8 +874,6 @@ static Image *ReadMATImage(const ImageInfo *image_info,ExceptionInfo *exception)
   int logging;
   int sample_size;
   MagickOffsetType filepos=0x80;
-  BlobInfo *blob;
-  size_t one;
 
   unsigned int (*ReadBlobXXXLong)(Image *image);
   unsigned short (*ReadBlobXXXShort)(Image *image);
@@ -948,7 +954,7 @@ MATLAB_KO:
   while(!EOFBlob(image)) /* object parser loop */
   {
     Frames = 1;
-    (void) SeekBlob(image,filepos,SEEK_SET);
+    if(SeekBlob(image,filepos,SEEK_SET) != filepos) break;
     /* printf("pos=%X\n",TellBlob(image)); */
 
     MATLAB_HDR.DataType = ReadBlobXXXLong(image);
@@ -959,6 +965,8 @@ MATLAB_KO:
       goto MATLAB_KO;
     filepos += MATLAB_HDR.ObjectSize + 4 + 4;
 
+    if (clone_info != (ImageInfo *) NULL)
+      clone_info=DestroyImageInfo(clone_info);
     clone_info=CloneImageInfo(image_info);
     if ((image != image2) && (image2 != (Image *) NULL))
       image2=DestroyImage(image2);
@@ -1053,7 +1061,16 @@ MATLAB_KO:
         MATLAB_HDR.StructureClass != mxUINT32_CLASS &&    /* uint32 + uint32 3D */
         MATLAB_HDR.StructureClass != mxINT64_CLASS &&
         MATLAB_HDR.StructureClass != mxUINT64_CLASS)    /* uint64 + uint64 3D */
-      ThrowReaderException(CoderError,"UnsupportedCellTypeInTheMatrix");
+      {
+        if ((image2 != (Image*) NULL) && (image2 != (Image *) image))
+          {
+            CloseBlob(image2);
+            DeleteImageFromList(&image2);
+          }
+        if (clone_info != (ImageInfo *) NULL)
+          clone_info=DestroyImageInfo(clone_info);
+        ThrowReaderException(CoderError,"UnsupportedCellTypeInTheMatrix");
+      }
 
     switch (MATLAB_HDR.NameFlag)
     {
@@ -1125,7 +1142,13 @@ MATLAB_KO:
 DisableMSCWarning(4127)
         if (sizeof(double) != 8)
 RestoreMSCWarning
-          ThrowReaderException(CoderError, "IncompatibleSizeOfDouble");
+          {
+            if (clone_info != (ImageInfo *) NULL)
+              clone_info=DestroyImageInfo(clone_info);
+            if ((image != image2) && (image2 != (Image *) NULL))
+              image2=DestroyImage(image2);
+            ThrowReaderException(CoderError, "IncompatibleSizeOfDouble");
+          }
         if (MATLAB_HDR.StructureFlag & FLAG_COMPLEX)
   {                         /* complex double type cell */
   }
@@ -1141,8 +1164,7 @@ RestoreMSCWarning
     (void) sample_size;
     image->columns = MATLAB_HDR.SizeX;
     image->rows = MATLAB_HDR.SizeY;
-    one=1;
-    image->colors = one << image->depth;
+    image->colors = GetQuantumRange(image->depth);
     if (image->columns == 0 || image->rows == 0)
       goto MATLAB_KO;
     if((unsigned long)ldblk*MATLAB_HDR.SizeY > MATLAB_HDR.ObjectSize)
@@ -1170,19 +1192,36 @@ RestoreMSCWarning
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
       {
+        if (clone_info != (ImageInfo *) NULL)
+          clone_info=DestroyImageInfo(clone_info);
         if ((image != image2) && (image2 != (Image *) NULL))
           image2=DestroyImage(image2);
         return(DestroyImageList(image));
       }
+    (void) SetImageBackgroundColor(image,exception);
     quantum_info=AcquireQuantumInfo(clone_info,image);
     if (quantum_info == (QuantumInfo *) NULL)
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      {
+        if (clone_info != (ImageInfo *) NULL)
+          clone_info=DestroyImageInfo(clone_info);
+        if ((image != image2) && (image2 != (Image *) NULL))
+          image2=DestroyImage(image2);
+        ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      }
 
   /* ----- Load raster data ----- */
     BImgBuff = (unsigned char *) AcquireQuantumMemory((size_t) (ldblk),sizeof(double));    /* Ldblk was set in the check phase */
     if (BImgBuff == NULL)
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
-    (void) ResetMagickMemory(BImgBuff,0,ldblk*sizeof(double));
+      {
+        if (clone_info != (ImageInfo *) NULL)
+          clone_info=DestroyImageInfo(clone_info);
+        if ((image != image2) && (image2 != (Image *) NULL))
+          image2=DestroyImage(image2);
+        if (quantum_info != (QuantumInfo *) NULL)
+          quantum_info=DestroyQuantumInfo(quantum_info);
+        ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      }
+    (void) memset(BImgBuff,0,ldblk*sizeof(double));
 
     MinVal = 0;
     MaxVal = 0;
@@ -1289,11 +1328,9 @@ ExitLoop:
         /* Remove page offsets added by RotateImage */
       rotated_image->page.x=0;
       rotated_image->page.y=0;
-
-      blob = rotated_image->blob;
-      rotated_image->blob = image->blob;
       rotated_image->colors = image->colors;
-      image->blob = blob;
+      DestroyBlob(rotated_image);
+      rotated_image->blob=ReferenceBlob(image->blob);
       AppendImageToList(&image,rotated_image);
       DeleteImageFromList(&image);
     }
@@ -1314,6 +1351,8 @@ done_reading:
     }
         }
       }
+    if (EOFBlob(image) != MagickFalse)
+      break;
 
       /* Allocate next image structure. */
     AcquireNextImage(image_info,image,exception);
@@ -1325,12 +1364,15 @@ done_reading:
       /* row scan buffer is no longer needed */
     RelinquishMagickMemory(BImgBuff);
     BImgBuff = NULL;
+    if (quantum_info != (QuantumInfo *) NULL)
+      quantum_info=DestroyQuantumInfo(quantum_info);
 
     if(--Frames>0)
     {
       z = z2;
       if(image2==NULL) image2 = image;
-      goto NEXT_FRAME;
+      if(!EOFBlob(image) && TellBlob(image)<filepos)
+        goto NEXT_FRAME;
     }
     if ((image2!=NULL) && (image2!=image))   /* Does shadow temporary decompressed image exist? */
       {
@@ -1347,8 +1389,6 @@ done_reading:
         }
         }
 
-    if (quantum_info != (QuantumInfo *) NULL)
-      quantum_info=DestroyQuantumInfo(quantum_info);
     if (clone_info)
       clone_info=DestroyImageInfo(clone_info);
   }

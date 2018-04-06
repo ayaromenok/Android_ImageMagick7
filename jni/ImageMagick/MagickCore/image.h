@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
 
   You may not use this file except in compliance with the License.
@@ -536,6 +536,7 @@ extern MagickExport MagickBooleanType
   ListMagickInfo(FILE *,ExceptionInfo *),
   ModifyImage(Image **,ExceptionInfo *),
   ResetImagePage(Image *,const char *),
+  ResetImagePixels(Image *,ExceptionInfo *),
   SetImageAlpha(Image *,const Quantum,ExceptionInfo *),
   SetImageBackgroundColor(Image *,ExceptionInfo *),
   SetImageColor(Image *,const PixelInfo *,ExceptionInfo *),

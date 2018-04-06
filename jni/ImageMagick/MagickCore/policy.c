@@ -16,7 +16,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -41,11 +41,13 @@
   Include declarations.
 */
 #include "MagickCore/studio.h"
+#include "MagickCore/cache-private.h"
 #include "MagickCore/client.h"
 #include "MagickCore/configure.h"
 #include "MagickCore/configure-private.h"
 #include "MagickCore/exception.h"
 #include "MagickCore/exception-private.h"
+#include "MagickCore/magick-private.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/memory-private.h"
 #include "MagickCore/monitor.h"
@@ -53,9 +55,12 @@
 #include "MagickCore/option.h"
 #include "MagickCore/policy.h"
 #include "MagickCore/policy-private.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/resource-private.h"
 #include "MagickCore/semaphore.h"
+#include "MagickCore/stream-private.h"
 #include "MagickCore/string_.h"
+#include "MagickCore/string-private.h"
 #include "MagickCore/token.h"
 #include "MagickCore/utility.h"
 #include "MagickCore/utility-private.h"
@@ -220,7 +225,7 @@ static LinkedListInfo *AcquirePolicyCache(const char *filename,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",p->name);
         continue;
       }
-    (void) ResetMagickMemory(policy_info,0,sizeof(*policy_info));
+    (void) memset(policy_info,0,sizeof(*policy_info));
     policy_info->path=(char *) "[built-in]";
     policy_info->domain=p->domain;
     policy_info->rights=p->rights;
@@ -494,7 +499,7 @@ MagickExport char **GetPolicyList(const char *pattern,
 %
 %  A description of each parameter follows:
 %
-%    o policy_info:  The policy info.
+%    o name:  The name of the policy.
 %
 */
 MagickExport char *GetPolicyValue(const char *name)
@@ -829,7 +834,7 @@ static MagickBooleanType LoadPolicyCache(LinkedListInfo *cache,const char *xml,
           GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeElementNestedTooDeeply","`%s'",token);
               else
@@ -864,7 +869,7 @@ static MagickBooleanType LoadPolicyCache(LinkedListInfo *cache,const char *xml,
           Policy element.
         */
         policy_info=(PolicyInfo *) AcquireCriticalMemory(sizeof(*policy_info));
-        (void) ResetMagickMemory(policy_info,0,sizeof(*policy_info));
+        (void) memset(policy_info,0,sizeof(*policy_info));
         policy_info->path=ConstantString(filename);
         policy_info->exempt=MagickFalse;
         policy_info->signature=MagickCoreSignature;
@@ -1067,10 +1072,10 @@ MagickExport MagickBooleanType SetMagickSecurityPolicy(const char *policy,
 {
   PolicyInfo
     *p;
-  
+
   MagickBooleanType
     status;
-  
+
   assert(exception != (ExceptionInfo *) NULL);
   if (policy == (const char *) NULL)
     return(MagickFalse);
@@ -1089,4 +1094,169 @@ MagickExport MagickBooleanType SetMagickSecurityPolicy(const char *policy,
   if (status == MagickFalse)
     return(MagickFalse);
   return(ResourceComponentGenesis());
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%  S e t M a g i c k S e c u r i t y P o l i c y V a l u e                    %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  SetMagickSecurityPolicyValue() sets a value associated with an ImageMagick
+%  security policy.  For most policies, the value must be less than any value
+%  set by the security policy configuration file (i.e. policy.xml).  It returns
+%  MagickFalse if the policy cannot be modified or if the policy does not parse.
+%
+%  The format of the SetMagickSecurityPolicyValue method is:
+%
+%      MagickBooleanType SetMagickSecurityPolicyValue(
+%        const PolicyDomain domain,const char *name,const char *value,
+%        ExceptionInfo *exception)
+%
+%  A description of each parameter follows:
+%
+%    o domain: the domain of the policy (e.g. system, resource).
+%
+%    o name: the name of the policy.
+%
+%    o value: the value to set the policy to.
+%
+%    o exception: return any errors or warnings in this structure.
+%
+*/
+
+static MagickBooleanType SetPolicyValue(const PolicyDomain domain,
+  const char *name,const char *value)
+{
+  MagickBooleanType
+    status;
+
+  register PolicyInfo
+    *p;
+
+  status=MagickTrue;
+  LockSemaphoreInfo(policy_semaphore);
+  ResetLinkedListIterator(policy_cache);
+  p=(PolicyInfo *) GetNextValueInLinkedList(policy_cache);
+  while (p != (PolicyInfo *) NULL)
+  {
+    if ((p->domain == domain) && (LocaleCompare(name,p->name) == 0))
+      break;
+    p=(PolicyInfo *) GetNextValueInLinkedList(policy_cache);
+  }
+  if (p != (PolicyInfo *) NULL)
+    {
+      if (p->value != (char *) NULL)
+        p->value=DestroyString(p->value);
+    }
+  else
+    {
+      p=(PolicyInfo *) AcquireCriticalMemory(sizeof(*p));
+      (void) memset(p,0,sizeof(*p));
+      p->exempt=MagickFalse;
+      p->signature=MagickCoreSignature;
+      p->domain=domain;
+      p->name=ConstantString(name);
+      status=AppendValueToLinkedList(policy_cache,p);
+    }
+  p->value=ConstantString(value);
+  UnlockSemaphoreInfo(policy_semaphore);
+  if (status == MagickFalse)
+    p=(PolicyInfo *) RelinquishMagickMemory(p);
+  return(status);
+}
+
+MagickExport MagickBooleanType SetMagickSecurityPolicyValue(
+  const PolicyDomain domain,const char *name,const char *value,
+  ExceptionInfo *exception)
+{
+  char
+    *current_value;
+
+  magick_unreferenced(exception);
+  assert(exception != (ExceptionInfo *) NULL);
+  if ((name == (const char *) NULL) || (value == (const char *) NULL))
+    return(MagickFalse);
+  switch(domain)
+  {
+    case CachePolicyDomain:
+    {
+      if (LocaleCompare(name,"memory-map") == 0)
+        {
+          if (LocaleCompare(value,"anonymous") != 0)
+            return(MagickFalse);
+          ResetCacheAnonymousMemory();
+          ResetStreamAnonymousMemory();
+          return(SetPolicyValue(domain,name,value));
+        }
+      if (LocaleCompare(name,"synchronize") == 0)
+        return(SetPolicyValue(domain,name,value));
+      break;
+    }
+    case ResourcePolicyDomain:
+    {
+      ssize_t
+        type;
+
+      if (LocaleCompare(name,"temporary-path") == 0)
+        return(SetPolicyValue(domain,name,value));
+      type=ParseCommandOption(MagickResourceOptions,MagickFalse,name);
+      if (type >= 0)
+        {
+          MagickSizeType
+            limit;
+
+          limit=MagickResourceInfinity;
+          if (LocaleCompare("unlimited",value) != 0)
+            limit=StringToMagickSizeType(value,100.0);
+          return(SetMagickResourceLimit((ResourceType) type,limit));
+        }
+      break;
+    }
+    case SystemPolicyDomain:
+    {
+      if (LocaleCompare(name,"max-memory-request") == 0)
+        {
+          current_value=GetPolicyValue("system:max-memory-request");
+          if ((current_value == (char *) NULL) ||
+              (StringToSizeType(value,100.0) < StringToSizeType(current_value,100.0)))
+            {
+              ResetMaxMemoryRequest();
+              return(SetPolicyValue(domain,name,value));
+            }
+        }
+      if (LocaleCompare(name,"memory-map") == 0)
+        {
+          if (LocaleCompare(value,"anonymous") != 0)
+            return(MagickFalse);
+          ResetVirtualAnonymousMemory();
+          return(SetPolicyValue(domain,name,value));
+        }
+      if (LocaleCompare(name,"precision") == 0)
+        {
+          ResetMagickPrecision();
+          return(SetPolicyValue(domain,name,value));
+        }
+      if (LocaleCompare(name,"shred") == 0)
+        {
+          current_value=GetPolicyValue("system:shred");
+          if ((current_value == (char *) NULL) ||
+              (StringToInteger(value) > StringToInteger(current_value)))
+            return(SetPolicyValue(domain,name,value));
+        }
+      break;
+    }
+    case CoderPolicyDomain:
+    case DelegatePolicyDomain:
+    case FilterPolicyDomain:
+    case PathPolicyDomain:
+    default:
+      break;
+  }
+  return(MagickFalse);
 }

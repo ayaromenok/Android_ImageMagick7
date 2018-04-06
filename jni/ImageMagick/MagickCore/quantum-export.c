@@ -22,7 +22,7 @@
 %                               October 1998                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -119,7 +119,7 @@ static inline unsigned char *PopDoublePixel(QuantumInfo *quantum_info,
   unsigned char
     quantum[8];
 
-  (void) ResetMagickMemory(quantum,0,sizeof(quantum));
+  (void) memset(quantum,0,sizeof(quantum));
   p=(double *) quantum;
   *p=(double) (pixel*quantum_info->state.inverse_scale+quantum_info->minimum);
   if (quantum_info->endian == LSBEndian)
@@ -154,7 +154,7 @@ static inline unsigned char *PopFloatPixel(QuantumInfo *quantum_info,
   unsigned char
     quantum[4];
 
-  (void) ResetMagickMemory(quantum,0,sizeof(quantum));
+  (void) memset(quantum,0,sizeof(quantum));
   p=(float *) quantum;
   *p=(float) ((double) pixel*quantum_info->state.inverse_scale+
     quantum_info->minimum);
@@ -250,6 +250,7 @@ static void ExportAlphaQuantum(const Image *image,QuantumInfo *quantum_info,
 
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
+  (void) exception;
   switch (quantum_info->depth)
   {
     case 8:

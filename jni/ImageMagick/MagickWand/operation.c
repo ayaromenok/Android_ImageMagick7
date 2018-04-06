@@ -17,7 +17,7 @@
 %                               September 2011                                %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -259,7 +259,7 @@ static Image *SparseColorOption(const Image *image,
       "MemoryAllocationFailed","%s","SparseColorOption");
     return( (Image *) NULL);
   }
-  (void) ResetMagickMemory(sparse_arguments,0,number_arguments*
+  (void) memset(sparse_arguments,0,number_arguments*
     sizeof(*sparse_arguments));
   p=arguments;
   x=0;
@@ -1187,7 +1187,7 @@ WandPrivate void CLISettingOptionInfo(MagickCLI *cli_wand,
               (void) CloneString(&_image_info->page,(char *) NULL);
               break;
             }
-          (void) ResetMagickMemory(&geometry,0,sizeof(geometry));
+          (void) memset(&geometry,0,sizeof(geometry));
           image_option=GetImageOption(_image_info,"page");
           if (image_option != (const char *) NULL)
             flags=ParseAbsoluteGeometry(image_option,&geometry);
@@ -2365,7 +2365,10 @@ static MagickBooleanType CLISimpleOperatorImage(MagickCLI *cli_wand,
           if (IsGeometry(arg1) == MagickFalse)
             CLIWandExceptArgBreak(OptionError,"InvalidArgument",option,arg1);
           (void) ParsePageGeometry(_image,arg1,&geometry,_exception);
-          (void) QueryColorCompliance(arg2,AllCompliance,&target,_exception);
+          (void) GetOneVirtualPixelInfo(_image,TileVirtualPixelMethod,
+            geometry.x,geometry.y,&target,exception);
+          (void) QueryColorCompliance(arg2,AllCompliance,&_draw_info->fill,
+            _exception);
           (void) FloodfillPaintImage(_image,_draw_info,&target,geometry.x,
             geometry.y,IsPlusOp,_exception);
           break;
@@ -3115,14 +3118,14 @@ static MagickBooleanType CLISimpleOperatorImage(MagickCLI *cli_wand,
         }
       if (LocaleCompare("region",option+1) == 0)
         {
-          if (IsGeometry(arg1) == MagickFalse)
-            CLIWandExceptArgBreak(OptionError,"InvalidArgument",option,arg1);
           if (*option == '+')
             {
               (void) SetImageRegionMask(_image,WritePixelMask,
                 (const RectangleInfo *) NULL,_exception);
               break;
             }
+          if (IsGeometry(arg1) == MagickFalse)
+            CLIWandExceptArgBreak(OptionError,"InvalidArgument",option,arg1);
           (void) ParseGravityGeometry(_image,arg1,&geometry,_exception);
           (void) SetImageRegionMask(_image,WritePixelMask,&geometry,_exception);
           break;

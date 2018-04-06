@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
   
   You may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ extern "C" {
 
 extern MagickExport MagickBooleanType
   InvokeStaticImageFilter(const char *,Image **,const int,const char **,
-    ExceptionInfo *);
+    ExceptionInfo *),
+  RegisterStaticModule(const char *,ExceptionInfo *exception),
+  UnregisterStaticModule(const char *);
 
 extern ModuleExport size_t
   RegisterAAIImage(void),
@@ -62,7 +64,6 @@ extern ModuleExport size_t
   RegisterEPTImage(void),
   RegisterEXRImage(void),
   RegisterFAXImage(void),
-  RegisterFDImage(void),
   RegisterFITSImage(void),
   RegisterFLIFImage(void),
   RegisterFPXImage(void),
@@ -74,6 +75,7 @@ extern ModuleExport size_t
   RegisterGRAYImage(void),
   RegisterHALDImage(void),
   RegisterHDRImage(void),
+  RegisterHEICImage(void),
   RegisterHImage(void),
   RegisterHISTOGRAMImage(void),
   RegisterHRZImage(void),
@@ -225,7 +227,6 @@ extern ModuleExport void
   UnregisterEPTImage(void),
   UnregisterEXRImage(void),
   UnregisterFAXImage(void),
-  UnregisterFDImage(void),
   UnregisterFITSImage(void),
   UnregisterFLIFImage(void),
   UnregisterFPXImage(void),
@@ -237,6 +238,7 @@ extern ModuleExport void
   UnregisterGRAYImage(void),
   UnregisterHALDImage(void),
   UnregisterHDRImage(void),
+  UnregisterHEICImage(void),
   UnregisterHImage(void),
   UnregisterHISTOGRAMImage(void),
   UnregisterHRZImage(void),
@@ -352,6 +354,10 @@ extern ModuleExport void
   UnregisterXWDImage(void),
   UnregisterYCBCRImage(void),
   UnregisterYUVImage(void);
+
+extern MagickExport void
+  RegisterStaticModules(void),
+  UnregisterStaticModules(void);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

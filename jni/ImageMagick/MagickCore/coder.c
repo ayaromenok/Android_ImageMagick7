@@ -17,7 +17,7 @@
 %                                 May 2001                                    %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -136,11 +136,13 @@ static const CoderMapInfo
     { "GIF87", "GIF" },
     { "G", "RAW" },
     { "GRANITE", "MAGICK" },
+    { "GRAYA", "GRAY" },
     { "GROUP4", "TIFF" },
     { "GV", "DOT" },
     { "HTM", "HTML" },
     { "ICB", "TGA" },
     { "ICO", "ICON" },
+    { "ICODIB", "DIB" },
     { "IIQ", "DNG" },
     { "K25", "DNG" },
     { "KDC", "DNG" },
@@ -208,7 +210,6 @@ static const CoderMapInfo
     { "PFB", "TTF" },
     { "PFM", "PNM" },
     { "PGM", "PNM" },
-    { "PGX", "JP2" },
     { "PICON", "XPM" },
     { "PJPEG", "JPEG" },
     { "PM", "XPM" },
@@ -374,7 +375,7 @@ static SplayTreeInfo *AcquireCoderCache(const char *filename,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",p->name);
         continue;
       }
-    (void) ResetMagickMemory(coder_info,0,sizeof(*coder_info));
+    (void) memset(coder_info,0,sizeof(*coder_info));
     coder_info->path=(char *) "[built-in]";
     coder_info->magick=(char *) p->magick;
     coder_info->name=(char *) p->name;
@@ -863,7 +864,7 @@ static MagickBooleanType LoadCoderCache(SplayTreeInfo *cache,const char *xml,
           GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeNodeNestedTooDeeply","`%s'",token);
               else
@@ -898,7 +899,7 @@ static MagickBooleanType LoadCoderCache(SplayTreeInfo *cache,const char *xml,
           Coder element.
         */
         coder_info=(CoderInfo *) AcquireCriticalMemory(sizeof(*coder_info));
-        (void) ResetMagickMemory(coder_info,0,sizeof(*coder_info));
+        (void) memset(coder_info,0,sizeof(*coder_info));
         coder_info->path=ConstantString(filename);
         coder_info->exempt=MagickFalse;
         coder_info->signature=MagickCoreSignature;

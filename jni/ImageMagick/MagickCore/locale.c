@@ -17,7 +17,7 @@
 %                                 July 2003                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -70,7 +70,6 @@
 #  define MAGICKCORE_LOCALE_SUPPORT
 #endif
 #define LocaleFilename  "locale.xml"
-#define MaxRecursionDepth  200
 
 /*
   Static declarations.
@@ -1244,7 +1243,7 @@ static MagickBooleanType LoadLocaleCache(SplayTreeInfo *cache,const char *xml,
             }
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeElementNestedTooDeeply","`%s'",token);
               else
@@ -1326,7 +1325,7 @@ static MagickBooleanType LoadLocaleCache(SplayTreeInfo *cache,const char *xml,
         (void) CopyMagickString(message,p,MagickMin((size_t) (q-p+2),
           MagickLocaleExtent));
         locale_info=(LocaleInfo *) AcquireCriticalMemory(sizeof(*locale_info));
-        (void) ResetMagickMemory(locale_info,0,sizeof(*locale_info));
+        (void) memset(locale_info,0,sizeof(*locale_info));
         locale_info->path=ConstantString(filename);
         locale_info->tag=ConstantString(tag);
         locale_info->message=ConstantString(message);

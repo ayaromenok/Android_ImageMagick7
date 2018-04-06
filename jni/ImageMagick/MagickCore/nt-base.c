@@ -17,7 +17,7 @@
 %                                December 1996                                %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -1547,13 +1547,13 @@ MagickPrivate int NTGhostscriptLoadDLL(void)
       UnlockSemaphoreInfo(ghost_semaphore);
       return(FALSE);
     }
-  (void) ResetMagickMemory((void *) &nt_ghost_info,0,sizeof(NTGhostInfo));
+  (void) memset((void *) &nt_ghost_info,0,sizeof(NTGhostInfo));
   nt_ghost_info.delete_instance=(void (MagickDLLCall *)(gs_main_instance *)) (
     lt_dlsym(ghost_handle,"gsapi_delete_instance"));
   nt_ghost_info.new_instance=(int (MagickDLLCall *)(gs_main_instance **,
     void *)) (lt_dlsym(ghost_handle,"gsapi_new_instance"));
   nt_ghost_info.has_instance=MagickFalse;
-  (void) ResetMagickMemory((void *) &ghost_info,0,sizeof(GhostInfo));
+  (void) memset((void *) &ghost_info,0,sizeof(GhostInfo));
   ghost_info.delete_instance=NTGhostscriptDeleteInstance;
   ghost_info.exit=(int (MagickDLLCall *)(gs_main_instance*))
     lt_dlsym(ghost_handle,"gsapi_exit");
@@ -1600,7 +1600,7 @@ MagickPrivate void NTGhostscriptUnLoadDLL(void)
     {
       (void) lt_dlclose(ghost_handle);
       ghost_handle=(void *) NULL;
-      (void) ResetMagickMemory((void *) &ghost_info,0,sizeof(GhostInfo));
+      (void) memset((void *) &ghost_info,0,sizeof(GhostInfo));
     }
   UnlockSemaphoreInfo(ghost_semaphore);
   RelinquishSemaphoreInfo(&ghost_semaphore);
@@ -2194,7 +2194,7 @@ MagickPrivate unsigned char *NTResourceToBlob(const char *id)
     sizeof(*blob));
   if (blob != (unsigned char *) NULL)
     {
-      (void) CopyMagickMemory(blob,value,length);
+      (void) memcpy(blob,value,length);
       blob[length]='\0';
     }
   UnlockResource(global);
@@ -2230,9 +2230,10 @@ MagickPrivate unsigned char *NTResourceToBlob(const char *id)
 */
 MagickPrivate void NTSeekDirectory(DIR *entry,ssize_t position)
 {
-  (void) position;
   (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   assert(entry != (DIR *) NULL);
+  (void) entry;
+  (void) position;
 }
 
 /*
@@ -2803,6 +2804,28 @@ MagickPrivate void NTWindowsGenesis(void)
       (void) _CrtSetDbgFlag(debug);
       _ASSERTE(_CrtCheckMemory());
     }
+#endif
+#if defined(MAGICKCORE_INSTALLED_SUPPORT)
+  {
+    unsigned char
+      *path;
+
+    path=NTRegistryKeyLookup("LibPath");
+    if (path != (unsigned char *) NULL)
+      {
+        size_t
+          length;
+
+        wchar_t
+          lib_path[MagickPathExtent];
+
+        length=MultiByteToWideChar(CP_UTF8,0,(char *) path,-1,lib_path,
+          MagickPathExtent);
+        if (length != 0)
+          SetDllDirectoryW(lib_path);
+        path=(unsigned char *) RelinquishMagickMemory(path);
+      }
+  }
 #endif
 }
 

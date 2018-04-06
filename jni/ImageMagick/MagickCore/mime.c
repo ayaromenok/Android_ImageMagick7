@@ -15,7 +15,7 @@
 %                                 July 2000                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -825,7 +825,7 @@ static MagickBooleanType LoadMimeCache(LinkedListInfo *cache,const char *xml,
     attribute=GetXMLTreeAttribute(include,"file");
     if (attribute != (const char *) NULL)
       {
-        if (depth > 200)
+        if (depth > MagickMaxRecursionDepth)
           (void) ThrowMagickException(exception,GetMagickModule(),
             ConfigureError,"IncludeElementNestedTooDeeply","`%s'",filename);
         else
@@ -859,7 +859,7 @@ static MagickBooleanType LoadMimeCache(LinkedListInfo *cache,const char *xml,
       Process mime element.
     */
     mime_info=(MimeInfo *) AcquireCriticalMemory(sizeof(*mime_info));
-    (void) ResetMagickMemory(mime_info,0,sizeof(*mime_info));
+    (void) memset(mime_info,0,sizeof(*mime_info));
     mime_info->path=ConstantString(filename);
     mime_info->signature=MagickCoreSignature;
     attribute=GetXMLTreeAttribute(mime,"data-type");

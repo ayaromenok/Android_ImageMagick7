@@ -18,7 +18,7 @@
 %                                August 2007                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -219,7 +219,7 @@ MagickExport ResampleFilter *AcquireResampleFilter(const Image *image,
   assert(exception->signature == MagickCoreSignature);
   resample_filter=(ResampleFilter *) AcquireCriticalMemory(sizeof(
     *resample_filter));
-  (void) ResetMagickMemory(resample_filter,0,sizeof(*resample_filter));
+  (void) memset(resample_filter,0,sizeof(*resample_filter));
   resample_filter->exception=exception;
   resample_filter->image=ReferenceImage((Image *) image);
   resample_filter->view=AcquireVirtualCacheView(resample_filter->image,

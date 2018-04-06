@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -292,6 +292,8 @@ static Image *ReadVIFFImage(const ImageInfo *image_info,
       &viff_info.machine_dependency);
     (void) ReadBlob(image,sizeof(viff_info.reserve),viff_info.reserve);
     count=ReadBlob(image,512,(unsigned char *) viff_info.comment);
+    if (count != 512)
+      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
     viff_info.comment[511]='\0';
     if (strlen(viff_info.comment) > 4)
       (void) SetImageProperty(image,"comment",viff_info.comment,exception);
@@ -329,6 +331,12 @@ static Image *ReadVIFFImage(const ImageInfo *image_info,
     image->rows=viff_info.columns;
     image->depth=viff_info.x_bits_per_pixel <= 8 ? 8UL :
       MAGICKCORE_QUANTUM_DEPTH;
+    image->alpha_trait=viff_info.number_data_bands == 4 ? BlendPixelTrait :
+      UndefinedPixelTrait;
+    status=SetImageExtent(image,image->columns,image->rows,exception);
+    if (status == MagickFalse)
+      return(DestroyImageList(image));
+    (void) SetImageBackgroundColor(image,exception);
     /*
       Verify that we can read this VIFF image.
     */
@@ -406,9 +414,13 @@ static Image *ReadVIFFImage(const ImageInfo *image_info,
           default: bytes_per_pixel=1; break;
         }
         image->colors=viff_info.map_columns;
+        if ((MagickSizeType) (viff_info.map_rows*image->colors) > GetBlobSize(image))
+          ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
         if (AcquireImageColormap(image,image->colors,exception) == MagickFalse)
           ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
-        if (viff_info.map_rows >
+        if ((MagickSizeType) viff_info.map_rows > GetBlobSize(image))
+          ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
+        if ((MagickSizeType) viff_info.map_rows >
             (viff_info.map_rows*bytes_per_pixel*sizeof(*viff_colormap)))
           ThrowReaderException(CorruptImageError,"ImproperImageHeader");
         viff_colormap=(unsigned char *) AcquireQuantumMemory(image->colors,
@@ -453,18 +465,20 @@ static Image *ReadVIFFImage(const ImageInfo *image_info,
           }
           if (i < (ssize_t) image->colors)
             {
-              image->colormap[i].red=ScaleCharToQuantum((unsigned char) value);
-              image->colormap[i].green=
+              image->colormap[i].red=(MagickRealType)
                 ScaleCharToQuantum((unsigned char) value);
-              image->colormap[i].blue=ScaleCharToQuantum((unsigned char) value);
+              image->colormap[i].green=(MagickRealType)
+                ScaleCharToQuantum((unsigned char) value);
+              image->colormap[i].blue=(MagickRealType)
+                ScaleCharToQuantum((unsigned char) value);
             }
           else
             if (i < (ssize_t) (2*image->colors))
-              image->colormap[i % image->colors].green=
+              image->colormap[i % image->colors].green=(MagickRealType)
                 ScaleCharToQuantum((unsigned char) value);
             else
               if (i < (ssize_t) (3*image->colors))
-                image->colormap[i % image->colors].blue=
+                image->colormap[i % image->colors].blue=(MagickRealType)
                   ScaleCharToQuantum((unsigned char) value);
         }
         viff_colormap=(unsigned char *) RelinquishMagickMemory(viff_colormap);
@@ -473,15 +487,6 @@ static Image *ReadVIFFImage(const ImageInfo *image_info,
       default:
         ThrowReaderException(CoderError,"ColormapTypeNotSupported");
     }
-    /*
-      Initialize image structure.
-    */
-    image->alpha_trait=viff_info.number_data_bands == 4 ? BlendPixelTrait :
-      UndefinedPixelTrait;
-    image->storage_class=(viff_info.number_data_bands < 3 ? PseudoClass :
-      DirectClass);
-    image->columns=viff_info.rows;
-    image->rows=viff_info.columns;
     if ((image_info->ping != MagickFalse) && (image_info->number_scenes != 0))
       if (image->scene >= (image_info->scene+image_info->number_scenes-1))
         break;
@@ -504,19 +509,18 @@ static Image *ReadVIFFImage(const ImageInfo *image_info,
       }
     else
       {
-        if (HeapOverflowSanityCheck(number_pixels,viff_info.number_data_bands) != MagickFalse)
+        if (HeapOverflowSanityCheck((size_t) number_pixels,viff_info.number_data_bands) != MagickFalse)
           ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
         max_packets=(size_t) (number_pixels*viff_info.number_data_bands);
       }
-    if ((bytes_per_pixel*max_packets) > GetBlobSize(image))
+    if ((MagickSizeType) (bytes_per_pixel*max_packets) > GetBlobSize(image))
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
-    status=SetImageExtent(image,image->columns,image->rows,exception);
-    if (status == MagickFalse)
-      return(DestroyImageList(image));
-    pixels=(unsigned char *) AcquireQuantumMemory(MagickMax(number_pixels,
-      max_packets),bytes_per_pixel*sizeof(*pixels));
+    pixels=(unsigned char *) AcquireQuantumMemory((size_t) MagickMax(
+      number_pixels,max_packets),bytes_per_pixel*sizeof(*pixels));
     if (pixels == (unsigned char *) NULL)
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+    (void) memset(pixels,0,MagickMax(number_pixels,max_packets)*
+      bytes_per_pixel*sizeof(*pixels));
     count=ReadBlob(image,bytes_per_pixel*max_packets,pixels);
     lsb_first=1;
     if (*(char *) &lsb_first &&
@@ -708,14 +712,14 @@ static Image *ReadVIFFImage(const ImageInfo *image_info,
                     index;
 
                   index=(ssize_t) GetPixelRed(image,q);
-                  SetPixelRed(image,image->colormap[
-                    ConstrainColormapIndex(image,index,exception)].red,q);
+                  SetPixelRed(image,ClampToQuantum(image->colormap[
+                    ConstrainColormapIndex(image,index,exception)].red),q);
                   index=(ssize_t) GetPixelGreen(image,q);
-                  SetPixelGreen(image,image->colormap[
-                    ConstrainColormapIndex(image,index,exception)].green,q);
+                  SetPixelGreen(image,ClampToQuantum(image->colormap[
+                    ConstrainColormapIndex(image,index,exception)].green),q);
                   index=(ssize_t) GetPixelBlue(image,q);
-                  SetPixelBlue(image,image->colormap[
-                    ConstrainColormapIndex(image,index,exception)].blue,q);
+                  SetPixelBlue(image,ClampToQuantum(image->colormap[
+                    ConstrainColormapIndex(image,index,exception)].blue),q);
                 }
               SetPixelAlpha(image,image->alpha_trait != UndefinedPixelTrait ?
                 ScaleCharToQuantum(*(p+number_pixels*3)) : OpaqueAlpha,q);
@@ -970,7 +974,7 @@ static MagickBooleanType WriteVIFFImage(const ImageInfo *image_info,
   status=OpenBlob(image_info,image,WriteBinaryBlobMode,exception);
   if (status == MagickFalse)
     return(status);
-  (void) ResetMagickMemory(&viff_info,0,sizeof(ViffInfo));
+  (void) memset(&viff_info,0,sizeof(ViffInfo));
   scene=0;
   do
   {
@@ -1140,11 +1144,11 @@ RestoreMSCWarning
             ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
           q=viff_colormap;
           for (i=0; i < (ssize_t) image->colors; i++)
-            *q++=ScaleQuantumToChar(image->colormap[i].red);
+            *q++=ScaleQuantumToChar(ClampToQuantum(image->colormap[i].red));
           for (i=0; i < (ssize_t) image->colors; i++)
-            *q++=ScaleQuantumToChar(image->colormap[i].green);
+            *q++=ScaleQuantumToChar(ClampToQuantum(image->colormap[i].green));
           for (i=0; i < (ssize_t) image->colors; i++)
-            *q++=ScaleQuantumToChar(image->colormap[i].blue);
+            *q++=ScaleQuantumToChar(ClampToQuantum(image->colormap[i].blue));
           (void) WriteBlob(image,3*image->colors,viff_colormap);
           viff_colormap=(unsigned char *) RelinquishMagickMemory(viff_colormap);
           /*

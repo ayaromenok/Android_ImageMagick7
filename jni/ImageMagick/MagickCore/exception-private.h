@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
   
   You may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ extern "C" {
 
 #define ThrowBinaryException(severity,tag,context) \
 { \
-  if (image != (Image *) NULL) \
-    (void) ThrowMagickException(exception,GetMagickModule(),severity, \
-      tag == (const char *) NULL ? "unknown" : tag,"`%s'",context); \
+  (void) ThrowMagickException(exception,GetMagickModule(),severity, \
+    tag == (const char *) NULL ? "unknown" : tag,"`%s'",context); \
   return(MagickFalse); \
 }
 #define ThrowFatalException(severity,tag) \

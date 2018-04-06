@@ -17,7 +17,7 @@
 %                                 March 2000                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -199,11 +199,7 @@ MagickExport void *GetImageRegistry(const RegistryType type,const char *key,
     return((void *) NULL);
   registry_info=(RegistryInfo *) GetValueFromSplayTree(registry,key);
   if (registry_info == (void *) NULL)
-    {
-      (void) ThrowMagickException(exception,GetMagickModule(),RegistryError,
-        "UnableToGetRegistryID","`%s'",key);
-      return((void *) NULL);
-    }
+    return((void *) NULL);
   value=(void *) NULL;
   switch (type)
   {
@@ -516,7 +512,7 @@ MagickExport MagickBooleanType SetImageRegistry(const RegistryType type,
   if (clone_value == (void *) NULL)
     return(MagickFalse);
   registry_info=(RegistryInfo *) AcquireCriticalMemory(sizeof(*registry_info));
-  (void) ResetMagickMemory(registry_info,0,sizeof(*registry_info));
+  (void) memset(registry_info,0,sizeof(*registry_info));
   registry_info->type=type;
   registry_info->value=clone_value;
   registry_info->signature=MagickCoreSignature;

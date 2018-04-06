@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -297,7 +297,7 @@ static Image *ReadSUNImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Read SUN raster header.
   */
-  (void) ResetMagickMemory(&sun_info,0,sizeof(sun_info));
+  (void) memset(&sun_info,0,sizeof(sun_info));
   sun_info.magic=ReadBlobMSBLong(image);
   do
   {
@@ -313,6 +313,8 @@ static Image *ReadSUNImage(const ImageInfo *image_info,ExceptionInfo *exception)
     sun_info.type=ReadBlobMSBLong(image);
     sun_info.maptype=ReadBlobMSBLong(image);
     sun_info.maplength=ReadBlobMSBLong(image);
+    if (sun_info.maplength > GetBlobSize(image))
+      ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
     extent=sun_info.height*sun_info.width;
     if ((sun_info.height != 0) && (sun_info.width != extent/sun_info.height))
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -336,14 +338,14 @@ static Image *ReadSUNImage(const ImageInfo *image_info,ExceptionInfo *exception)
         size_t
           one;
 
-        if (sun_info.maplength > GetBlobSize(image))
-          ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
         image->colors=sun_info.maplength;
         one=1;
         if (sun_info.maptype == RMT_NONE)
           image->colors=one << sun_info.depth;
         if (sun_info.maptype == RMT_EQUAL_RGB)
           image->colors=sun_info.maplength/3;
+        if (image->colors == 0)
+          ThrowReaderException(CorruptImageError,"ImproperImageHeader");
         if (AcquireImageColormap(image,image->colors,exception) == MagickFalse)
           ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
       }
@@ -476,7 +478,8 @@ static Image *ReadSUNImage(const ImageInfo *image_info,ExceptionInfo *exception)
         sun_data=(unsigned char *) RelinquishMagickMemory(sun_data);
         ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
       }
-    ResetMagickMemory(sun_pixels,0,pixels_length*sizeof(*sun_pixels));
+    (void) memset(sun_pixels,0,(pixels_length+image->rows)*
+      sizeof(*sun_pixels));
     if (sun_info.type == RT_ENCODED)
       {
         status=DecodeImage(sun_data,sun_info.length,sun_pixels,pixels_length);
@@ -495,7 +498,7 @@ static Image *ReadSUNImage(const ImageInfo *image_info,ExceptionInfo *exception)
             sun_pixels=(unsigned char *) RelinquishMagickMemory(sun_pixels);
             ThrowReaderException(ResourceLimitError,"ImproperImageHeader");
           }
-        (void) CopyMagickMemory(sun_pixels,sun_data,sun_info.length);
+        (void) memcpy(sun_pixels,sun_data,sun_info.length);
       }
     sun_data=(unsigned char *) RelinquishMagickMemory(sun_data);
     /*

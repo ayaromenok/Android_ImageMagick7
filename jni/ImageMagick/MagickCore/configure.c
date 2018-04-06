@@ -17,7 +17,7 @@
 %                                 July 2003                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -204,7 +204,7 @@ static LinkedListInfo *AcquireConfigureCache(const char *filename,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",p->name);
         continue;
       }
-    (void) ResetMagickMemory(configure_info,0,sizeof(*configure_info));
+    (void) memset(configure_info,0,sizeof(*configure_info));
     configure_info->path=(char *) "[built-in]";
     configure_info->name=(char *) p->name;
     configure_info->value=(char *) p->value;
@@ -955,6 +955,9 @@ MagickExport LinkedListInfo *GetConfigurePaths(const char *filename,
       }
   }
 #endif
+  if (GetNumberOfElementsInLinkedList(paths) == 0)
+    (void) ThrowMagickException(exception,GetMagickModule(),ConfigureWarning,
+      "no configuration paths found","`%s'",filename);
   return(paths);
 }
 
@@ -1211,7 +1214,7 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
           GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeElementNestedTooDeeply","`%s'",token);
               else
@@ -1247,7 +1250,7 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
         */
         configure_info=(ConfigureInfo *) AcquireCriticalMemory(
           sizeof(*configure_info));
-        (void) ResetMagickMemory(configure_info,0,sizeof(*configure_info));
+        (void) memset(configure_info,0,sizeof(*configure_info));
         configure_info->path=ConstantString(filename);
         configure_info->exempt=MagickFalse;
         configure_info->signature=MagickCoreSignature;

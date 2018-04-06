@@ -18,7 +18,7 @@
 %                               Dirk Lemstra                                  %
 %                               January 2014                                  %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -567,7 +567,7 @@ static Image *ReadEMFImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Initialize the bitmap header info.
   */
-  (void) ResetMagickMemory(&DIBinfo,0,sizeof(BITMAPINFO));
+  (void) memset(&DIBinfo,0,sizeof(BITMAPINFO));
   DIBinfo.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
   DIBinfo.bmiHeader.biWidth=(LONG) image->columns;
   DIBinfo.bmiHeader.biHeight=(-1)*(LONG) image->rows;

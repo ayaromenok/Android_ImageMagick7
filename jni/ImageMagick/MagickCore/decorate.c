@@ -17,7 +17,7 @@
 %                                   July 1992                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -215,7 +215,7 @@ MagickExport Image *FrameImage(const Image *image,const FrameInfo *frame_info,
   bevel_width=(size_t) (frame_info->outer_bevel+frame_info->inner_bevel);
   x=(ssize_t) frame_info->width-frame_info->x-bevel_width;
   y=(ssize_t) frame_info->height-frame_info->y-bevel_width;
-  if ((x < (ssize_t) image->columns) |  (y < (ssize_t) image->rows))
+  if ((x < (ssize_t) image->columns) ||  (y < (ssize_t) image->rows))
     ThrowImageException(OptionError,"FrameIsLessThanImageSize");
   /*
     Initialize framed image attributes.
@@ -382,7 +382,7 @@ MagickExport Image *FrameImage(const Image *image,const FrameInfo *frame_info,
     Draw sides of ornamental border.
   */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,frame_image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -657,7 +657,7 @@ MagickExport MagickBooleanType RaiseImage(Image *image,
   progress=0;
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,raise_info->height,1)
 #endif
   for (y=0; y < (ssize_t) raise_info->height; y++)
@@ -747,7 +747,7 @@ MagickExport MagickBooleanType RaiseImage(Image *image,
       }
   }
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows-2*raise_info->height,1)
 #endif
   for (y=(ssize_t) raise_info->height; y < (ssize_t) (image->rows-raise_info->height); y++)
@@ -821,7 +821,7 @@ MagickExport MagickBooleanType RaiseImage(Image *image,
       }
   }
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows-raise_info->height,1)
 #endif
   for (y=(ssize_t) (image->rows-raise_info->height); y < (ssize_t) image->rows; y++)

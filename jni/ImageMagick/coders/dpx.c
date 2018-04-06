@@ -17,7 +17,7 @@
 %                                March 2001                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -719,13 +719,15 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
   image->endian=LSBEndian;
   if (LocaleNCompare(magick,"SDPX",4) == 0)
     image->endian=MSBEndian;
-  (void) ResetMagickMemory(&dpx,0,sizeof(dpx));
+  (void) memset(&dpx,0,sizeof(dpx));
   dpx.file.image_offset=ReadBlobLong(image);
   offset+=4;
   offset+=ReadBlob(image,sizeof(dpx.file.version),(unsigned char *)
     dpx.file.version);
   (void) FormatImageProperty(image,"dpx:file.version","%.8s",dpx.file.version);
   dpx.file.file_size=ReadBlobLong(image);
+  if (0 && dpx.file.file_size > GetBlobSize(image))
+    ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   offset+=4;
   dpx.file.ditto_key=ReadBlobLong(image);
   offset+=4;
@@ -733,10 +735,16 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     (void) FormatImageProperty(image,"dpx:file.ditto.key","%u",
       dpx.file.ditto_key);
   dpx.file.generic_size=ReadBlobLong(image);
+  if (0 && dpx.file.generic_size > GetBlobSize(image))
+    ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   offset+=4;
   dpx.file.industry_size=ReadBlobLong(image);
+  if (dpx.file.industry_size > GetBlobSize(image))
+    ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   offset+=4;
   dpx.file.user_size=ReadBlobLong(image);
+  if (0 && dpx.file.user_size > GetBlobSize(image))
+    ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   offset+=4;
   offset+=ReadBlob(image,sizeof(dpx.file.filename),(unsigned char *)
     dpx.file.filename);
@@ -803,7 +811,8 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     case 7: image->orientation=RightBottomOrientation; break;
   }
   dpx.image.number_elements=ReadBlobShort(image);
-  if (dpx.image.number_elements > MaxNumberImageElements)
+  if ((dpx.image.number_elements < 1) ||
+      (dpx.image.number_elements > MaxNumberImageElements))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   offset+=2;
   dpx.image.pixels_per_line=ReadBlobLong(image);
@@ -1115,7 +1124,8 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
              ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
            offset+=ReadBlob(image,GetStringInfoLength(profile),
              GetStringInfoDatum(profile));
-           (void) SetImageProfile(image,"dpx:user-data",profile,exception);
+           if (EOFBlob(image) != MagickFalse)
+             (void) SetImageProfile(image,"dpx:user-data",profile,exception);
            profile=DestroyStringInfo(profile);
         }
     }
@@ -1131,6 +1141,9 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
       return(GetFirstImageInList(image));
     }
   status=SetImageExtent(image,image->columns,image->rows,exception);
+  if (status == MagickFalse)
+    return(DestroyImageList(image));
+  status=ResetImagePixels(image,exception);
   if (status == MagickFalse)
     return(DestroyImageList(image));
   for (n=0; n < (ssize_t) dpx.image.number_elements; n++)
@@ -1157,6 +1170,8 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     SetPrimaryChromaticity((DPXColorimetric)
       dpx.image.image_element[n].colorimetric,&image->chromaticity);
     image->depth=dpx.image.image_element[n].bit_size;
+    if ((image->depth == 0) || (image->depth > 32))
+      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
     samples_per_pixel=1;
     quantum_type=GrayQuantum;
     component_type=dpx.image.image_element[n].descriptor;
@@ -1221,7 +1236,6 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     /*
       DPX any-bit pixel format.
     */
-    status=MagickTrue;
     row=0;
     quantum_info=AcquireQuantumInfo(image_info,image);
     if (quantum_info == (QuantumInfo *) NULL)
@@ -1246,12 +1260,10 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
       ssize_t
         offset;
 
-      if (status == MagickFalse)
-        continue;
       pixels=(const unsigned char *) ReadBlobStream(image,extent,
         GetQuantumPixels(quantum_info),&count);
       if (count != (ssize_t) extent)
-        status=MagickFalse;
+        break;
       if ((image->progress_monitor != (MagickProgressMonitor) NULL) &&
           (image->previous == (Image *) NULL))
         {
@@ -1261,24 +1273,21 @@ static Image *ReadDPXImage(const ImageInfo *image_info,ExceptionInfo *exception)
           proceed=SetImageProgress(image,LoadImageTag,(MagickOffsetType) row,
             image->rows);
           if (proceed == MagickFalse)
-            status=MagickFalse;
+            break;
         }
       offset=row++;
       q=QueueAuthenticPixels(image,0,offset,image->columns,1,exception);
       if (q == (Quantum *) NULL)
-        {
-          status=MagickFalse;
-          continue;
-        }
+        break;
       length=ImportQuantumPixels(image,(CacheView *) NULL,quantum_info,
         quantum_type,pixels,exception);
       (void) length;
       sync=SyncAuthenticPixels(image,exception);
       if (sync == MagickFalse)
-        status=MagickFalse;
+        break;
     }
     quantum_info=DestroyQuantumInfo(quantum_info);
-    if (status == MagickFalse)
+    if (y < (ssize_t) image->rows)
       ThrowReaderException(CorruptImageError,"UnableToReadImageData");
     SetQuantumImageType(image,quantum_type);
     if (EOFBlob(image) != MagickFalse)
@@ -1485,6 +1494,7 @@ static MagickBooleanType WriteDPXImage(const ImageInfo *image_info,Image *image,
     i;
 
   size_t
+    channels,
     extent;
 
   ssize_t
@@ -1534,7 +1544,7 @@ static MagickBooleanType WriteDPXImage(const ImageInfo *image_info,Image *image,
   /*
     Write file header.
   */
-  (void) ResetMagickMemory(&dpx,0,sizeof(dpx));
+  (void) memset(&dpx,0,sizeof(dpx));
   offset=0;
   dpx.file.magic=0x53445058U;
   offset+=WriteBlobLong(image,dpx.file.magic);
@@ -1550,7 +1560,12 @@ static MagickBooleanType WriteDPXImage(const ImageInfo *image_info,Image *image,
   offset+=WriteBlobLong(image,dpx.file.image_offset);
   (void) strncpy(dpx.file.version,"V2.0",sizeof(dpx.file.version)-1);
   offset+=WriteBlob(image,8,(unsigned char *) &dpx.file.version);
-  dpx.file.file_size=(unsigned int) (4U*image->columns*image->rows+
+  channels=1;
+  if (IsImageGray(image) == MagickFalse)
+    channels=3;
+  if (image->alpha_trait != UndefinedPixelTrait)
+    channels++;
+  dpx.file.file_size=(unsigned int) (channels*image->columns*image->rows+
     dpx.file.image_offset);
   offset+=WriteBlobLong(image,dpx.file.file_size);
   dpx.file.ditto_key=1U;  /* new frame */
@@ -1789,36 +1804,36 @@ static MagickBooleanType WriteDPXImage(const ImageInfo *image_info,Image *image,
   /*
     Write film header.
   */
-  (void) ResetMagickMemory(dpx.film.id,0,sizeof(dpx.film.id));
+  (void) memset(dpx.film.id,0,sizeof(dpx.film.id));
   value=GetDPXProperty(image,"dpx:film.id",exception);
   if (value != (const char *) NULL)
     (void) strncpy(dpx.film.id,value,sizeof(dpx.film.id)-1);
   offset+=WriteBlob(image,sizeof(dpx.film.id),(unsigned char *) dpx.film.id);
-  (void) ResetMagickMemory(dpx.film.type,0,sizeof(dpx.film.type));
+  (void) memset(dpx.film.type,0,sizeof(dpx.film.type));
   value=GetDPXProperty(image,"dpx:film.type",exception);
   if (value != (const char *) NULL)
     (void) strncpy(dpx.film.type,value,sizeof(dpx.film.type)-1);
   offset+=WriteBlob(image,sizeof(dpx.film.type),(unsigned char *)
     dpx.film.type);
-  (void) ResetMagickMemory(dpx.film.offset,0,sizeof(dpx.film.offset));
+  (void) memset(dpx.film.offset,0,sizeof(dpx.film.offset));
   value=GetDPXProperty(image,"dpx:film.offset",exception);
   if (value != (const char *) NULL)
     (void) strncpy(dpx.film.offset,value,sizeof(dpx.film.offset)-1);
   offset+=WriteBlob(image,sizeof(dpx.film.offset),(unsigned char *)
     dpx.film.offset);
-  (void) ResetMagickMemory(dpx.film.prefix,0,sizeof(dpx.film.prefix));
+  (void) memset(dpx.film.prefix,0,sizeof(dpx.film.prefix));
   value=GetDPXProperty(image,"dpx:film.prefix",exception);
   if (value != (const char *) NULL)
     (void) strncpy(dpx.film.prefix,value,sizeof(dpx.film.prefix)-1);
   offset+=WriteBlob(image,sizeof(dpx.film.prefix),(unsigned char *)
     dpx.film.prefix);
-  (void) ResetMagickMemory(dpx.film.count,0,sizeof(dpx.film.count));
+  (void) memset(dpx.film.count,0,sizeof(dpx.film.count));
   value=GetDPXProperty(image,"dpx:film.count",exception);
   if (value != (const char *) NULL)
     (void) strncpy(dpx.film.count,value,sizeof(dpx.film.count)-1);
   offset+=WriteBlob(image,sizeof(dpx.film.count),(unsigned char *)
     dpx.film.count);
-  (void) ResetMagickMemory(dpx.film.format,0,sizeof(dpx.film.format));
+  (void) memset(dpx.film.format,0,sizeof(dpx.film.format));
   value=GetDPXProperty(image,"dpx:film.format",exception);
   if (value != (const char *) NULL)
     (void) strncpy(dpx.film.format,value,sizeof(dpx.film.format)-1);
@@ -1849,7 +1864,7 @@ static MagickBooleanType WriteDPXImage(const ImageInfo *image_info,Image *image,
   if (value != (const char *) NULL)
     dpx.film.shutter_angle=StringToDouble(value,(char **) NULL);
   offset+=WriteBlobFloat(image,dpx.film.shutter_angle);
-  (void) ResetMagickMemory(dpx.film.frame_id,0,sizeof(dpx.film.frame_id));
+  (void) memset(dpx.film.frame_id,0,sizeof(dpx.film.frame_id));
   value=GetDPXProperty(image,"dpx:film.frame_id",exception);
   if (value != (const char *) NULL)
     (void) strncpy(dpx.film.frame_id,value,sizeof(dpx.film.frame_id)-1);

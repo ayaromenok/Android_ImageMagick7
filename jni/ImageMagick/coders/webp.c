@@ -17,7 +17,7 @@
 %                                 March 2011                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -57,6 +57,7 @@
 #include "MagickCore/memory_.h"
 #include "MagickCore/option.h"
 #include "MagickCore/pixel-accessor.h"
+#include "MagickCore/profile.h"
 #include "MagickCore/quantum-private.h"
 #include "MagickCore/static.h"
 #include "MagickCore/string_.h"
@@ -68,6 +69,9 @@
 #if defined(MAGICKCORE_WEBP_DELEGATE)
 #include <webp/decode.h>
 #include <webp/encode.h>
+#if defined(MAGICKCORE_WEBPMUX_DELEGATE)
+#include <webp/mux.h>
+#endif
 #endif
 
 /*
@@ -183,7 +187,7 @@ static MagickBooleanType IsWEBPImageLossless(const unsigned char *stream,
     Read extended header.
   */
   offset=RIFF_HEADER_SIZE+TAG_SIZE+CHUNK_SIZE_BYTES+VP8X_CHUNK_SIZE;
-  while (offset <= (ssize_t) length)
+  while (offset <= (ssize_t) (length-TAG_SIZE))
   {
     uint32_t
       chunk_size,
@@ -378,6 +382,59 @@ static Image *ReadWEBPImage(const ImageInfo *image_info,
       break;
   }
   WebPFreeDecBuffer(webp_image);
+#if defined(MAGICKCORE_WEBPMUX_DELEGATE)
+  {
+    StringInfo
+      *profile;
+
+    uint32_t
+      webp_flags = 0;
+
+    WebPData
+     content = { stream, length },
+     chunk ={ 0 };
+
+    WebPMux
+      *mux;
+
+    /*
+      Extract any profiles.
+    */
+    mux=WebPMuxCreate(&content,0);
+    WebPMuxGetFeatures(mux,&webp_flags);
+    if (webp_flags & ICCP_FLAG)
+      {
+        WebPMuxGetChunk(mux,"ICCP",&chunk);
+        profile=BlobToStringInfo(chunk.bytes,chunk.size);
+        if (profile != (StringInfo *) NULL)
+          {
+            SetImageProfile(image,"ICC",profile,exception);
+            profile=DestroyStringInfo(profile);
+          }
+      }
+    if (webp_flags & EXIF_FLAG)
+      {
+        WebPMuxGetChunk(mux,"EXIF",&chunk);
+        profile=BlobToStringInfo(chunk.bytes,chunk.size);
+        if (profile != (StringInfo *) NULL)
+          {
+            SetImageProfile(image,"EXIF",profile,exception);
+            profile=DestroyStringInfo(profile);
+          }
+      }
+    if (webp_flags & XMP_FLAG)
+      {
+        WebPMuxGetChunk(mux,"XMP",&chunk);
+        profile=BlobToStringInfo(chunk.bytes,chunk.size);
+        if (profile != (StringInfo *) NULL)
+          {
+            SetImageProfile(image,"XMP",profile,exception);
+            profile=DestroyStringInfo(profile);
+          }
+      }
+    WebPMuxDelete(mux);
+  }
+#endif
   stream=(unsigned char*) RelinquishMagickMemory(stream);
   (void) CloseBlob(image);
   return(image);
@@ -497,12 +554,13 @@ static int WebPEncodeProgress(int percent,const WebPPicture* picture)
   MagickBooleanType
     status;
 
-  image=(Image *) picture->custom_ptr;
+  image=(Image *) picture->user_data;
   status=SetImageProgress(image,EncodeImageTag,percent-1,100);
   return(status == MagickFalse ? 0 : 1);
 }
 #endif
 
+#if !defined(MAGICKCORE_WEBPMUX_DELEGATE)
 static int WebPEncodeWriter(const unsigned char *stream,size_t length,
   const WebPPicture *const picture)
 {
@@ -510,8 +568,9 @@ static int WebPEncodeWriter(const unsigned char *stream,size_t length,
     *image;
 
   image=(Image *) picture->custom_ptr;
-  return(length != 0 ? (WriteBlob(image,length,stream) == length) : 1);
+  return(length != 0 ? (WriteBlob(image,length,stream) == (ssize_t) length) : 1);
 }
+#endif
 
 static MagickBooleanType WriteWEBPImage(const ImageInfo *image_info,
   Image *image,ExceptionInfo *exception)
@@ -534,14 +593,19 @@ static MagickBooleanType WriteWEBPImage(const ImageInfo *image_info,
   ssize_t
     y;
 
+  WebPAuxStats
+    statistics;
+
   WebPConfig
     configure;
 
+#if defined(MAGICKCORE_WEBPMUX_DELEGATE)
+  WebPMemoryWriter
+    writer_info;
+#endif
+
   WebPPicture
     picture;
-
-  WebPAuxStats
-    statistics;
 
   /*
     Open output image file.
@@ -559,10 +623,17 @@ static MagickBooleanType WriteWEBPImage(const ImageInfo *image_info,
     return(status);
   if ((WebPPictureInit(&picture) == 0) || (WebPConfigInit(&configure) == 0))
     ThrowWriterException(ResourceLimitError,"UnableToEncodeImageFile");
+#if !defined(MAGICKCORE_WEBPMUX_DELEGATE)
   picture.writer=WebPEncodeWriter;
   picture.custom_ptr=(void *) image;
+#else
+  WebPMemoryWriterInit(&writer_info);
+  picture.writer=WebPMemoryWrite;
+  picture.custom_ptr=(&writer_info);
+#endif
 #if WEBP_DECODER_ABI_VERSION >= 0x0100
   picture.progress_hook=WebPEncodeProgress;
+  picture.user_data=(void *) image;
 #endif
   picture.stats=(&statistics);
   picture.width=(int) image->columns;
@@ -765,8 +836,74 @@ static MagickBooleanType WriteWEBPImage(const ImageInfo *image_info,
       (void) ThrowMagickException(exception,GetMagickModule(),CorruptImageError,
         (char *) message,"`%s'",image->filename);
     }
+#if defined(MAGICKCORE_WEBPMUX_DELEGATE)
+  {
+    const StringInfo
+      *profile;
+
+    WebPData
+      chunk,
+      image_chunk = { writer_info.mem, writer_info.size };
+
+    WebPMux
+      *mux;
+
+    WebPMuxError
+      mux_error;
+
+    /*
+      Set image profiles (if any).
+    */
+    mux_error=WEBP_MUX_OK;
+    chunk.size=0;
+    mux=WebPMuxNew();
+    profile=GetImageProfile(image,"ICC");    
+    if ((profile != (StringInfo *) NULL) && (mux_error == WEBP_MUX_OK))
+      {
+        chunk.bytes=GetStringInfoDatum(profile);
+        chunk.size=GetStringInfoLength(profile);
+        mux_error=WebPMuxSetChunk(mux,"ICCP",&chunk,0);
+      }
+    profile=GetImageProfile(image,"EXIF");    
+    if ((profile != (StringInfo *) NULL) && (mux_error == WEBP_MUX_OK))
+      {
+        chunk.bytes=GetStringInfoDatum(profile);
+        chunk.size=GetStringInfoLength(profile);
+        mux_error=WebPMuxSetChunk(mux,"EXIF",&chunk,0);
+      }
+    profile=GetImageProfile(image,"XMP");    
+    if ((profile != (StringInfo *) NULL) && (mux_error == WEBP_MUX_OK))
+      {
+        chunk.bytes=GetStringInfoDatum(profile);
+        chunk.size=GetStringInfoLength(profile);
+        mux_error=WebPMuxSetChunk(mux,"XMP",&chunk,0);
+      }
+    if (mux_error != WEBP_MUX_OK)
+      (void) ThrowMagickException(exception,GetMagickModule(),
+        ResourceLimitError,"UnableToEncodeImageFile","`%s'",image->filename);
+    if (chunk.size != 0)
+      {
+        WebPData
+          picture_profiles = { writer_info.mem, writer_info.size };
+
+        /*
+          Replace original container with image profile (if any).
+        */
+        WebPMuxSetImage(mux,&image_chunk,1);
+        mux_error=WebPMuxAssemble(mux,&picture_profiles);
+        WebPMemoryWriterClear(&writer_info);
+        writer_info.size=picture_profiles.size;
+        writer_info.mem=(unsigned char *) picture_profiles.bytes;
+      }
+    WebPMuxDelete(mux);
+  }
+  (void) WriteBlob(image,writer_info.size,writer_info.mem);
+#endif
   picture.argb=(uint32_t *) NULL;
   WebPPictureFree(&picture);
+#if defined(MAGICKCORE_WEBPMUX_DELEGATE)
+  WebPMemoryWriterClear(&writer_info);
+#endif
   pixel_info=RelinquishVirtualMemory(pixel_info);
   (void) CloseBlob(image);
   return(webp_status == 0 ? MagickFalse : MagickTrue);

@@ -17,7 +17,7 @@
 %                                July 1993                                    %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -69,11 +69,6 @@ static void
 #if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif
-
-/*
-  Global declarations.
-*/
-#define MaxExceptions  128
 
 /*
   Global declarations.
@@ -195,6 +190,9 @@ MagickExport void ClearMagickException(ExceptionInfo *exception)
 */
 MagickExport void CatchException(ExceptionInfo *exception)
 {
+  LinkedListInfo
+    *exceptions;
+
   register const ExceptionInfo
     *p;
 
@@ -206,27 +204,18 @@ MagickExport void CatchException(ExceptionInfo *exception)
   if (exception->exceptions  == (void *) NULL)
     return;
   LockSemaphoreInfo(exception->semaphore);
-  ResetLinkedListIterator((LinkedListInfo *) exception->exceptions);
-  p=(const ExceptionInfo *) GetNextValueInLinkedList((LinkedListInfo *)
-    exception->exceptions);
+  exceptions=(LinkedListInfo *) exception->exceptions;
+  ResetLinkedListIterator(exceptions);
+  p=(const ExceptionInfo *) GetNextValueInLinkedList(exceptions);
   for (i=0; p != (const ExceptionInfo *) NULL; i++)
   {
-    if (i < MaxExceptions)
-      {
-        if ((p->severity >= WarningException) && (p->severity < ErrorException))
-          MagickWarning(p->severity,p->reason,p->description);
-        if ((p->severity >= ErrorException) &&
-            (p->severity < FatalErrorException))
-          MagickError(p->severity,p->reason,p->description);
-      }
-    else
-      if (i == MaxExceptions)
-        MagickError(ResourceLimitError,"too many exceptions",
-          "exception processing is suspended");
+    if ((p->severity >= WarningException) && (p->severity < ErrorException))
+      MagickWarning(p->severity,p->reason,p->description);
+    if ((p->severity >= ErrorException) && (p->severity < FatalErrorException))
+      MagickError(p->severity,p->reason,p->description);
     if (p->severity >= FatalErrorException)
       MagickFatalError(p->severity,p->reason,p->description);
-    p=(const ExceptionInfo *) GetNextValueInLinkedList((LinkedListInfo *)
-      exception->exceptions);
+    p=(const ExceptionInfo *) GetNextValueInLinkedList(exceptions);
   }
   UnlockSemaphoreInfo(exception->semaphore);
   ClearMagickException(exception);
@@ -681,7 +670,7 @@ MagickExport void InheritException(ExceptionInfo *exception,
 MagickPrivate void InitializeExceptionInfo(ExceptionInfo *exception)
 {
   assert(exception != (ExceptionInfo *) NULL);
-  (void) ResetMagickMemory(exception,0,sizeof(*exception));
+  (void) memset(exception,0,sizeof(*exception));
   exception->severity=UndefinedException;
   exception->exceptions=(void *) NewLinkedList(0);
   exception->semaphore=AcquireSemaphoreInfo();
@@ -926,14 +915,22 @@ MagickExport WarningHandler SetWarningHandler(WarningHandler handler)
 MagickExport MagickBooleanType ThrowException(ExceptionInfo *exception,
   const ExceptionType severity,const char *reason,const char *description)
 {
+  LinkedListInfo
+    *exceptions;
+
   register ExceptionInfo
     *p;
 
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
   LockSemaphoreInfo(exception->semaphore);
-  p=(ExceptionInfo *) GetLastValueInLinkedList((LinkedListInfo *)
-    exception->exceptions);
+  exceptions=(LinkedListInfo *) exception->exceptions;
+  if (GetNumberOfElementsInLinkedList(exceptions) > MagickMaxRecursionDepth)
+    {
+      UnlockSemaphoreInfo(exception->semaphore);
+      return(MagickTrue);
+    }
+  p=(ExceptionInfo *) GetLastValueInLinkedList(exceptions);
   if ((p != (ExceptionInfo *) NULL) && (p->severity == severity) &&
       (LocaleCompare(exception->reason,reason) == 0) &&
       (LocaleCompare(exception->description,description) == 0))
@@ -947,14 +944,14 @@ MagickExport MagickBooleanType ThrowException(ExceptionInfo *exception,
       UnlockSemaphoreInfo(exception->semaphore);
       ThrowFatalException(ResourceLimitFatalError,"MemoryAllocationFailed");
     }
-  (void) ResetMagickMemory(p,0,sizeof(*p));
+  (void) memset(p,0,sizeof(*p));
   p->severity=severity;
   if (reason != (const char *) NULL)
     p->reason=ConstantString(reason);
   if (description != (const char *) NULL)
     p->description=ConstantString(description);
   p->signature=MagickCoreSignature;
-  (void) AppendValueToLinkedList((LinkedListInfo *) exception->exceptions,p);
+  (void) AppendValueToLinkedList(exceptions,p);
   if (p->severity >= exception->severity)
     {
       exception->severity=p->severity;
@@ -962,6 +959,9 @@ MagickExport MagickBooleanType ThrowException(ExceptionInfo *exception,
       exception->description=p->description;
     }
   UnlockSemaphoreInfo(exception->semaphore);
+  if (GetNumberOfElementsInLinkedList(exceptions) == MagickMaxRecursionDepth)
+    (void) ThrowMagickException(exception,GetMagickModule(),ResourceLimitError,
+      "TooManyExceptions","(exception processing is suspended)");
   return(MagickTrue);
 }
 

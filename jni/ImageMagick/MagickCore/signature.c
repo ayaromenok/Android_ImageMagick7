@@ -16,7 +16,7 @@
 %                              December 1992                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -123,7 +123,7 @@ MagickPrivate SignatureInfo *AcquireSignatureInfo(void)
     lsb_first;
 
   signature_info=(SignatureInfo *) AcquireCriticalMemory(sizeof(*signature_info));
-  (void) ResetMagickMemory(signature_info,0,sizeof(*signature_info));
+  (void) memset(signature_info,0,sizeof(*signature_info));
   signature_info->digestsize=SignatureDigestsize;
   signature_info->blocksize=SignatureBlocksize;
   signature_info->digest=AcquireStringInfo(SignatureDigestsize);
@@ -236,14 +236,14 @@ MagickPrivate void FinalizeSignature(SignatureInfo *signature_info)
   datum=GetStringInfoDatum(signature_info->message);
   datum[extent++]=(unsigned char) 0x80;
   if (extent <= (unsigned int) (GetStringInfoLength(signature_info->message)-8))
-    (void) ResetMagickMemory(datum+extent,0,GetStringInfoLength(
+    (void) memset(datum+extent,0,GetStringInfoLength(
       signature_info->message)-8-extent);
   else
     {
-      (void) ResetMagickMemory(datum+extent,0,GetStringInfoLength(
+      (void) memset(datum+extent,0,GetStringInfoLength(
         signature_info->message)-extent);
       TransformSignature(signature_info);
-      (void) ResetMagickMemory(datum,0,GetStringInfoLength(
+      (void) memset(datum,0,GetStringInfoLength(
         signature_info->message)-8);
     }
   datum[56]=(unsigned char) (high_order >> 24);
@@ -749,7 +749,7 @@ RestoreMSCWarning
   T=0;
   T1=0;
   T2=0;
-  (void) ResetMagickMemory(W,0,sizeof(W));
+  (void) memset(W,0,sizeof(W));
 }
 
 /*
@@ -808,7 +808,7 @@ MagickPrivate void UpdateSignature(SignatureInfo *signature_info,
       i=GetStringInfoLength(signature_info->message)-signature_info->extent;
       if (i > n)
         i=n;
-      (void) CopyMagickMemory(GetStringInfoDatum(signature_info->message)+
+      (void) memcpy(GetStringInfoDatum(signature_info->message)+
         signature_info->extent,p,i);
       n-=i;
       p+=i;
@@ -824,6 +824,6 @@ MagickPrivate void UpdateSignature(SignatureInfo *signature_info,
     n-=GetStringInfoLength(signature_info->message);
     TransformSignature(signature_info);
   }
-  (void) CopyMagickMemory(GetStringInfoDatum(signature_info->message),p,n);
+  (void) memcpy(GetStringInfoDatum(signature_info->message),p,n);
   signature_info->extent=n;
 }

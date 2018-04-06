@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -218,7 +218,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
   pixel_info=(MemoryInfo *) NULL;
   count=ReadBlob(image,2,(unsigned char *) magick);
   if ((count != 2) || (memcmp(magick,"\122\314",2) != 0))
-    ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+    ThrowRLEException(CorruptImageError,"ImproperImageHeader");
   do
   {
     /*
@@ -235,17 +235,19 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
     number_colormaps=(size_t) ReadBlobByte(image);
     map_length=(unsigned char) ReadBlobByte(image);
     if (map_length >= 22)
-      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+      ThrowRLEException(CorruptImageError,"ImproperImageHeader");
     if (EOFBlob(image) != MagickFalse)
       ThrowRLEException(CorruptImageError,"UnexpectedEndOfFile");
     one=1;
     map_length=one << map_length;
     if ((number_planes == 0) || (number_planes == 2) || ((flags & 0x04) &&
         ((number_planes <= 2) || number_planes > 254)) || (bits_per_pixel != 8))
-      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+      ThrowRLEException(CorruptImageError,"ImproperImageHeader");
+    if (number_planes > 4)
+      ThrowRLEException(CorruptImageError,"ImproperImageHeader");
     if ((image->columns == 0) || (image->columns >= 32768) ||
         (image->rows == 0) || (image->rows >= 32768))
-      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+      ThrowRLEException(CorruptImageError,"ImproperImageHeader");
     if (flags & 0x02)
       {
         /*
@@ -284,7 +286,9 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
         colormap=(unsigned char *) AcquireQuantumMemory(number_colormaps,
           3*map_length*sizeof(*colormap));
         if (colormap == (unsigned char *) NULL)
-          ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+          ThrowRLEException(ResourceLimitError,"MemoryAllocationFailed");
+        (void) memset(colormap,0,number_colormaps*3*map_length*
+          sizeof(*colormap));
         p=colormap;
         for (i=0; i < (ssize_t) number_colormaps; i++)
           for (x=0; x < (ssize_t) map_length; x++)
@@ -311,10 +315,13 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
           {
             comment=(char *) AcquireQuantumMemory(length,sizeof(*comment));
             if (comment == (char *) NULL)
-              ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+              ThrowRLEException(ResourceLimitError,"MemoryAllocationFailed");
             count=ReadBlob(image,length-1,(unsigned char *) comment);
-            comment[length-1]='\0';
-            (void) SetImageProperty(image,"comment",comment,exception);
+            if (count == (length-1))
+              {
+                comment[length-1]='\0';
+                (void) SetImageProperty(image,"comment",comment,exception);
+              }
             comment=DestroyString(comment);
             if ((length & 0x01) == 0)
               (void) ReadBlobByte(image);
@@ -327,7 +334,13 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
         break;
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
-      return(DestroyImageList(image));
+      {
+        if (colormap != (unsigned char *) NULL)
+          colormap=(unsigned char *) RelinquishMagickMemory(colormap);
+        if (pixel_info != (MemoryInfo *) NULL)
+          pixel_info=RelinquishVirtualMemory(pixel_info);
+        return(DestroyImageList(image));
+      }
     /*
       Allocate RLE pixels.
     */
@@ -335,15 +348,15 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
       number_planes+1;
     if ((number_pixels*number_planes_filled) != (size_t) (number_pixels*
          number_planes_filled))
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      ThrowRLEException(ResourceLimitError,"MemoryAllocationFailed");
     pixel_info=AcquireVirtualMemory(image->columns,image->rows*
       MagickMax(number_planes_filled,4)*sizeof(*pixels));
     if (pixel_info == (MemoryInfo *) NULL)
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      ThrowRLEException(ResourceLimitError,"MemoryAllocationFailed");
     pixel_info_length=image->columns*image->rows*
       MagickMax(number_planes_filled,4);
     pixels=(unsigned char *) GetVirtualMemoryBlob(pixel_info);
-    (void) ResetMagickMemory(pixels,0,pixel_info_length);
+    (void) memset(pixels,0,pixel_info_length);
     if ((flags & 0x01) && !(flags & 0x02))
       {
         ssize_t
@@ -374,7 +387,11 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
     y=0;
     opcode=ReadBlobByte(image);
     if (opcode == EOF)
-      ThrowRLEException(CorruptImageError,"UnexpectedEndOfFile");
+      {
+        if (number_colormaps != 0)
+          colormap=(unsigned char *) RelinquishMagickMemory(colormap);
+        ThrowRLEException(CorruptImageError,"UnexpectedEndOfFile");
+      }
     do
     {
       switch (opcode & 0x3f)
@@ -435,12 +452,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
           operand++;
           if ((offset < 0) ||
               ((size_t) (offset+operand*number_planes) > pixel_info_length))
-            {
-              if (number_colormaps != 0)
-                colormap=(unsigned char *) RelinquishMagickMemory(colormap);
-              pixel_info=RelinquishVirtualMemory(pixel_info);
-              ThrowReaderException(CorruptImageError,"UnableToReadImageData");
-            }
+            ThrowRLEException(CorruptImageError,"UnableToReadImageData");
           p=pixels+offset;
           for (i=0; i < (ssize_t) operand; i++)
           {
@@ -473,12 +485,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
           operand++;
           if ((offset < 0) ||
               ((size_t) (offset+operand*number_planes) > pixel_info_length))
-            {
-              if (number_colormaps != 0)
-                colormap=(unsigned char *) RelinquishMagickMemory(colormap);
-              pixel_info=RelinquishVirtualMemory(pixel_info);
-              ThrowReaderException(CorruptImageError,"UnableToReadImageData");
-            }
+            ThrowRLEException(CorruptImageError,"UnableToReadImageData");
           p=pixels+offset;
           for (i=0; i < (ssize_t) operand; i++)
           {
@@ -526,11 +533,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
                 p++;
               }
         if ((i < (ssize_t) number_pixels) || (x < (ssize_t) number_planes))
-          {
-            colormap=(unsigned char *) RelinquishMagickMemory(colormap);
-            pixel_info=RelinquishVirtualMemory(pixel_info);
-            ThrowReaderException(CorruptImageError,"UnableToReadImageData");
-          }
+          ThrowRLEException(CorruptImageError,"UnableToReadImageData");
       }
     /*
       Initialize image structure.
@@ -574,7 +577,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
         if (number_colormaps == 0)
           map_length=256;
         if (AcquireImageColormap(image,map_length,exception) == MagickFalse)
-          ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+          ThrowRLEException(ResourceLimitError,"MemoryAllocationFailed");
         p=colormap;
         if (number_colormaps == 1)
           for (i=0; i < (ssize_t) image->colors; i++)

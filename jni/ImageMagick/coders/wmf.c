@@ -17,7 +17,7 @@
 %                               December 2000                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -1425,7 +1425,7 @@ static void ipa_functions(wmfAPI *API)
   if (ERR(API))
     return;
 
-  (void) ResetMagickMemory((void *) ddata, 0, sizeof(wmf_magick_t));
+  (void) memset((void *) ddata, 0, sizeof(wmf_magick_t));
   API->device_data = (void *) ddata;
 
   /*
@@ -2607,7 +2607,7 @@ static Image *ReadWMFImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
   /* Register callbacks */
   wmf_options_flags |= WMF_OPT_FUNCTION;
-  (void) ResetMagickMemory(&wmf_api_options, 0, sizeof(wmf_api_options));
+  (void) memset(&wmf_api_options, 0, sizeof(wmf_api_options));
   wmf_api_options.function = ipa_functions;
 
   /* Ignore non-fatal errors */

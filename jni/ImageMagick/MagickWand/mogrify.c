@@ -17,7 +17,7 @@
 %                                March 2000                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -552,7 +552,7 @@ static Image *SparseColorOption(const Image *image,
       "MemoryAllocationFailed","%s","SparseColorOption");
     return( (Image *) NULL);
   }
-  (void) ResetMagickMemory(sparse_arguments,0,number_arguments*
+  (void) memset(sparse_arguments,0,number_arguments*
     sizeof(*sparse_arguments));
   p=arguments;
   x=0;
@@ -1443,7 +1443,7 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             if (arguments == (double *) NULL)
               ThrowWandFatalException(ResourceLimitFatalError,
                 "MemoryAllocationFailed",(*image)->filename);
-            (void) ResetMagickMemory(arguments,0,number_arguments*
+            (void) memset(arguments,0,number_arguments*
               sizeof(*arguments));
             p=(char *) args;
             for (x=0; (x < (ssize_t) number_arguments) && (*p != '\0'); x++)
@@ -1650,8 +1650,10 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             */
             (void) SyncImageSettings(mogrify_info,*image,exception);
             (void) ParsePageGeometry(*image,argv[i+1],&geometry,exception);
-            (void) QueryColorCompliance(argv[i+2],AllCompliance,&target,
-              exception);
+            (void) GetOneVirtualPixelInfo(*image,TileVirtualPixelMethod,
+              geometry.x,geometry.y,&target,exception);
+            (void) QueryColorCompliance(argv[i+2],AllCompliance,
+              &draw_info->fill,exception);
             (void) FloodfillPaintImage(*image,draw_info,&target,geometry.x,
               geometry.y,*option == '-' ? MagickFalse : MagickTrue,exception);
             break;
@@ -1746,7 +1748,7 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             if (parameters == (double *) NULL)
               ThrowWandFatalException(ResourceLimitFatalError,
                 "MemoryAllocationFailed",(*image)->filename);
-            (void) ResetMagickMemory(parameters,0,number_parameters*
+            (void) memset(parameters,0,number_parameters*
               sizeof(*parameters));
             p=(char *) arguments;
             for (x=0; (x < (ssize_t) number_parameters) && (*p != '\0'); x++)
@@ -2539,7 +2541,8 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             */
             (void) SyncImageSettings(mogrify_info,*image,exception);
             flags=ParseGeometry(argv[i+1],&geometry_info);
-            mogrify_image=RotationalBlurImage(*image,geometry_info.rho,exception);
+            mogrify_image=RotationalBlurImage(*image,geometry_info.rho,
+              exception);
             break;
           }
         if (LocaleCompare("raise",option+1) == 0)
@@ -7325,7 +7328,7 @@ WandExport MagickBooleanType MogrifyImageInfo(ImageInfo *image_info,
                 (void) CloneString(&image_info->page,(char *) NULL);
                 break;
               }
-            (void) ResetMagickMemory(&geometry,0,sizeof(geometry));
+            (void) memset(&geometry,0,sizeof(geometry));
             image_option=GetImageOption(image_info,"page");
             if (image_option != (const char *) NULL)
               flags=ParseAbsoluteGeometry(image_option,&geometry);
@@ -8615,7 +8618,7 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
             if (arguments == (double *) NULL)
               ThrowWandFatalException(ResourceLimitFatalError,
                 "MemoryAllocationFailed",(*images)->filename);
-            (void) ResetMagickMemory(arguments,0,number_arguments*
+            (void) memset(arguments,0,number_arguments*
               sizeof(*arguments));
             p=(char *) args;
             for (x=0; (x < (ssize_t) number_arguments) && (*p != '\0'); x++)

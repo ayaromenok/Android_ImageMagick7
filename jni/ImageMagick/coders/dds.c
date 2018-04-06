@@ -19,7 +19,7 @@
 %                              September 2013                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -1427,7 +1427,7 @@ static void ComputePrincipleComponent(const float *covariance,
     w.z = (row2.z * v.z) + w.z;
     w.w = (row2.w * v.z) + w.w;
 
-    a = 1.0f / MagickMax(w.x,MagickMax(w.y,w.z));
+    a = (float) PerceptibleReciprocal(MagickMax(w.x,MagickMax(w.y,w.z)));
 
     v.x = w.x * a;
     v.y = w.y * a;
@@ -1792,8 +1792,11 @@ static Image *ReadDDSImage(const ImageInfo *image_info,ExceptionInfo *exception)
   if (volume)
     num_images = dds_info.depth;
 
-  if (num_images < 1)
+  if ((num_images == 0) || (num_images > GetBlobSize(image)))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+
+  if (AcquireMagickResource(ListLengthResource,num_images) == MagickFalse)
+    ThrowReaderException(ResourceLimitError,"ListLengthExceedsLimit");
 
   option=GetImageOption(image_info,"dds:skip-mipmaps");
   if (IsStringFalse(option) != MagickFalse)
@@ -1827,6 +1830,7 @@ static Image *ReadDDSImage(const ImageInfo *image_info,ExceptionInfo *exception)
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
       return(DestroyImageList(image));
+    (void) SetImageBackgroundColor(image,exception);
     status=(decoder)(image_info,image,&dds_info,read_mipmaps,exception);
     if (status == MagickFalse)
       {
@@ -1942,9 +1946,6 @@ static MagickBooleanType ReadMipmaps(const ImageInfo *image_info,Image *image,
       && (dds_info->ddscaps1 & DDSCAPS_TEXTURE
           || dds_info->ddscaps2 & DDSCAPS2_CUBEMAP))
     {
-      MagickOffsetType
-        offset;
-
       register ssize_t
         i;
 
@@ -1969,6 +1970,8 @@ static MagickBooleanType ReadMipmaps(const ImageInfo *image_info,Image *image,
           break;
         status=decoder(image,dds_info,exception);
         if (status == MagickFalse)
+          break;
+        if ((w == 1) && (h == 1))
           break;
 
         w=DIV2(w);
@@ -2114,7 +2117,7 @@ static MagickBooleanType ReadDXT3Pixels(Image *image,
       {
         for (i = 0; i < 4; i++)
         {
-          if ((x + i) < (ssize_t) image->rows && (y + j) < (ssize_t) image->columns)
+          if ((x + i) < (ssize_t) image->columns && (y + j) < (ssize_t) image->rows)
             {
               code = (bits >> ((4*j+i)*2)) & 0x3;
               SetPixelRed(image,ScaleCharToQuantum(colors.r[code]),q);
@@ -2556,6 +2559,8 @@ static MagickBooleanType SkipDXTMipmaps(Image *image,DDSInfo *dds_info,
           break;
         w=DIV2(w);
         h=DIV2(h);
+        if ((w == 1) && (h == 1))
+          break;
       }
     }
   return(MagickTrue);
@@ -2603,6 +2608,8 @@ static MagickBooleanType SkipRGBMipmaps(Image *image,DDSInfo *dds_info,
           break;
         w=DIV2(w);
         h=DIV2(h);
+        if ((w == 1) && (h == 1))
+          break;
       }
     }
   return(MagickTrue);
@@ -2933,7 +2940,7 @@ static void WriteDDSInfo(Image *image, const size_t pixelFormat,
 
   (void) WriteBlobLSBLong(image,0x00);
   (void) WriteBlobLSBLong(image,(unsigned int) mipmaps+1);
-  (void) ResetMagickMemory(software,0,sizeof(software));
+  (void) memset(software,0,sizeof(software));
   (void) CopyMagickString(software,"IMAGEMAGICK",MagickPathExtent);
   (void) WriteBlob(image,44,(unsigned char *) software);
 

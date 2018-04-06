@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
 
   You may not use this file except in compliance with the License.
@@ -336,6 +336,7 @@ extern int vsnprintf(char *,size_t,const char *,va_list);
 /*
   Magick defines.
 */
+#define MagickMaxRecursionDepth  600
 #define Swap(x,y) ((x)^=(y), (y)^=(x), (x)^=(y))
 #if defined(_MSC_VER)
 # define DisableMSCWarning(nr) __pragma(warning(push)) \

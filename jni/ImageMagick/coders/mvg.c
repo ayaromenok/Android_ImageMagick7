@@ -17,7 +17,7 @@
 %                                 April 2000                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -168,6 +168,7 @@ static Image *ReadMVGImage(const ImageInfo *image_info,ExceptionInfo *exception)
       /*
         Determine size of image canvas.
       */
+      (void) memset(&bounds,0,sizeof(bounds));
       while (ReadBlobString(image,primitive) != (char *) NULL)
       {
         for (p=primitive; (*p == ' ') || (*p == '\t'); p++) ;
@@ -198,8 +199,7 @@ static Image *ReadMVGImage(const ImageInfo *image_info,ExceptionInfo *exception)
   if (SetImageBackgroundColor(image,exception) == MagickFalse)
     {
       draw_info=DestroyDrawInfo(draw_info);
-      image=DestroyImageList(image);
-      return((Image *) NULL);
+      return(DestroyImageList(image));
     }
   /*
     Render drawing.
@@ -211,7 +211,7 @@ static Image *ReadMVGImage(const ImageInfo *image_info,ExceptionInfo *exception)
       draw_info->primitive=(char *) AcquireMagickMemory(GetBlobSize(image)+1);
       if (draw_info->primitive != (char *) NULL)
         {
-          CopyMagickMemory(draw_info->primitive,GetBlobStreamData(image),
+          memcpy(draw_info->primitive,GetBlobStreamData(image),
             GetBlobSize(image));
           draw_info->primitive[GetBlobSize(image)]='\0';
         }

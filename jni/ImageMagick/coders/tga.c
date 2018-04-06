@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -271,8 +271,9 @@ static Image *ReadTGAImage(const ImageInfo *image_info,
 
           one=1;
           image->colors=one << tga_info.bits_per_pixel;
-          if (image->colors > ((~0UL)/sizeof(*image->colormap)))
-            ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+          if (image->colors > GetBlobSize(image))
+            ThrowReaderException(CorruptImageError,
+              "InsufficientImageDataInFile");
           if (AcquireImageColormap(image,image->colors,exception) == MagickFalse)
             ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
         }
@@ -322,7 +323,7 @@ static Image *ReadTGAImage(const ImageInfo *image_info,
   status=SetImageExtent(image,image->columns,image->rows,exception);
   if (status == MagickFalse)
     return(DestroyImageList(image));
-  (void) ResetMagickMemory(&pixel,0,sizeof(pixel));
+  (void) memset(&pixel,0,sizeof(pixel));
   pixel.alpha=(MagickRealType) OpaqueAlpha;
   if (tga_info.colormap_type != 0)
     {
@@ -451,7 +452,9 @@ static Image *ReadTGAImage(const ImageInfo *image_info,
             /*
               Gray scale.
             */
-            index=(Quantum) ReadBlobByte(image);
+            if (ReadBlob(image,1,pixels) != 1)
+              ThrowReaderException(CorruptImageError,"UnableToReadImageData");
+            index=(Quantum) pixels[0];
             if (tga_info.colormap_type != 0)
               pixel=image->colormap[(ssize_t) ConstrainColormapIndex(image,
                 (ssize_t) index,exception)];
@@ -592,21 +595,25 @@ ModuleExport size_t RegisterTGAImage(void)
   entry=AcquireMagickInfo("TGA","ICB","Truevision Targa image");
   entry->decoder=(DecodeImageHandler *) ReadTGAImage;
   entry->encoder=(EncodeImageHandler *) WriteTGAImage;
+  entry->flags|=CoderDecoderSeekableStreamFlag;
   entry->flags^=CoderAdjoinFlag;
   (void) RegisterMagickInfo(entry);
   entry=AcquireMagickInfo("TGA","TGA","Truevision Targa image");
   entry->decoder=(DecodeImageHandler *) ReadTGAImage;
   entry->encoder=(EncodeImageHandler *) WriteTGAImage;
+  entry->flags|=CoderDecoderSeekableStreamFlag;
   entry->flags^=CoderAdjoinFlag;
   (void) RegisterMagickInfo(entry);
   entry=AcquireMagickInfo("TGA","VDA","Truevision Targa image");
   entry->decoder=(DecodeImageHandler *) ReadTGAImage;
   entry->encoder=(EncodeImageHandler *) WriteTGAImage;
+  entry->flags|=CoderDecoderSeekableStreamFlag;
   entry->flags^=CoderAdjoinFlag;
   (void) RegisterMagickInfo(entry);
   entry=AcquireMagickInfo("TGA","VST","Truevision Targa image");
   entry->decoder=(DecodeImageHandler *) ReadTGAImage;
   entry->encoder=(EncodeImageHandler *) WriteTGAImage;
+  entry->flags|=CoderDecoderSeekableStreamFlag;
   entry->flags^=CoderAdjoinFlag;
   (void) RegisterMagickInfo(entry);
   return(MagickImageCoderSignature);

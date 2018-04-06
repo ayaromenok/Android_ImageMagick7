@@ -17,7 +17,7 @@
 %                                March 2000                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -142,7 +142,7 @@ MagickExport ModuleInfo *AcquireModuleInfo(const char *path,const char *tag)
     *module_info;
 
   module_info=(ModuleInfo *) AcquireCriticalMemory(sizeof(*module_info));
-  (void) ResetMagickMemory(module_info,0,sizeof(*module_info));
+  (void) memset(module_info,0,sizeof(*module_info));
   if (path != (const char *) NULL)
     module_info->path=ConstantString(path);
   if (tag != (const char *) NULL)
@@ -373,7 +373,7 @@ static int ModuleCompare(const void *x,const void *y)
     **p,
     **q;
 
-   p=(const char **) x;
+  p=(const char **) x;
   q=(const char **) y;
   return(LocaleCompare(*p,*q));
 }
@@ -1002,7 +1002,7 @@ MagickExport MagickBooleanType InvokeDynamicImageFilter(const char *tag,
   (void) FormatLocaleString(name,MagickPathExtent,"%sImage",tag);
 #else
   (void) FormatLocaleString(name,MagickPathExtent,"%s%sImage",
-    MAGICKCORE_NAMESPACE_PREFIX,tag);
+    MAGICKCORE_NAMESPACE_PREFIX_TAG,tag);
 #endif
   /*
     Execute the module.
@@ -1559,7 +1559,7 @@ static void TagToModuleName(const char *tag,const char *format,char *module)
       prefix_format[MagickPathExtent];
 
     (void) FormatLocaleString(prefix_format,MagickPathExtent,"%s%s",
-      MAGICKCORE_NAMESPACE_PREFIX,format);
+      MAGICKCORE_NAMESPACE_PREFIX_TAG,format);
     (void) FormatLocaleString(module,MagickPathExtent,prefix_format,name);
   }
 #endif

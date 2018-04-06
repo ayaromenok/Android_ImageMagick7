@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -220,7 +220,7 @@ MagickExport void GetMontageInfo(const ImageInfo *image_info,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
       image_info->filename);
   assert(montage_info != (MontageInfo *) NULL);
-  (void) ResetMagickMemory(montage_info,0,sizeof(*montage_info));
+  (void) memset(montage_info,0,sizeof(*montage_info));
   (void) CopyMagickString(montage_info->filename,image_info->filename,
     MagickPathExtent);
   montage_info->geometry=AcquireString(DefaultTileGeometry);
@@ -228,8 +228,8 @@ MagickExport void GetMontageInfo(const ImageInfo *image_info,
     montage_info->font=AcquireString(image_info->font);
   montage_info->gravity=CenterGravity;
   montage_info->pointsize=image_info->pointsize;
-  montage_info->fill.alpha=OpaqueAlpha;
-  montage_info->stroke.alpha=(Quantum) TransparentAlpha;
+  montage_info->fill.alpha=(MagickRealType) OpaqueAlpha;
+  montage_info->stroke.alpha=(MagickRealType) TransparentAlpha;
   montage_info->matte_color=image_info->matte_color;
   montage_info->background_color=image_info->background_color;
   montage_info->border_color=image_info->border_color;
@@ -372,7 +372,6 @@ MagickExport Image *MontageImageList(const ImageInfo *image_info,
     extract_info;
 
   size_t
-    bevel_width,
     border_width,
     extent,
     height,
@@ -389,6 +388,7 @@ MagickExport Image *MontageImageList(const ImageInfo *image_info,
     width;
 
   ssize_t
+    bevel_width,
     tile,
     x,
     x_offset,
@@ -438,6 +438,8 @@ MagickExport Image *MontageImageList(const ImageInfo *image_info,
   }
   if (i < (ssize_t) number_images)
     {
+      if (image != (Image *) NULL)
+        image=DestroyImage(image);
       if (thumbnail == (Image *) NULL)
         i--;
       for (tile=0; (ssize_t) tile <= i; tile++)
@@ -484,7 +486,7 @@ MagickExport Image *MontageImageList(const ImageInfo *image_info,
     }
   border_width=montage_info->border_width;
   bevel_width=0;
-  (void) ResetMagickMemory(&frame_info,0,sizeof(frame_info));
+  (void) memset(&frame_info,0,sizeof(frame_info));
   if (montage_info->frame != (char *) NULL)
     {
       char
@@ -499,12 +501,12 @@ MagickExport Image *MontageImageList(const ImageInfo *image_info,
       if ((flags & HeightValue) == 0)
         frame_info.height=frame_info.width;
       if ((flags & XiValue) == 0)
-        frame_info.outer_bevel=(ssize_t) frame_info.width/2;
+        frame_info.outer_bevel=(ssize_t) frame_info.width/2-1;
       if ((flags & PsiValue) == 0)
         frame_info.inner_bevel=frame_info.outer_bevel;
       frame_info.x=(ssize_t) frame_info.width;
       frame_info.y=(ssize_t) frame_info.height;
-      bevel_width=(size_t) MagickMax(frame_info.inner_bevel,
+      bevel_width=(ssize_t) MagickMax(frame_info.inner_bevel,
         frame_info.outer_bevel);
       border_width=(size_t) MagickMax((ssize_t) frame_info.width,
         (ssize_t) frame_info.height);
@@ -663,7 +665,7 @@ MagickExport Image *MontageImageList(const ImageInfo *image_info,
     {
       (void) ConcatenateMagickString(montage->directory,
         image_list[tile]->filename,extent);
-      (void) ConcatenateMagickString(montage->directory,"\n",extent);
+      (void) ConcatenateMagickString(montage->directory,"\xff",extent);
       tile++;
     }
     progress_monitor=SetImageProgressMonitor(montage,(MagickProgressMonitor)
@@ -763,12 +765,12 @@ MagickExport Image *MontageImageList(const ImageInfo *image_info,
       tile_image->gravity=montage_info->gravity;
       if (image->gravity != UndefinedGravity)
         tile_image->gravity=image->gravity;
-      (void) FormatLocaleString(tile_geometry,MagickPathExtent,"%.20gx%.20g+0+0",
-        (double) image->columns,(double) image->rows);
+      (void) FormatLocaleString(tile_geometry,MagickPathExtent,
+        "%.20gx%.20g+0+0",(double) image->columns,(double) image->rows);
       flags=ParseGravityGeometry(tile_image,tile_geometry,&geometry,exception);
       x=(ssize_t) (geometry.x+border_width);
       y=(ssize_t) (geometry.y+border_width);
-      if ((montage_info->frame != (char *) NULL) && (bevel_width != 0))
+      if ((montage_info->frame != (char *) NULL) && (bevel_width > 0))
         {
           FrameInfo
             frame_clone;

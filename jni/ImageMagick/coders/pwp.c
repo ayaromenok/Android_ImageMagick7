@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -121,6 +121,9 @@ static MagickBooleanType IsPWP(const unsigned char *magick,const size_t length)
 */
 static Image *ReadPWPImage(const ImageInfo *image_info,ExceptionInfo *exception)
 {
+  char
+    filename[MagickPathExtent];
+
   FILE
     *file;
 
@@ -170,7 +173,7 @@ static Image *ReadPWPImage(const ImageInfo *image_info,ExceptionInfo *exception)
   status=OpenBlob(image_info,pwp_image,ReadBinaryBlobMode,exception);
   if (status == MagickFalse)
     return((Image *) NULL);
-  ResetMagickMemory(magick,0,sizeof(magick));
+  memset(magick,0,sizeof(magick));
   count=ReadBlob(pwp_image,5,magick);
   if ((count != 5) || (LocaleNCompare((char *) magick,"SFW95",5) != 0))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -178,9 +181,12 @@ static Image *ReadPWPImage(const ImageInfo *image_info,ExceptionInfo *exception)
   (void) SetImageInfoProgressMonitor(read_info,(MagickProgressMonitor) NULL,
     (void *) NULL);
   SetImageInfoBlob(read_info,(void *) NULL,0);
-  unique_file=AcquireUniqueFileResource(read_info->filename);
+  unique_file=AcquireUniqueFileResource(filename);
+  (void) FormatLocaleString(read_info->filename,MagickPathExtent,"sfw:%s",
+    filename);
   for ( ; ; )
   {
+    (void) memset(magick,0,sizeof(magick));
     for (c=ReadBlobByte(pwp_image); c != EOF; c=ReadBlobByte(pwp_image))
     {
       for (i=0; i < 17; i++)
@@ -190,10 +196,15 @@ static Image *ReadPWPImage(const ImageInfo *image_info,ExceptionInfo *exception)
         break;
     }
     if (c == EOF)
-      break;
+      {
+        (void) RelinquishUniqueFileResource(filename);
+        read_info=DestroyImageInfo(read_info);
+        ThrowReaderException(CorruptImageError,"UnexpectedEndOfFile");
+      }
     if (LocaleNCompare((char *) (magick+12),"SFW94A",6) != 0)
       {
-        (void) RelinquishUniqueFileResource(read_info->filename);
+        (void) RelinquishUniqueFileResource(filename);
+        read_info=DestroyImageInfo(read_info);
         ThrowReaderException(CorruptImageError,"ImproperImageHeader");
       }
     /*
@@ -204,7 +215,8 @@ static Image *ReadPWPImage(const ImageInfo *image_info,ExceptionInfo *exception)
       file=fdopen(unique_file,"wb");
     if ((unique_file == -1) || (file == (FILE *) NULL))
       {
-        (void) RelinquishUniqueFileResource(read_info->filename);
+        (void) RelinquishUniqueFileResource(filename);
+        read_info=DestroyImageInfo(read_info);
         ThrowFileException(exception,FileOpenError,"UnableToWriteFile",
           image->filename);
         image=DestroyImageList(image);
@@ -221,6 +233,12 @@ static Image *ReadPWPImage(const ImageInfo *image_info,ExceptionInfo *exception)
       (void) fputc(c,file);
     }
     (void) fclose(file);
+    if (c == EOF)
+      {
+        (void) RelinquishUniqueFileResource(filename);
+        read_info=DestroyImageInfo(read_info);
+        ThrowReaderException(CorruptImageError,"UnexpectedEndOfFile");
+      }
     next_image=ReadImage(read_info,exception);
     if (next_image == (Image *) NULL)
       break;
@@ -248,19 +266,23 @@ static Image *ReadPWPImage(const ImageInfo *image_info,ExceptionInfo *exception)
   }
   if (unique_file != -1)
     (void) close(unique_file);
-  (void) RelinquishUniqueFileResource(read_info->filename);
+  (void) RelinquishUniqueFileResource(filename);
   read_info=DestroyImageInfo(read_info);
-  if (EOFBlob(image) != MagickFalse)
+  if (image != (Image *) NULL)
     {
-      char
-        *message;
+      if (EOFBlob(image) != MagickFalse)
+        {
+          char
+            *message;
 
-      message=GetExceptionMessage(errno);
-      (void) ThrowMagickException(exception,GetMagickModule(),CorruptImageError,
-        "UnexpectedEndOfFile","`%s': %s",image->filename,message);
-      message=DestroyString(message);
+          message=GetExceptionMessage(errno);
+          (void) ThrowMagickException(exception,GetMagickModule(),
+            CorruptImageError,"UnexpectedEndOfFile","`%s': %s",image->filename,
+            message);
+          message=DestroyString(message);
+        }
+      (void) CloseBlob(image);
     }
-  (void) CloseBlob(image);
   return(GetFirstImageInList(image));
 }
 

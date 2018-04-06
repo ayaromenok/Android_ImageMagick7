@@ -17,7 +17,7 @@
 %                                 July 2001                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -2198,13 +2198,13 @@ static int format8BIM(Image *ifile, Image *ofile)
       }
     }
     count=(ssize_t) ReadBlobMSBSignedLong(ifile);
-    if (count < 0)
+    if ((count < 0) || (count > GetBlobSize(ifile)))
       {
         PString=(unsigned char *) RelinquishMagickMemory(PString);
         return -1;
       }
-    /* make a buffer to hold the datand snag it from the input stream */
-    str=(unsigned char *) AcquireQuantumMemory((size_t) count,sizeof(*str));
+    /* make a buffer to hold the data and snag it from the input stream */
+    str=(unsigned char *) AcquireQuantumMemory((size_t) count+1,sizeof(*str));
     if (str == (unsigned char *) NULL)
       {
         PString=(unsigned char *) RelinquishMagickMemory(PString);

@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -244,10 +244,10 @@ static Image *ReadPCLImage(const ImageInfo *image_info,ExceptionInfo *exception)
   */
   cmyk=image->colorspace == CMYKColorspace ? MagickTrue : MagickFalse;
   count=0;
-  (void) ResetMagickMemory(&bounding_box,0,sizeof(bounding_box));
-  (void) ResetMagickMemory(&bounds,0,sizeof(bounds));
-  (void) ResetMagickMemory(&page,0,sizeof(page));
-  (void) ResetMagickMemory(command,0,sizeof(command));
+  (void) memset(&bounding_box,0,sizeof(bounding_box));
+  (void) memset(&bounds,0,sizeof(bounds));
+  (void) memset(&page,0,sizeof(page));
+  (void) memset(command,0,sizeof(command));
   p=command;
   for (c=ReadBlobByte(image); c != EOF; c=ReadBlobByte(image))
   {
@@ -326,8 +326,8 @@ static Image *ReadPCLImage(const ImageInfo *image_info,ExceptionInfo *exception)
     (void) ParseAbsoluteGeometry(image_info->page,&page);
   density=AcquireString("");
   options=AcquireString("");
-  (void) FormatLocaleString(density,MagickPathExtent,"%gx%g",image->resolution.x,
-    image->resolution.y);
+  (void) FormatLocaleString(density,MagickPathExtent,"%gx%g",
+    image->resolution.x,image->resolution.y);
   page.width=(size_t) floor(page.width*image->resolution.x/delta.x+0.5);
   page.height=(size_t) floor(page.height*image->resolution.y/delta.y+0.5);
   (void) FormatLocaleString(options,MagickPathExtent,"-g%.20gx%.20g ",(double)
@@ -791,7 +791,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
     pixels=(unsigned char *) AcquireQuantumMemory(length+1,sizeof(*pixels));
     if (pixels == (unsigned char *) NULL)
       ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
-    (void) ResetMagickMemory(pixels,0,(length+1)*sizeof(*pixels));
+    (void) memset(pixels,0,(length+1)*sizeof(*pixels));
     compress_pixels=(unsigned char *) NULL;
     previous_pixels=(unsigned char *) NULL;
 
@@ -815,7 +815,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
             pixels=(unsigned char *) RelinquishMagickMemory(pixels);
             ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
           }
-        (void) ResetMagickMemory(compress_pixels,0,(length+256)*
+        (void) memset(compress_pixels,0,(length+256)*
           sizeof(*compress_pixels));
         (void) FormatLocaleString(buffer,MagickPathExtent,"\033*b2M");
         (void) WriteBlobString(image,buffer);
@@ -830,7 +830,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
             pixels=(unsigned char *) RelinquishMagickMemory(pixels);
             ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
           }
-        (void) ResetMagickMemory(compress_pixels,0,(3*length+256)*
+        (void) memset(compress_pixels,0,(3*length+256)*
           sizeof(*compress_pixels));
         previous_pixels=(unsigned char *) AcquireQuantumMemory(length+1,
           sizeof(*previous_pixels));
@@ -841,7 +841,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
             pixels=(unsigned char *) RelinquishMagickMemory(pixels);
             ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
           }
-        (void) ResetMagickMemory(previous_pixels,0,(length+1)*
+        (void) memset(previous_pixels,0,(length+1)*
           sizeof(*previous_pixels));
         (void) FormatLocaleString(buffer,MagickPathExtent,"\033*b3M");
         (void) WriteBlobString(image,buffer);
@@ -943,7 +943,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
             (double) packets);
           (void) WriteBlobString(image,buffer);
           (void) WriteBlob(image,packets,compress_pixels);
-          (void) CopyMagickMemory(previous_pixels,pixels,length*
+          (void) memcpy(previous_pixels,pixels,length*
             sizeof(*pixels));
           break;
         }

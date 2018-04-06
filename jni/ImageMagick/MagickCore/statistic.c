@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -166,7 +166,7 @@ static PixelChannels **AcquirePixelThreadSet(const Image *image)
     sizeof(*pixels));
   if (pixels == (PixelChannels **) NULL)
     return((PixelChannels **) NULL);
-  (void) ResetMagickMemory(pixels,0,number_threads*sizeof(*pixels));
+  (void) memset(pixels,0,number_threads*sizeof(*pixels));
   for (i=0; i < (ssize_t) number_threads; i++)
   {
     register ssize_t
@@ -509,7 +509,7 @@ MagickExport Image *EvaluateImages(const Image *images,
     {
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
       key=GetRandomSecretKey(random_info[0]);
-      #pragma omp parallel for schedule(static,4) shared(progress,status) \
+      #pragma omp parallel for schedule(static) shared(progress,status) \
         magick_number_threads(image,images,image->rows,key == ~0UL)
 #endif
       for (y=0; y < (ssize_t) image->rows; y++)
@@ -611,7 +611,7 @@ MagickExport Image *EvaluateImages(const Image *images,
     {
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
       key=GetRandomSecretKey(random_info[0]);
-      #pragma omp parallel for schedule(static,4) shared(progress,status) \
+      #pragma omp parallel for schedule(static) shared(progress,status) \
         magick_number_threads(image,images,image->rows,key == ~0UL)
 #endif
       for (y=0; y < (ssize_t) image->rows; y++)
@@ -814,7 +814,7 @@ MagickExport MagickBooleanType EvaluateImage(Image *image,
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
   key=GetRandomSecretKey(random_info[0]);
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,key == ~0UL)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1049,7 +1049,7 @@ MagickExport MagickBooleanType FunctionImage(Image *image,
   progress=0;
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1348,6 +1348,8 @@ static size_t GetImageChannels(const Image *image)
     PixelTrait traits = GetPixelChannelTraits(image,channel);
     if (traits == UndefinedPixelTrait)
       continue;
+    if ((traits & UpdatePixelTrait) == 0)
+      continue;
     channels++;
   }
   return((size_t) (channels == 0 ? 1 : channels));
@@ -1392,20 +1394,20 @@ MagickExport ChannelMoments *GetImageMoments(const Image *image,
     sizeof(*channel_moments));
   if (channel_moments == (ChannelMoments *) NULL)
     return(channel_moments);
-  (void) ResetMagickMemory(channel_moments,0,(MaxPixelChannels+1)*
+  (void) memset(channel_moments,0,(MaxPixelChannels+1)*
     sizeof(*channel_moments));
-  (void) ResetMagickMemory(centroid,0,sizeof(centroid));
-  (void) ResetMagickMemory(M00,0,sizeof(M00));
-  (void) ResetMagickMemory(M01,0,sizeof(M01));
-  (void) ResetMagickMemory(M02,0,sizeof(M02));
-  (void) ResetMagickMemory(M03,0,sizeof(M03));
-  (void) ResetMagickMemory(M10,0,sizeof(M10));
-  (void) ResetMagickMemory(M11,0,sizeof(M11));
-  (void) ResetMagickMemory(M12,0,sizeof(M12));
-  (void) ResetMagickMemory(M20,0,sizeof(M20));
-  (void) ResetMagickMemory(M21,0,sizeof(M21));
-  (void) ResetMagickMemory(M22,0,sizeof(M22));
-  (void) ResetMagickMemory(M30,0,sizeof(M30));
+  (void) memset(centroid,0,sizeof(centroid));
+  (void) memset(M00,0,sizeof(M00));
+  (void) memset(M01,0,sizeof(M01));
+  (void) memset(M02,0,sizeof(M02));
+  (void) memset(M03,0,sizeof(M03));
+  (void) memset(M10,0,sizeof(M10));
+  (void) memset(M11,0,sizeof(M11));
+  (void) memset(M12,0,sizeof(M12));
+  (void) memset(M20,0,sizeof(M20));
+  (void) memset(M21,0,sizeof(M21));
+  (void) memset(M22,0,sizeof(M22));
+  (void) memset(M30,0,sizeof(M30));
   image_view=AcquireVirtualCacheView(image,exception);
   for (y=0; y < (ssize_t) image->rows; y++)
   {
@@ -1823,7 +1825,7 @@ MagickExport MagickBooleanType GetImageRange(const Image *image,double *minima,
   *minima=0.0;
   image_view=AcquireVirtualCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status,initialize) \
+  #pragma omp parallel for schedule(static) shared(status,initialize) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1984,7 +1986,7 @@ MagickExport ChannelStatistics *GetImageStatistics(const Image *image,
           channel_statistics);
       return(channel_statistics);
     }
-  (void) ResetMagickMemory(channel_statistics,0,(MaxPixelChannels+1)*
+  (void) memset(channel_statistics,0,(MaxPixelChannels+1)*
     sizeof(*channel_statistics));
   for (i=0; i <= (ssize_t) MaxPixelChannels; i++)
   {
@@ -1992,7 +1994,7 @@ MagickExport ChannelStatistics *GetImageStatistics(const Image *image,
     channel_statistics[i].maxima=(-MagickMaximumValue);
     channel_statistics[i].minima=MagickMaximumValue;
   }
-  (void) ResetMagickMemory(histogram,0,(MaxMap+1)*GetPixelChannels(image)*
+  (void) memset(histogram,0,(MaxMap+1)*GetPixelChannels(image)*
     sizeof(*histogram));
   for (y=0; y < (ssize_t) image->rows; y++)
   {
@@ -2108,14 +2110,11 @@ MagickExport ChannelStatistics *GetImageStatistics(const Image *image,
         count;
 
       count=area*histogram[GetPixelChannels(image)*j+i];
-      if (number_bins > MagickEpsilon)
-        {
-          channel_statistics[channel].entropy+=-count*MagickLog10(count)/
-            MagickLog10(number_bins);
-          channel_statistics[CompositePixelChannel].entropy+=-count*
-            MagickLog10(count)/MagickLog10(number_bins)/
-            GetPixelChannels(image);
-        }
+      channel_statistics[channel].entropy+=-count*MagickLog10(count)*
+        PerceptibleReciprocal(MagickLog10(number_bins));
+      channel_statistics[CompositePixelChannel].entropy+=-count*
+        MagickLog10(count)*PerceptibleReciprocal(MagickLog10(number_bins))/
+        GetPixelChannels(image);
     }
   }
   histogram=(double *) RelinquishMagickMemory(histogram);
@@ -2139,6 +2138,24 @@ MagickExport ChannelStatistics *GetImageStatistics(const Image *image,
       channel_statistics[i].mean)*(standard_deviation*standard_deviation*
       standard_deviation*standard_deviation)-3.0;
   }
+  channel_statistics[CompositePixelChannel].mean=0.0;
+  channel_statistics[CompositePixelChannel].standard_deviation=0.0;
+  channel_statistics[CompositePixelChannel].entropy=0.0;
+  for (i=0; i < (ssize_t) MaxPixelChannels; i++)
+  {
+    channel_statistics[CompositePixelChannel].mean+=
+      channel_statistics[i].mean;
+    channel_statistics[CompositePixelChannel].standard_deviation+=
+      channel_statistics[i].standard_deviation;
+    channel_statistics[CompositePixelChannel].entropy+=
+      channel_statistics[i].entropy;
+  }
+  channel_statistics[CompositePixelChannel].mean/=(double)
+    GetImageChannels(image);
+  channel_statistics[CompositePixelChannel].standard_deviation/=(double)
+    GetImageChannels(image);
+  channel_statistics[CompositePixelChannel].entropy/=(double)
+    GetImageChannels(image);
   if (y < (ssize_t) image->rows)
     channel_statistics=(ChannelStatistics *) RelinquishMagickMemory(
       channel_statistics);
@@ -2235,7 +2252,7 @@ MagickExport Image *PolynomialImage(const Image *images,
   progress=0;
   polynomial_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -2464,13 +2481,13 @@ static PixelList *AcquirePixelList(const size_t width,const size_t height)
   pixel_list=(PixelList *) AcquireMagickMemory(sizeof(*pixel_list));
   if (pixel_list == (PixelList *) NULL)
     return(pixel_list);
-  (void) ResetMagickMemory((void *) pixel_list,0,sizeof(*pixel_list));
+  (void) memset((void *) pixel_list,0,sizeof(*pixel_list));
   pixel_list->length=width*height;
   pixel_list->skip_list.nodes=(SkipNode *) AcquireAlignedMemory(65537UL,
     sizeof(*pixel_list->skip_list.nodes));
   if (pixel_list->skip_list.nodes == (SkipNode *) NULL)
     return(DestroyPixelList(pixel_list));
-  (void) ResetMagickMemory(pixel_list->skip_list.nodes,0,65537UL*
+  (void) memset(pixel_list->skip_list.nodes,0,65537UL*
     sizeof(*pixel_list->skip_list.nodes));
   pixel_list->signature=MagickCoreSignature;
   return(pixel_list);
@@ -2493,7 +2510,7 @@ static PixelList **AcquirePixelListThreadSet(const size_t width,
     sizeof(*pixel_list));
   if (pixel_list == (PixelList **) NULL)
     return((PixelList **) NULL);
-  (void) ResetMagickMemory(pixel_list,0,number_threads*sizeof(*pixel_list));
+  (void) memset(pixel_list,0,number_threads*sizeof(*pixel_list));
   for (i=0; i < (ssize_t) number_threads; i++)
   {
     pixel_list[i]=AcquirePixelList(width,height);
@@ -2917,7 +2934,7 @@ MagickExport Image *StatisticImage(const Image *image,const StatisticType type,
   image_view=AcquireVirtualCacheView(image,exception);
   statistic_view=AcquireAuthenticCacheView(statistic_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,statistic_image,statistic_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) statistic_image->rows; y++)

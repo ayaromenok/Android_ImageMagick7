@@ -17,7 +17,7 @@
 %                                April 1993                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -293,9 +293,9 @@ static MagickBooleanType Classify(Image *image,short **extrema,
   */
   cluster=(Cluster *) NULL;
   head=(Cluster *) NULL;
-  (void) ResetMagickMemory(&red,0,sizeof(red));
-  (void) ResetMagickMemory(&green,0,sizeof(green));
-  (void) ResetMagickMemory(&blue,0,sizeof(blue));
+  (void) memset(&red,0,sizeof(red));
+  (void) memset(&green,0,sizeof(green));
+  (void) memset(&blue,0,sizeof(blue));
   while (DefineRegion(extrema[Red],&red) != 0)
   {
     green.index=0;
@@ -535,7 +535,7 @@ static MagickBooleanType Classify(Image *image,short **extrema,
   */
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1005,9 +1005,9 @@ MagickExport MagickBooleanType GetImageDynamicThreshold(const Image *image,
   */
   cluster=(Cluster *) NULL;
   head=(Cluster *) NULL;
-  (void) ResetMagickMemory(&red,0,sizeof(red));
-  (void) ResetMagickMemory(&green,0,sizeof(green));
-  (void) ResetMagickMemory(&blue,0,sizeof(blue));
+  (void) memset(&red,0,sizeof(red));
+  (void) memset(&green,0,sizeof(green));
+  (void) memset(&blue,0,sizeof(blue));
   while (DefineRegion(extrema[Red],&red) != 0)
   {
     green.index=0;

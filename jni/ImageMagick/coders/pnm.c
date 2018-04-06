@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -428,6 +428,7 @@ static Image *ReadPNMImage(const ImageInfo *image_info,ExceptionInfo *exception)
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
       return(DestroyImageList(image));
+    (void) SetImageBackgroundColor(image,exception);
     /*
       Convert PNM pixels to runextent-encoded MIFF packets.
     */
@@ -1131,6 +1132,7 @@ static Image *ReadPNMImage(const ImageInfo *image_info,ExceptionInfo *exception)
                           }
                         q+=GetPixelChannels(image);
                       }
+                      break;
                     }
                   for (x=0; x < (ssize_t) image->columns; x++)
                   {
@@ -1282,7 +1284,7 @@ static Image *ReadPNMImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
           pixels=(unsigned char *) ReadBlobStream(image,extent,
             GetQuantumPixels(quantum_info),&count);
-          if ((size_t) count != extent)
+          if (count != (ssize_t) extent)
             break;
           if ((image->progress_monitor != (MagickProgressMonitor) NULL) &&
               (image->previous == (Image *) NULL))
@@ -1661,7 +1663,7 @@ static MagickBooleanType WritePNMImage(const ImageInfo *image_info,Image *image,
           {
             packet_size=1;
             (void) CopyMagickString(type,"GRAYSCALE",MagickPathExtent);
-            if (IsImageMonochrome(image) != MagickFalse)
+            if (IdentifyImageMonochrome(image,exception) != MagickFalse)
               (void) CopyMagickString(type,"BLACKANDWHITE",MagickPathExtent);
             break;
           }

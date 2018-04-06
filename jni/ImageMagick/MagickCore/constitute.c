@@ -17,7 +17,7 @@
 %                               October 1998                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -696,6 +696,7 @@ MagickExport Image *ReadImage(const ImageInfo *image_info,
         RectangleInfo
           geometry;
 
+        SetGeometry(next,&geometry);
         flags=ParseAbsoluteGeometry(read_info->extract,&geometry);
         if ((next->columns != geometry.width) ||
             (next->rows != geometry.height))
@@ -927,7 +928,10 @@ MagickExport Image *ReadInlineImage(const ImageInfo *image_info,
   length=0;
   blob=Base64Decode(p,&length);
   if (length == 0)
-    ThrowReaderException(CorruptImageError,"CorruptImage");
+    {
+      blob=(unsigned char *) RelinquishMagickMemory(blob);
+      ThrowReaderException(CorruptImageError,"CorruptImage");
+    }
   read_info=CloneImageInfo(image_info);
   (void) SetImageInfoProgressMonitor(read_info,(MagickProgressMonitor) NULL,
     (void *) NULL);

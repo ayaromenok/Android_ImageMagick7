@@ -17,7 +17,7 @@
 %                               November 2001                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -57,6 +57,7 @@
 #include "MagickCore/property.h"
 #include "MagickCore/quantize.h"
 #include "MagickCore/quantum-private.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/static.h"
 #include "MagickCore/string_.h"
 #include "MagickCore/module.h"
@@ -643,6 +644,9 @@ static MagickBooleanType load_level(Image *image,XCFDocInfo *inDocInfo,
     /* read in the offset of the next tile so we can calculate the amount
        of data needed for this tile*/
     offset2=(MagickOffsetType)ReadBlobMSBLong(image);
+    if ((MagickSizeType) offset2 > GetBlobSize(image))
+      ThrowBinaryException(CorruptImageError,"InsufficientImageDataInFile",
+        image->filename);
     /* if the offset is 0 then we need to read in the maximum possible
        allowing for negative compression */
     if (offset2 == 0)
@@ -669,6 +673,7 @@ static MagickBooleanType load_level(Image *image,XCFDocInfo *inDocInfo,
       if (tile_image == (Image *) NULL)
         ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
           image->filename);
+      (void) SetImageBackgroundColor(tile_image,exception);
 
       /* read in the tile */
       switch (inDocInfo->compression)
@@ -683,9 +688,11 @@ static MagickBooleanType load_level(Image *image,XCFDocInfo *inDocInfo,
             status=MagickTrue;
           break;
         case COMPRESS_ZLIB:
+          tile_image=DestroyImage(tile_image);
           ThrowBinaryException(CoderError,"ZipCompressNotSupported",
             image->filename)
         case COMPRESS_FRACTAL:
+          tile_image=DestroyImage(tile_image);
           ThrowBinaryException(CoderError,"FractalCompressNotSupported",
             image->filename)
       }
@@ -798,7 +805,7 @@ static MagickBooleanType ReadOneLayer(const ImageInfo *image_info,Image* image,
     layer_mask_offset;
 
   /* clear the block! */
-  (void) ResetMagickMemory( outLayer, 0, sizeof( XCFLayerInfo ) );
+  (void) memset( outLayer, 0, sizeof( XCFLayerInfo ) );
   /* read in the layer width, height, type and name */
   outLayer->width = ReadBlobMSBLong(image);
   outLayer->height = ReadBlobMSBLong(image);
@@ -807,6 +814,10 @@ static MagickBooleanType ReadOneLayer(const ImageInfo *image_info,Image* image,
     sizeof(outLayer->name),exception);
   if (EOFBlob(image) != MagickFalse)
     ThrowBinaryException(CorruptImageError,"InsufficientImageDataInFile",
+      image->filename);
+  if ((outLayer->width < 1) || (outLayer->width > image->columns) ||
+      (outLayer->height < 1) || (outLayer->height > image->rows))
+    ThrowBinaryException(CorruptImageError,"ImproperImageHeader",
       image->filename);
   /* read the layer properties! */
   foundPropEnd = 0;
@@ -920,6 +931,7 @@ static MagickBooleanType ReadOneLayer(const ImageInfo *image_info,Image* image,
     exception);
   if (outLayer->image == (Image *) NULL)
     return(MagickFalse);
+  outLayer->width=outLayer->image->columns;
   status=SetImageExtent(outLayer->image,outLayer->image->columns,
     outLayer->image->rows,exception);
   if (status == MagickFalse)
@@ -1067,7 +1079,7 @@ static Image *ReadXCFImage(const ImageInfo *image_info,ExceptionInfo *exception)
   if ((count != 14) ||
       (LocaleNCompare((char *) magick,"gimp xcf",8) != 0))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
-  (void) ResetMagickMemory(&doc_info,0,sizeof(XCFDocInfo));
+  (void) memset(&doc_info,0,sizeof(XCFDocInfo));
   doc_info.width=ReadBlobMSBLong(image);
   doc_info.height=ReadBlobMSBLong(image);
   if ((doc_info.width > 262144) || (doc_info.height > 262144))
@@ -1309,6 +1321,8 @@ static Image *ReadXCFImage(const ImageInfo *image_info,ExceptionInfo *exception)
             break;
           }
     } while (foundAllLayers == MagickFalse);
+    if (AcquireMagickResource(ListLengthResource,number_layers) == MagickFalse)
+      ThrowReaderException(ResourceLimitError,"ListLengthExceedsLimit");
     doc_info.number_layers=number_layers;
     offset=SeekBlob(image,oldPos,SEEK_SET); /* restore the position! */
     if (offset < 0)
@@ -1319,7 +1333,7 @@ static Image *ReadXCFImage(const ImageInfo *image_info,ExceptionInfo *exception)
       sizeof(*layer_info));
     if (layer_info == (XCFLayerInfo *) NULL)
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
-    (void) ResetMagickMemory(layer_info,0,number_layers*sizeof(XCFLayerInfo));
+    (void) memset(layer_info,0,number_layers*sizeof(XCFLayerInfo));
     for ( ; ; )
     {
       MagickBooleanType
@@ -1341,11 +1355,13 @@ static Image *ReadXCFImage(const ImageInfo *image_info,ExceptionInfo *exception)
       */
       saved_pos=TellBlob(image);
       /* seek to the layer offset */
-      if (SeekBlob(image,offset,SEEK_SET) != offset)
-        ThrowReaderException(CorruptImageError,"NotEnoughPixelData");
-      /* read in the layer */
-      layer_ok=ReadOneLayer(image_info,image,&doc_info,
-        &layer_info[current_layer],current_layer,exception);
+      layer_ok=MagickFalse;
+      if (SeekBlob(image,offset,SEEK_SET) == offset)
+        {
+          /* read in the layer */
+          layer_ok=ReadOneLayer(image_info,image,&doc_info,
+            &layer_info[current_layer],current_layer,exception);
+        }
       if (layer_ok == MagickFalse)
         {
           ssize_t j;
@@ -1354,7 +1370,7 @@ static Image *ReadXCFImage(const ImageInfo *image_info,ExceptionInfo *exception)
             if (layer_info[j].image != (Image *) NULL)
               layer_info[j].image=DestroyImage(layer_info[j].image);
           layer_info=(XCFLayerInfo *) RelinquishMagickMemory(layer_info);
-          ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+          ThrowReaderException(CorruptImageError,"NotEnoughPixelData");
         }
       /* restore the saved position so we'll be ready to
       *  read the next offset.

@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
 
   You may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ static inline ResampleFilter **AcquireResampleFilterThreadSet(
     sizeof(*filter));
   if (filter == (ResampleFilter **) NULL)
     ThrowFatalException(ResourceLimitFatalError,"MemoryAllocationFailed");
-  (void) ResetMagickMemory(filter,0,number_threads*sizeof(*filter));
+  (void) memset(filter,0,number_threads*sizeof(*filter));
   for (i=0; i < (ssize_t) number_threads; i++)
   {
     filter[i]=AcquireResampleFilter(image,exception);

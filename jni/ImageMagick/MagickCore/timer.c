@@ -17,7 +17,7 @@
 %                              January 1993                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -90,7 +90,7 @@ MagickExport TimerInfo *AcquireTimerInfo(void)
     *timer_info;
 
   timer_info=(TimerInfo *) AcquireCriticalMemory(sizeof(*timer_info));
-  (void) ResetMagickMemory(timer_info,0,sizeof(*timer_info));
+  (void) memset(timer_info,0,sizeof(*timer_info));
   timer_info->signature=MagickCoreSignature;
   GetTimerInfo(timer_info);
   return(timer_info);
@@ -283,7 +283,7 @@ MagickExport void GetTimerInfo(TimerInfo *time_info)
     Create a stopwatch and start it.
   */
   assert(time_info != (TimerInfo *) NULL);
-  (void) ResetMagickMemory(time_info,0,sizeof(*time_info));
+  (void) memset(time_info,0,sizeof(*time_info));
   time_info->state=UndefinedTimerState;
   time_info->signature=MagickCoreSignature;
   StartTimer(time_info,MagickTrue);

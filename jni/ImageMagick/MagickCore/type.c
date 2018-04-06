@@ -17,7 +17,7 @@
 %                                 May 2001                                    %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -367,7 +367,7 @@ MagickExport const TypeInfo *GetTypeInfoByFamily(const char *family,
   (void) GetTypeInfo("*",exception);
   if (type_cache == (SplayTreeInfo *) NULL)
     return((TypeInfo *) NULL);
-  font_weight=weight == 0 ? 400 : weight;
+  font_weight=(size_t) (weight == 0 ? 400 : weight);
   LockSemaphoreInfo(type_semaphore);
   ResetSplayTreeIterator(type_cache);
   type_info=(const TypeInfo *) NULL;
@@ -798,7 +798,7 @@ MagickExport MagickBooleanType LoadFontConfigFonts(SplayTreeInfo *type_cache,
     type_info=(TypeInfo *) AcquireMagickMemory(sizeof(*type_info));
     if (type_info == (TypeInfo *) NULL)
       continue;
-    (void) ResetMagickMemory(type_info,0,sizeof(*type_info));
+    (void) memset(type_info,0,sizeof(*type_info));
     type_info->path=ConstantString("System Fonts");
     type_info->signature=MagickCoreSignature;
     (void) CopyMagickString(name,"Unknown",MagickPathExtent);
@@ -1138,7 +1138,7 @@ static MagickBooleanType LoadTypeCache(SplayTreeInfo *cache,const char *xml,
           GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeNodeNestedTooDeeply","`%s'",token);
               else
@@ -1179,7 +1179,7 @@ static MagickBooleanType LoadTypeCache(SplayTreeInfo *cache,const char *xml,
           Type element.
         */
         type_info=(TypeInfo *) AcquireCriticalMemory(sizeof(*type_info));
-        (void) ResetMagickMemory(type_info,0,sizeof(*type_info));
+        (void) memset(type_info,0,sizeof(*type_info));
         type_info->path=ConstantString(filename);
         type_info->signature=MagickCoreSignature;
         continue;
@@ -1309,7 +1309,7 @@ static MagickBooleanType LoadTypeCache(SplayTreeInfo *cache,const char *xml,
 
             weight=ParseCommandOption(MagickWeightOptions,MagickFalse,token);
             if (weight == -1)
-              weight=StringToUnsignedLong(token);
+              weight=(ssize_t) StringToUnsignedLong(token);
             type_info->weight=(size_t) weight;
             break;
           }

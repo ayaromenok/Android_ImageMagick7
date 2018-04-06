@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -118,7 +118,7 @@ static MagickBooleanType IsTXT(const unsigned char *magick,const size_t length)
     return(MagickFalse);
   if (LocaleNCompare((const char *) magick,MagickID,strlen(MagickID)) != 0)
     return(MagickFalse);
-  count=(ssize_t) sscanf((const char *) magick+32,"%lu,%lu,%lu,%s",&columns,
+  count=(ssize_t) sscanf((const char *) magick+32,"%lu,%lu,%lu,%32s",&columns,
     &rows,&depth,colorspace);
   if (count != 4)
     return(MagickFalse);
@@ -204,7 +204,7 @@ static Image *ReadTEXTImage(const ImageInfo *image_info,
       image=DestroyImageList(image);
       return((Image *) NULL);
     }
-  (void) ResetMagickMemory(text,0,sizeof(text));
+  (void) memset(text,0,sizeof(text));
   (void) ReadBlobString(image,text);
   /*
     Set the page geometry.
@@ -267,7 +267,10 @@ static Image *ReadTEXTImage(const ImageInfo *image_info,
   (void) CloneString(&draw_info->geometry,geometry);
   status=GetTypeMetrics(image,draw_info,&metrics,exception);
   if (status == MagickFalse)
-    ThrowReaderException(TypeError,"UnableToGetTypeMetrics");
+    {
+      draw_info=DestroyDrawInfo(draw_info);
+      ThrowReaderException(TypeError,"UnableToGetTypeMetrics");
+    }
   page.y=(ssize_t) ceil((double) page.y+metrics.ascent-0.5);
   (void) FormatLocaleString(geometry,MagickPathExtent,"%gx%g%+g%+g",(double)
     image->columns,(double) image->rows,(double) page.x,(double) page.y);
@@ -430,17 +433,19 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
       image=DestroyImageList(image);
       return((Image *) NULL);
     }
-  (void) ResetMagickMemory(text,0,sizeof(text));
+  (void) memset(text,0,sizeof(text));
   (void) ReadBlobString(image,text);
   if (LocaleNCompare((char *) text,MagickID,strlen(MagickID)) != 0)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+  x_offset=(-1);
+  y_offset=(-1);
   do
   {
     width=0;
     height=0;
     max_value=0;
     *colorspace='\0';
-    count=(ssize_t) sscanf(text+32,"%lu,%lu,%lu,%s",&width,&height,&max_value,
+    count=(ssize_t) sscanf(text+32,"%lu,%lu,%lu,%32s",&width,&height,&max_value,
       colorspace);
     if ((count != 4) || (width == 0) || (height == 0) || (max_value == 0))
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -464,10 +469,11 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
     type=ParseCommandOption(MagickColorspaceOptions,MagickFalse,colorspace);
     if (type < 0)
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
-    (void) SetImageBackgroundColor(image,exception);
     (void) SetImageColorspace(image,(ColorspaceType) type,exception);
+    (void) SetImageBackgroundColor(image,exception);
     GetPixelInfo(image,&pixel);
     range=GetQuantumRange(image->depth);
+    status=MagickTrue;
     for (y=0; y < (ssize_t) image->rows; y++)
     {
       double
@@ -477,6 +483,8 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
         green,
         red;
 
+      if (status == MagickFalse)
+        break;
       red=0.0;
       green=0.0;
       blue=0.0;
@@ -485,9 +493,13 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
       for (x=0; x < (ssize_t) image->columns; x++)
       {
         if (ReadBlobString(image,text) == (char *) NULL)
-          break;
+          {
+            status=MagickFalse;
+            break;
+          }
         switch (image->colorspace)
         {
+          case LinearGRAYColorspace:
           case GRAYColorspace:
           {
             if (image->alpha_trait != UndefinedPixelTrait)
@@ -562,15 +574,15 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
           continue;
         SetPixelViaPixelInfo(image,&pixel,q);
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
-          break;
+          {
+            status=MagickFalse;
+            break;
+          }
       }
     }
-    if (EOFBlob(image) != MagickFalse)
-      {
-        ThrowFileException(exception,CorruptImageError,"UnexpectedEndOfFile",
-          image->filename);
-        break;
-      }
+    if (status == MagickFalse)
+      break;
+    *text='\0';
     (void) ReadBlobString(image,text);
     if (LocaleNCompare((char *) text,MagickID,strlen(MagickID)) == 0)
       {
@@ -800,7 +812,8 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
           (double) x,(double) y);
         (void) WriteBlobString(image,buffer);
         (void) CopyMagickString(tuple,"(",MagickPathExtent);
-        if (pixel.colorspace == GRAYColorspace)
+        if ((pixel.colorspace == LinearGRAYColorspace) ||
+            (pixel.colorspace == GRAYColorspace))
           ConcatenateColorComponent(&pixel,GrayPixelChannel,compliance,tuple);
         else
           {
@@ -809,7 +822,8 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
             ConcatenateColorComponent(&pixel,GreenPixelChannel,compliance,
               tuple);
             (void) ConcatenateMagickString(tuple,",",MagickPathExtent);
-            ConcatenateColorComponent(&pixel,BluePixelChannel,compliance,tuple);
+            ConcatenateColorComponent(&pixel,BluePixelChannel,compliance,
+              tuple);
           }
         if (pixel.colorspace == CMYKColorspace)
           {

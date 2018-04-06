@@ -19,7 +19,7 @@
 %                               December 2001                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -594,6 +594,8 @@ static void MSLPopImage(MSLInfo *msl_info)
     msl_info->image[msl_info->n]=DestroyImage(msl_info->image[msl_info->n]);
   msl_info->attributes[msl_info->n]=DestroyImage(
     msl_info->attributes[msl_info->n]);
+  msl_info->draw_info[msl_info->n]=DestroyDrawInfo(
+    msl_info->draw_info[msl_info->n]);
   msl_info->image_info[msl_info->n]=DestroyImageInfo(
     msl_info->image_info[msl_info->n]);
   msl_info->n--;
@@ -669,7 +671,7 @@ static void MSLStartElement(void *context,const xmlChar *tag,
   keyword=(const char *) NULL;
   value=(char *) NULL;
   SetGeometryInfo(&geometry_info);
-  (void) ResetMagickMemory(&geometry,0,sizeof(geometry));
+  (void) memset(&geometry,0,sizeof(geometry));
   channel=DefaultChannels;
   switch (*tag)
   {
@@ -3070,7 +3072,7 @@ static void MSLStartElement(void *context,const xmlChar *tag,
                 (const char *) tag);
               break;
             }
-          (void) ResetMagickMemory(&frame_info,0,sizeof(frame_info));
+          (void) memset(&frame_info,0,sizeof(frame_info));
           SetGeometry(msl_info->image[n],&geometry);
           if (attributes != (const xmlChar **) NULL)
             for (i=0; (attributes[i] != (const xmlChar *) NULL); i++)
@@ -6191,7 +6193,7 @@ static void MSLStartElement(void *context,const xmlChar *tag,
                 RectangleInfo
                   geometry;
 
-                (void) ResetMagickMemory(&geometry,0,sizeof(geometry));
+                (void) memset(&geometry,0,sizeof(geometry));
                 image_option=GetImageArtifact(msl_info->image[n],"page");
                 if (image_option != (const char *) NULL)
                   flags=ParseAbsoluteGeometry(image_option,&geometry);
@@ -7828,7 +7830,7 @@ static MagickBooleanType ProcessMSLScript(const ImageInfo *image_info,
   /*
     Parse MSL file.
   */
-  (void) ResetMagickMemory(&msl_info,0,sizeof(msl_info));
+  (void) memset(&msl_info,0,sizeof(msl_info));
   msl_info.exception=exception;
   msl_info.image_info=(ImageInfo **) AcquireMagickMemory(
     sizeof(*msl_info.image_info));
@@ -7841,6 +7843,7 @@ static MagickBooleanType ProcessMSLScript(const ImageInfo *image_info,
   msl_info.group_info=(MSLGroupInfo *) AcquireMagickMemory(
     sizeof(*msl_info.group_info));
   if ((msl_info.image_info == (ImageInfo **) NULL) ||
+      (msl_info.draw_info == (DrawInfo **) NULL) ||
       (msl_info.image == (Image **) NULL) ||
       (msl_info.attributes == (Image **) NULL) ||
       (msl_info.group_info == (MSLGroupInfo *) NULL))
@@ -7854,7 +7857,7 @@ static MagickBooleanType ProcessMSLScript(const ImageInfo *image_info,
   if (*image != (Image *) NULL)
     MSLPushImage(&msl_info,*image);
   (void) xmlSubstituteEntitiesDefault(1);
-  (void) ResetMagickMemory(&sax_modules,0,sizeof(sax_modules));
+  (void) memset(&sax_modules,0,sizeof(sax_modules));
   sax_modules.internalSubset=MSLInternalSubset;
   sax_modules.isStandalone=MSLIsStandalone;
   sax_modules.hasInternalSubset=MSLHasInternalSubset;
@@ -7904,18 +7907,24 @@ static MagickBooleanType ProcessMSLScript(const ImageInfo *image_info,
   */
   xmlFreeParserCtxt(msl_info.parser);
   (void) LogMagickEvent(CoderEvent,GetMagickModule(),"end SAX");
-  msl_info.group_info=(MSLGroupInfo *) RelinquishMagickMemory(
-    msl_info.group_info);
   if (*image == (Image *) NULL)
-    *image=(*msl_info.image);
-  *msl_info.image_info=DestroyImageInfo(*msl_info.image_info);
-  msl_info.image_info=(ImageInfo **) RelinquishMagickMemory(
-    msl_info.image_info);
-  *msl_info.draw_info=DestroyDrawInfo(*msl_info.draw_info);
+    *image=CloneImage(*msl_info.image,0,0,MagickTrue,exception);
+  while (msl_info.n >= 0)
+  {
+    msl_info.image[msl_info.n]=DestroyImage(msl_info.image[msl_info.n]);
+    msl_info.attributes[msl_info.n]=DestroyImage(
+      msl_info.attributes[msl_info.n]);
+    msl_info.draw_info[msl_info.n]=DestroyDrawInfo(
+      msl_info.draw_info[msl_info.n]);
+    msl_info.image_info[msl_info.n]=DestroyImageInfo(
+      msl_info.image_info[msl_info.n]);
+    msl_info.n--;
+  } 
   msl_info.draw_info=(DrawInfo **) RelinquishMagickMemory(msl_info.draw_info);
   msl_info.image=(Image **) RelinquishMagickMemory(msl_info.image);
-  *msl_info.attributes=DestroyImage(*msl_info.attributes);
   msl_info.attributes=(Image **) RelinquishMagickMemory(msl_info.attributes);
+  msl_info.image_info=(ImageInfo **) RelinquishMagickMemory(
+    msl_info.image_info);
   msl_info.group_info=(MSLGroupInfo *) RelinquishMagickMemory(
     msl_info.group_info);
   if (msl_info.exception->severity != UndefinedException)
@@ -8334,9 +8343,6 @@ static MagickBooleanType WriteMSLImage(const ImageInfo *image_info,Image *image,
   Image
     *msl_image;
 
-  MagickBooleanType
-    status;
-
   assert(image_info != (const ImageInfo *) NULL);
   assert(image_info->signature == MagickCoreSignature);
   assert(image != (Image *) NULL);
@@ -8344,9 +8350,6 @@ static MagickBooleanType WriteMSLImage(const ImageInfo *image_info,Image *image,
   if (image->debug != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   msl_image=CloneImage(image,0,0,MagickTrue,exception);
-  status=ProcessMSLScript(image_info,&msl_image,exception);
-  if (msl_image != (Image *) NULL)
-    msl_image=DestroyImage(msl_image);
-  return(status);
+  return(ProcessMSLScript(image_info,&msl_image,exception));
 }
 #endif

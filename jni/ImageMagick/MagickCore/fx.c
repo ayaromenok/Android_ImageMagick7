@@ -17,7 +17,7 @@
 %                                 October 1996                                %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -106,7 +106,7 @@
 #define NotEqualOperator  0xfaU
 #define LogicalAndOperator  0xfbU
 #define LogicalOrOperator  0xfcU
-#define ExponentialNotation 0xfdU
+#define ExponentialNotation  0xfdU
 
 struct _FxInfo
 {
@@ -176,7 +176,7 @@ MagickPrivate FxInfo *AcquireFxInfo(const Image *images,const char *expression,
     i;
 
   fx_info=(FxInfo *) AcquireCriticalMemory(sizeof(*fx_info));
-  (void) ResetMagickMemory(fx_info,0,sizeof(*fx_info));
+  (void) memset(fx_info,0,sizeof(*fx_info));
   fx_info->exception=AcquireExceptionInfo();
   fx_info->images=images;
   fx_info->colors=NewSplayTree(CompareSplayTreeString,RelinquishMagickMemory,
@@ -301,7 +301,7 @@ MagickExport Image *AddNoiseImage(const Image *image,const NoiseType noise_type,
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
 #if defined(MAGICKCORE_OPENCL_SUPPORT)
-  noise_image=AccelerateAddNoiseImage(image,noise_type,exception);
+  noise_image=AccelerateAddNoiseImage(image,noise_type,attenuate,exception);
   if (noise_image != (Image *) NULL)
     return(noise_image);
 #endif
@@ -323,7 +323,7 @@ MagickExport Image *AddNoiseImage(const Image *image,const NoiseType noise_type,
   noise_view=AcquireAuthenticCacheView(noise_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
   key=GetRandomSecretKey(random_info[0]);
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,noise_image,image->rows,key == ~0UL)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -478,7 +478,7 @@ MagickExport Image *BlueShiftImage(const Image *image,const double factor,
   image_view=AcquireVirtualCacheView(image,exception);
   shift_view=AcquireAuthenticCacheView(shift_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,shift_image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -737,7 +737,7 @@ MagickExport Image *ColorizeImage(const Image *image,const char *blend,
   progress=0;
   image_view=AcquireVirtualCacheView(colorize_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(colorize_image,colorize_image,colorize_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) colorize_image->rows; y++)
@@ -938,7 +938,7 @@ MagickExport Image *ColorMatrixImage(const Image *image,
   image_view=AcquireVirtualCacheView(image,exception);
   color_view=AcquireAuthenticCacheView(color_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,color_image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1156,7 +1156,7 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
         skewness;
 
       (void) GetImageKurtosis(image,&kurtosis,&skewness,exception);
-      (void) FormatLocaleString(statistic,MagickPathExtent,"%g",kurtosis);
+      (void) FormatLocaleString(statistic,MagickPathExtent,"%.20g",kurtosis);
     }
   if (LocaleNCompare(symbol,"maxima",6) == 0)
     {
@@ -1165,7 +1165,7 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
         minima;
 
       (void) GetImageRange(image,&minima,&maxima,exception);
-      (void) FormatLocaleString(statistic,MagickPathExtent,"%g",maxima);
+      (void) FormatLocaleString(statistic,MagickPathExtent,"%.20g",maxima);
     }
   if (LocaleNCompare(symbol,"mean",4) == 0)
     {
@@ -1174,7 +1174,7 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
         standard_deviation;
 
       (void) GetImageMean(image,&mean,&standard_deviation,exception);
-      (void) FormatLocaleString(statistic,MagickPathExtent,"%g",mean);
+      (void) FormatLocaleString(statistic,MagickPathExtent,"%.20g",mean);
     }
   if (LocaleNCompare(symbol,"minima",6) == 0)
     {
@@ -1183,7 +1183,7 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
         minima;
 
       (void) GetImageRange(image,&minima,&maxima,exception);
-      (void) FormatLocaleString(statistic,MagickPathExtent,"%g",minima);
+      (void) FormatLocaleString(statistic,MagickPathExtent,"%.20g",minima);
     }
   if (LocaleNCompare(symbol,"skewness",8) == 0)
     {
@@ -1192,7 +1192,7 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
         skewness;
 
       (void) GetImageKurtosis(image,&kurtosis,&skewness,exception);
-      (void) FormatLocaleString(statistic,MagickPathExtent,"%g",skewness);
+      (void) FormatLocaleString(statistic,MagickPathExtent,"%.20g",skewness);
     }
   if (LocaleNCompare(symbol,"standard_deviation",18) == 0)
     {
@@ -1201,7 +1201,7 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
         standard_deviation;
 
       (void) GetImageMean(image,&mean,&standard_deviation,exception);
-      (void) FormatLocaleString(statistic,MagickPathExtent,"%g",
+      (void) FormatLocaleString(statistic,MagickPathExtent,"%.20g",
         standard_deviation);
     }
   if (channel_mask != UndefinedChannel)
@@ -1213,7 +1213,7 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
 
 static double
   FxEvaluateSubexpression(FxInfo *,const PixelChannel,const ssize_t,
-    const ssize_t,const char *,size_t *,double *,ExceptionInfo *);
+    const ssize_t,const char *,const size_t,double *,ExceptionInfo *);
 
 static MagickOffsetType FxGCD(MagickOffsetType alpha,MagickOffsetType beta)
 {
@@ -1265,6 +1265,9 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
   Image
     *image;
 
+  MagickBooleanType
+    status;
+
   PixelInfo
     pixel;
 
@@ -1279,13 +1282,11 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
     i;
 
   size_t
-    depth,
     length,
     level;
 
   p=expression;
   i=GetImageIndexInList(fx_info->images);
-  depth=0;
   level=0;
   point.x=(double) x;
   point.y=(double) y;
@@ -1324,9 +1325,10 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
               }
               *q='\0';
               alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,
-                &depth,&beta,exception);
+                0,&beta,exception);
               i=(ssize_t) alpha;
-              p++;
+              if (*p != '\0')
+                p++;
             }
           if (*p == '.')
             p++;
@@ -1353,10 +1355,11 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
               }
               *q='\0';
               alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,
-                &depth,&beta,exception);
+                0,&beta,exception);
               point.x=alpha;
               point.y=beta;
-              p++;
+              if (*p != '\0')
+                p++;
             }
           else
             if (*p == '[')
@@ -1378,10 +1381,11 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
                 }
                 *q='\0';
                 alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,
-                  &depth,&beta,exception);
+                  0,&beta,exception);
                 point.x+=alpha;
                 point.y+=beta;
-                p++;
+                if (*p != '\0')
+                  p++;
               }
           if (*p == '.')
             p++;
@@ -1400,8 +1404,9 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
       return(0.0);
     }
   GetPixelInfo(image,&pixel);
-  (void) InterpolatePixelInfo(image,fx_info->view[i],image->interpolate,
+  status=InterpolatePixelInfo(image,fx_info->view[i],image->interpolate,
     point.x,point.y,&pixel,exception);
+  (void) status;
   if ((strlen(p) > 2) && (LocaleCompare(p,"intensity") != 0) &&
       (LocaleCompare(p,"luma") != 0) && (LocaleCompare(p,"luminance") != 0) &&
       (LocaleCompare(p,"hue") != 0) && (LocaleCompare(p,"saturation") != 0) &&
@@ -1868,11 +1873,11 @@ static const char *FxOperatorPrecedence(const char *expression,
   size_t
     level;
 
-  c=0;
+  c=(-1);
   level=0;
   subexpression=(const char *) NULL;
   target=NullPrecedence;
-  while (*expression != '\0')
+  while ((c != '\0') && (*expression != '\0'))
   {
     precedence=UndefinedPrecedence;
     if ((isspace((int) ((unsigned char) *expression)) != 0) || (c == (int) '@'))
@@ -1916,7 +1921,7 @@ static const char *FxOperatorPrecedence(const char *expression,
       case 'E':
       case 'e':
       {
-        if ((isdigit((int) ((unsigned char) c)) != 0) &&
+        if ((isdigit(c) != 0) &&
             ((LocaleNCompare(expression,"E+",2) == 0) ||
              (LocaleNCompare(expression,"E-",2) == 0)))
           {
@@ -1966,11 +1971,11 @@ static const char *FxOperatorPrecedence(const char *expression,
         }
         default:
         {
-          if (((c != 0) && ((isdigit((int) ((unsigned char) c)) != 0) ||
-               (strchr(")",(int) ((unsigned char) c)) != (char *) NULL))) &&
+          if (((c != 0) && ((isdigit(c) != 0) ||
+               (strchr(")",c) != (char *) NULL))) &&
               (((islower((int) ((unsigned char) *expression)) != 0) ||
                (strchr("(",(int) ((unsigned char) *expression)) != (char *) NULL)) ||
-               ((isdigit((int) ((unsigned char) c)) == 0) &&
+               ((isdigit(c) == 0) &&
                 (isdigit((int) ((unsigned char) *expression)) != 0))) &&
               (strchr("xy",(int) ((unsigned char) *expression)) == (char *) NULL))
             precedence=MultiplyPrecedence;
@@ -2089,13 +2094,20 @@ static const char *FxOperatorPrecedence(const char *expression,
 
 static double FxEvaluateSubexpression(FxInfo *fx_info,
   const PixelChannel channel,const ssize_t x,const ssize_t y,
-  const char *expression,size_t *depth,double *beta,ExceptionInfo *exception)
+  const char *expression,const size_t depth,double *beta,
+  ExceptionInfo *exception)
 {
 #define FxMaxParenthesisDepth  58
+#define FxMaxSubexpressionDepth  600
+#define FxReturn(value) \
+{ \
+  subexpression=DestroyString(subexpression); \
+  return(value); \
+}
 
   char
     *q,
-    subexpression[MagickPathExtent];
+    *subexpression;
 
   double
     alpha,
@@ -2105,148 +2117,167 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     *p;
 
   *beta=0.0;
+  subexpression=AcquireString(expression);
+  *subexpression='\0';
+  if (depth > FxMaxSubexpressionDepth)
+    {
+      (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
+        "UnableToParseExpression","`%s'",expression);
+      FxReturn(0.0);
+    }
   if (exception->severity >= ErrorException)
-    return(0.0);
+    FxReturn(0.0);
   while (isspace((int) ((unsigned char) *expression)) != 0)
     expression++;
   if (*expression == '\0')
-    return(0.0);
-  *subexpression='\0';
+    FxReturn(0.0);
   p=FxOperatorPrecedence(expression,exception);
   if (p != (const char *) NULL)
     {
       (void) CopyMagickString(subexpression,expression,(size_t)
         (p-expression+1));
-      alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,depth,
+      alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,depth+1,
         beta,exception);
       switch ((unsigned char) *p)
       {
         case '~':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
           *beta=(double) (~(size_t) *beta);
-          return(*beta);
+          FxReturn(*beta);
         }
         case '!':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(*beta == 0.0 ? 1.0 : 0.0);
+          FxReturn(*beta == 0.0 ? 1.0 : 0.0);
         }
         case '^':
         {
-          *beta=pow(alpha,FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,
-            beta,exception));
-          return(*beta);
+          *beta=pow(alpha,FxEvaluateSubexpression(fx_info,channel,x,y,++p,
+            depth+1,beta,exception));
+          FxReturn(*beta);
         }
         case '*':
         case ExponentialNotation:
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha*(*beta));
+          FxReturn(alpha*(*beta));
         }
         case '/':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
           if (*beta == 0.0)
             {
               (void) ThrowMagickException(exception,GetMagickModule(),
                 OptionError,"DivideByZero","`%s'",expression);
-              return(0.0);
+              FxReturn(0.0);
             }
-          return(alpha/(*beta));
+          FxReturn(alpha/(*beta));
         }
         case '%':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
           *beta=fabs(floor((*beta)+0.5));
           if (*beta == 0.0)
             {
               (void) ThrowMagickException(exception,GetMagickModule(),
                 OptionError,"DivideByZero","`%s'",expression);
-              return(0.0);
+              FxReturn(0.0);
             }
-          return(fmod(alpha,*beta));
+          FxReturn(fmod(alpha,*beta));
         }
         case '+':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha+(*beta));
+          FxReturn(alpha+(*beta));
         }
         case '-':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha-(*beta));
+          FxReturn(alpha-(*beta));
         }
         case LeftShiftOperator:
         {
-          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
+          if ((size_t) (gamma+0.5) >= (8*sizeof(size_t)))
+            {
+              (void) ThrowMagickException(exception,GetMagickModule(),
+                OptionError,"ShiftCountOverflow","`%s'",subexpression);
+              FxReturn(0.0);
+            }
           *beta=(double) ((size_t) (alpha+0.5) << (size_t) (gamma+0.5));
-          return(*beta);
+          FxReturn(*beta);
         }
         case RightShiftOperator:
         {
-          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
+          if ((size_t) (gamma+0.5) >= (8*sizeof(size_t)))
+            {
+              (void) ThrowMagickException(exception,GetMagickModule(),
+                OptionError,"ShiftCountOverflow","`%s'",subexpression);
+              FxReturn(0.0);
+            }
           *beta=(double) ((size_t) (alpha+0.5) >> (size_t) (gamma+0.5));
-          return(*beta);
+          FxReturn(*beta);
         }
         case '<':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha < *beta ? 1.0 : 0.0);
+          FxReturn(alpha < *beta ? 1.0 : 0.0);
         }
         case LessThanEqualOperator:
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha <= *beta ? 1.0 : 0.0);
+          FxReturn(alpha <= *beta ? 1.0 : 0.0);
         }
         case '>':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha > *beta ? 1.0 : 0.0);
+          FxReturn(alpha > *beta ? 1.0 : 0.0);
         }
         case GreaterThanEqualOperator:
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha >= *beta ? 1.0 : 0.0);
+          FxReturn(alpha >= *beta ? 1.0 : 0.0);
         }
         case EqualOperator:
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(fabs(alpha-(*beta)) < MagickEpsilon ? 1.0 : 0.0);
+          FxReturn(fabs(alpha-(*beta)) < MagickEpsilon ? 1.0 : 0.0);
         }
         case NotEqualOperator:
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(fabs(alpha-(*beta)) >= MagickEpsilon ? 1.0 : 0.0);
+          FxReturn(fabs(alpha-(*beta)) >= MagickEpsilon ? 1.0 : 0.0);
         }
         case '&':
         {
-          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
           *beta=(double) ((size_t) (alpha+0.5) & (size_t) (gamma+0.5));
-          return(*beta);
+          FxReturn(*beta);
         }
         case '|':
         {
-          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
           *beta=(double) ((size_t) (alpha+0.5) | (size_t) (gamma+0.5));
-          return(*beta);
+          FxReturn(*beta);
         }
         case LogicalAndOperator:
         {
@@ -2254,12 +2285,12 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           if (alpha <= 0.0)
             {
               *beta=0.0;
-              return(*beta);
+              FxReturn(*beta);
             }
-          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,p,depth,beta,
+          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,p,depth+1,beta,
             exception);
           *beta=(gamma > 0.0) ? 1.0 : 0.0;
-          return(*beta);
+          FxReturn(*beta);
         }
         case LogicalOrOperator:
         {
@@ -2267,12 +2298,12 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           if (alpha > 0.0)
             {
              *beta=1.0;
-             return(*beta);
+             FxReturn(*beta);
             }
-          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,p,depth,beta,
+          gamma=FxEvaluateSubexpression(fx_info,channel,x,y,p,depth+1,beta,
             exception);
           *beta=(gamma > 0.0) ? 1.0 : 0.0;
-          return(*beta);
+          FxReturn(*beta);
         }
         case '?':
         {
@@ -2283,15 +2314,15 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
             {
               (void) ThrowMagickException(exception,GetMagickModule(),
                 OptionError,"UnableToParseExpression","`%s'",subexpression);
-              return(0.0);
+              FxReturn(0.0);
             }
           if (fabs(alpha) >= MagickEpsilon)
-            gamma=FxEvaluateSubexpression(fx_info,channel,x,y,p,depth,beta,
+            gamma=FxEvaluateSubexpression(fx_info,channel,x,y,p,depth+1,beta,
               exception);
           else
-            gamma=FxEvaluateSubexpression(fx_info,channel,x,y,q,depth,beta,
+            gamma=FxEvaluateSubexpression(fx_info,channel,x,y,q,depth+1,beta,
               exception);
-          return(gamma);
+          FxReturn(gamma);
         }
         case '=':
         {
@@ -2305,153 +2336,152 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
             {
               (void) ThrowMagickException(exception,GetMagickModule(),
                 OptionError,"UnableToParseExpression","`%s'",subexpression);
-              return(0.0);
+              FxReturn(0.0);
             }
           ClearMagickException(exception);
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          (void) FormatLocaleString(numeric,MagickPathExtent,"%g",*beta);
+          (void) FormatLocaleString(numeric,MagickPathExtent,"%.20g",*beta);
           (void) DeleteNodeFromSplayTree(fx_info->symbols,subexpression);
           (void) AddValueToSplayTree(fx_info->symbols,ConstantString(
             subexpression),ConstantString(numeric));
-          return(*beta);
+          FxReturn(*beta);
         }
         case ',':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(alpha);
+          FxReturn(alpha);
         }
         case ';':
         {
-          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth,beta,
+          *beta=FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,beta,
             exception);
-          return(*beta);
+          FxReturn(*beta);
         }
         default:
         {
-          gamma=alpha*FxEvaluateSubexpression(fx_info,channel,x,y,p,depth,beta,
-            exception);
-          return(gamma);
+          gamma=alpha*FxEvaluateSubexpression(fx_info,channel,x,y,++p,depth+1,
+            beta,exception);
+          FxReturn(gamma);
         }
       }
     }
   if (strchr("(",(int) *expression) != (char *) NULL)
     {
-      (*depth)++;
-      if (*depth >= FxMaxParenthesisDepth)
+      if (depth >= FxMaxParenthesisDepth)
         (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
           "ParenthesisNestedTooDeeply","`%s'",expression);
       (void) CopyMagickString(subexpression,expression+1,MagickPathExtent);
-      subexpression[strlen(subexpression)-1]='\0';
-      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,depth,
+      if (strlen(subexpression) != 0)
+        subexpression[strlen(subexpression)-1]='\0';
+      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,depth+1,
         beta,exception);
-      (*depth)--;
-      return(gamma);
+      FxReturn(gamma);
     }
   switch (*expression)
   {
     case '+':
     {
-      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,expression+1,depth,beta,
-        exception);
-      return(1.0*gamma);
+      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,expression+1,depth+1,
+        beta,exception);
+      FxReturn(1.0*gamma);
     }
     case '-':
     {
-      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,expression+1,depth,beta,
-        exception);
-      return(-1.0*gamma);
+      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,expression+1,depth+1,
+        beta,exception);
+      FxReturn(-1.0*gamma);
     }
     case '~':
     {
-      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,expression+1,depth,beta,
-        exception);
-      return((double) (~(size_t) (gamma+0.5)));
+      gamma=FxEvaluateSubexpression(fx_info,channel,x,y,expression+1,depth+1,
+        beta,exception);
+      FxReturn((double) (~(size_t) (gamma+0.5)));
     }
     case 'A':
     case 'a':
     {
       if (LocaleNCompare(expression,"abs",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(fabs(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(fabs(alpha));
         }
 #if defined(MAGICKCORE_HAVE_ACOSH)
       if (LocaleNCompare(expression,"acosh",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return(acosh(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn(acosh(alpha));
         }
 #endif
       if (LocaleNCompare(expression,"acos",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(acos(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(acos(alpha));
         }
 #if defined(MAGICKCORE_HAVE_J1)
       if (LocaleNCompare(expression,"airy",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
           if (alpha == 0.0)
-            return(1.0);
+            FxReturn(1.0);
           gamma=2.0*j1((MagickPI*alpha))/(MagickPI*alpha);
-          return(gamma*gamma);
+          FxReturn(gamma*gamma);
         }
 #endif
 #if defined(MAGICKCORE_HAVE_ASINH)
       if (LocaleNCompare(expression,"asinh",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return(asinh(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn(asinh(alpha));
         }
 #endif
       if (LocaleNCompare(expression,"asin",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(asin(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(asin(alpha));
         }
       if (LocaleNCompare(expression,"alt",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(((ssize_t) alpha) & 0x01 ? -1.0 : 1.0);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(((ssize_t) alpha) & 0x01 ? -1.0 : 1.0);
         }
       if (LocaleNCompare(expression,"atan2",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return(atan2(alpha,*beta));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn(atan2(alpha,*beta));
         }
 #if defined(MAGICKCORE_HAVE_ATANH)
       if (LocaleNCompare(expression,"atanh",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return(atanh(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn(atanh(alpha));
         }
 #endif
       if (LocaleNCompare(expression,"atan",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(atan(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(atan(alpha));
         }
       if (LocaleCompare(expression,"a") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'B':
     case 'b':
     {
       if (LocaleCompare(expression,"b") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'C':
@@ -2459,34 +2489,34 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     {
       if (LocaleNCompare(expression,"ceil",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(ceil(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(ceil(alpha));
         }
       if (LocaleNCompare(expression,"clamp",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
           if (alpha < 0.0)
-            return(0.0);
+            FxReturn(0.0);
           if (alpha > 1.0)
-            return(1.0);
-          return(alpha);
+            FxReturn(1.0);
+          FxReturn(alpha);
         }
       if (LocaleNCompare(expression,"cosh",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(cosh(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(cosh(alpha));
         }
       if (LocaleNCompare(expression,"cos",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(cos(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(cos(alpha));
         }
       if (LocaleCompare(expression,"c") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'D':
@@ -2497,8 +2527,8 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           const char
             *type;
 
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
           if (fx_info->images->colorspace == CMYKColorspace)
             switch (channel)
             {
@@ -2523,15 +2553,15 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
             subexpression[strlen(subexpression)-1]='\0';
           if (fx_info->file != (FILE *) NULL)
             (void) FormatLocaleFile(fx_info->file,"%s[%.20g,%.20g].%s: "
-               "%s=%.*g\n",fx_info->images->filename,(double) x,(double) y,type,
-               subexpression,GetMagickPrecision(),alpha);
-          return(0.0);
+              "%s=%.*g\n",fx_info->images->filename,(double) x,(double) y,type,
+              subexpression,GetMagickPrecision(),alpha);
+          FxReturn(0.0);
         }
       if (LocaleNCompare(expression,"drc",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return((alpha/(*beta*(alpha-1.0)+1.0)));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn((alpha/(*beta*(alpha-1.0)+1.0)));
         }
       break;
     }
@@ -2539,23 +2569,23 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     case 'e':
     {
       if (LocaleCompare(expression,"epsilon") == 0)
-        return(MagickEpsilon);
+        FxReturn(MagickEpsilon);
 #if defined(MAGICKCORE_HAVE_ERF)
       if (LocaleNCompare(expression,"erf",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(erf(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(erf(alpha));
         }
 #endif
       if (LocaleNCompare(expression,"exp",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(exp(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(exp(alpha));
         }
       if (LocaleCompare(expression,"e") == 0)
-        return(2.7182818284590452354);
+        FxReturn(2.7182818284590452354);
       break;
     }
     case 'F':
@@ -2563,9 +2593,9 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     {
       if (LocaleNCompare(expression,"floor",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return(floor(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn(floor(alpha));
         }
       break;
     }
@@ -2574,38 +2604,38 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     {
       if (LocaleNCompare(expression,"gauss",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
           gamma=exp((-alpha*alpha/2.0))/sqrt(2.0*MagickPI);
-          return(gamma);
+          FxReturn(gamma);
         }
       if (LocaleNCompare(expression,"gcd",3) == 0)
         {
           MagickOffsetType
             gcd;
 
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
           gcd=FxGCD((MagickOffsetType) (alpha+0.5),(MagickOffsetType) (*beta+
             0.5));
-          return((double) gcd);
+          FxReturn((double) gcd);
         }
       if (LocaleCompare(expression,"g") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'H':
     case 'h':
     {
       if (LocaleCompare(expression,"h") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       if (LocaleCompare(expression,"hue") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       if (LocaleNCompare(expression,"hypot",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return(hypot(alpha,*beta));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn(hypot(alpha,*beta));
         }
       break;
     }
@@ -2613,60 +2643,60 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     case 'k':
     {
       if (LocaleCompare(expression,"k") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'I':
     case 'i':
     {
       if (LocaleCompare(expression,"intensity") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       if (LocaleNCompare(expression,"int",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(floor(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(floor(alpha));
         }
       if (LocaleNCompare(expression,"isnan",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return((double) !!IsNaN(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn((double) !!IsNaN(alpha));
         }
       if (LocaleCompare(expression,"i") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'J':
     case 'j':
     {
       if (LocaleCompare(expression,"j") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
 #if defined(MAGICKCORE_HAVE_J0)
       if (LocaleNCompare(expression,"j0",2) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+2,depth,
-            beta,exception);
-          return(j0(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+2,
+            depth+1,beta,exception);
+          FxReturn(j0(alpha));
         }
 #endif
 #if defined(MAGICKCORE_HAVE_J1)
       if (LocaleNCompare(expression,"j1",2) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+2,depth,
-            beta,exception);
-          return(j1(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+2,
+            depth+1,beta,exception);
+          FxReturn(j1(alpha));
         }
 #endif
 #if defined(MAGICKCORE_HAVE_J1)
       if (LocaleNCompare(expression,"jinc",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
           if (alpha == 0.0)
-            return(1.0);
+            FxReturn(1.0);
           gamma=(2.0*j1((MagickPI*alpha))/(MagickPI*alpha));
-          return(gamma);
+          FxReturn(gamma);
         }
 #endif
       break;
@@ -2676,56 +2706,56 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     {
       if (LocaleNCompare(expression,"ln",2) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+2,depth,
-            beta,exception);
-          return(log(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+2,
+            depth+1,beta,exception);
+          FxReturn(log(alpha));
         }
       if (LocaleNCompare(expression,"logtwo",6) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+6,depth,
-            beta,exception);
-          return(log10(alpha))/log10(2.0);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+6,
+            depth+1,beta,exception);
+          FxReturn(log10(alpha)/log10(2.0));
         }
       if (LocaleNCompare(expression,"log",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(log10(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(log10(alpha));
         }
       if (LocaleCompare(expression,"lightness") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'M':
     case 'm':
     {
       if (LocaleCompare(expression,"MaxRGB") == 0)
-        return(QuantumRange);
+        FxReturn(QuantumRange);
       if (LocaleNCompare(expression,"maxima",6) == 0)
         break;
       if (LocaleNCompare(expression,"max",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(alpha > *beta ? alpha : *beta);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(alpha > *beta ? alpha : *beta);
         }
       if (LocaleNCompare(expression,"minima",6) == 0)
         break;
       if (LocaleNCompare(expression,"min",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(alpha < *beta ? alpha : *beta);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(alpha < *beta ? alpha : *beta);
         }
       if (LocaleNCompare(expression,"mod",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
           gamma=alpha-floor((alpha/(*beta)))*(*beta);
-          return(gamma);
+          FxReturn(gamma);
         }
       if (LocaleCompare(expression,"m") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'N':
@@ -2733,47 +2763,47 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     {
       if (LocaleNCompare(expression,"not",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return((double) (alpha < MagickEpsilon));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn((double) (alpha < MagickEpsilon));
         }
       if (LocaleCompare(expression,"n") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'O':
     case 'o':
     {
       if (LocaleCompare(expression,"Opaque") == 0)
-        return(1.0);
+        FxReturn(1.0);
       if (LocaleCompare(expression,"o") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'P':
     case 'p':
     {
       if (LocaleCompare(expression,"phi") == 0)
-        return(MagickPHI);
+        FxReturn(MagickPHI);
       if (LocaleCompare(expression,"pi") == 0)
-        return(MagickPI);
+        FxReturn(MagickPI);
       if (LocaleNCompare(expression,"pow",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(pow(alpha,*beta));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(pow(alpha,*beta));
         }
       if (LocaleCompare(expression,"p") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'Q':
     case 'q':
     {
       if (LocaleCompare(expression,"QuantumRange") == 0)
-        return(QuantumRange);
+        FxReturn(QuantumRange);
       if (LocaleCompare(expression,"QuantumScale") == 0)
-        return(QuantumScale);
+        FxReturn(QuantumScale);
       break;
     }
     case 'R':
@@ -2785,64 +2815,64 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
         #pragma omp critical (MagickCore_FxEvaluateSubexpression)
 #endif
           alpha=GetPseudoRandomValue(fx_info->random_info);
-          return(alpha);
+          FxReturn(alpha);
         }
       if (LocaleNCompare(expression,"round",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
-          return(floor(alpha+0.5));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
+          FxReturn(floor(alpha+0.5));
         }
       if (LocaleCompare(expression,"r") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'S':
     case 's':
     {
       if (LocaleCompare(expression,"saturation") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       if (LocaleNCompare(expression,"sign",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(alpha < 0.0 ? -1.0 : 1.0);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(alpha < 0.0 ? -1.0 : 1.0);
         }
       if (LocaleNCompare(expression,"sinc",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
           if (alpha == 0)
-            return(1.0);
+            FxReturn(1.0);
           gamma=sin((MagickPI*alpha))/(MagickPI*alpha);
-          return(gamma);
+          FxReturn(gamma);
         }
       if (LocaleNCompare(expression,"sinh",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(sinh(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(sinh(alpha));
         }
       if (LocaleNCompare(expression,"sin",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(sin(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(sin(alpha));
         }
       if (LocaleNCompare(expression,"sqrt",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(sqrt(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(sqrt(alpha));
         }
       if (LocaleNCompare(expression,"squish",6) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+6,depth,
-            beta,exception);
-          return((1.0/(1.0+exp(-alpha))));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+6,
+            depth+1,beta,exception);
+          FxReturn((1.0/(1.0+exp(-alpha))));
         }
       if (LocaleCompare(expression,"s") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'T':
@@ -2850,42 +2880,42 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     {
       if (LocaleNCompare(expression,"tanh",4) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,depth,
-            beta,exception);
-          return(tanh(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
+            depth+1,beta,exception);
+          FxReturn(tanh(alpha));
         }
       if (LocaleNCompare(expression,"tan",3) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,depth,
-            beta,exception);
-          return(tan(alpha));
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
+            depth+1,beta,exception);
+          FxReturn(tan(alpha));
         }
       if (LocaleCompare(expression,"Transparent") == 0)
-        return(0.0);
+        FxReturn(0.0);
       if (LocaleNCompare(expression,"trunc",5) == 0)
         {
-          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,depth,
-            beta,exception);
+          alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
+            depth+1,beta,exception);
           if (alpha >= 0.0)
-            return(floor(alpha));
-          return(ceil(alpha));
+            FxReturn(floor(alpha));
+          FxReturn(ceil(alpha));
         }
       if (LocaleCompare(expression,"t") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'U':
     case 'u':
     {
       if (LocaleCompare(expression,"u") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'V':
     case 'v':
     {
       if (LocaleCompare(expression,"v") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'W':
@@ -2896,36 +2926,37 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           do
           {
             alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
-              depth,beta,exception);
+              depth+1,beta,exception);
           } while (fabs(alpha) >= MagickEpsilon);
-          return(*beta);
+          FxReturn(*beta);
         }
       if (LocaleCompare(expression,"w") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'Y':
     case 'y':
     {
       if (LocaleCompare(expression,"y") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     case 'Z':
     case 'z':
     {
       if (LocaleCompare(expression,"z") == 0)
-        return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
       break;
     }
     default:
       break;
   }
+  subexpression=DestroyString(subexpression);
   q=(char *) expression;
   alpha=InterpretSiPrefixValue(expression,&q);
   if (q == expression)
-    return(FxGetSymbol(fx_info,channel,x,y,expression,exception));
-  return(alpha);
+    FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+  FxReturn(alpha);
 }
 
 MagickPrivate MagickBooleanType FxEvaluateExpression(FxInfo *fx_info,
@@ -2963,12 +2994,8 @@ MagickPrivate MagickBooleanType FxEvaluateChannelExpression(FxInfo *fx_info,
   double
     beta;
 
-  size_t
-    depth;
-
-  depth=0;
   beta=0.0;
-  *alpha=FxEvaluateSubexpression(fx_info,channel,x,y,fx_info->expression,&depth,
+  *alpha=FxEvaluateSubexpression(fx_info,channel,x,y,fx_info->expression,0,
     &beta,exception);
   return(exception->severity == OptionError ? MagickFalse : MagickTrue);
 }
@@ -3040,7 +3067,7 @@ static FxInfo **AcquireFxThreadSet(const Image *image,const char *expression,
         ResourceLimitError,"MemoryAllocationFailed","`%s'",image->filename);
       return((FxInfo **) NULL);
     }
-  (void) ResetMagickMemory(fx_info,0,number_threads*sizeof(*fx_info));
+  (void) memset(fx_info,0,number_threads*sizeof(*fx_info));
   if (*expression != '@')
     fx_expression=ConstantString(expression);
   else
@@ -3114,7 +3141,7 @@ MagickExport Image *FxImage(const Image *image,const char *expression,
   image_view=AcquireVirtualCacheView(image,exception);
   fx_view=AcquireAuthenticCacheView(fx_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,fx_image,fx_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) fx_image->rows; y++)
@@ -3312,7 +3339,7 @@ MagickExport Image *ImplodeImage(const Image *image,const double amount,
   interpolate_view=AcquireVirtualCacheView(canvas,exception);
   implode_view=AcquireAuthenticCacheView(implode_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(canvas,implode_image,canvas->rows,1)
 #endif
   for (y=0; y < (ssize_t) canvas->rows; y++)
@@ -3386,6 +3413,8 @@ MagickExport Image *ImplodeImage(const Image *image,const double amount,
           status=InterpolatePixelChannels(canvas,interpolate_view,implode_image,
             method,(double) (factor*delta.x/scale.x+center.x),(double) (factor*
             delta.y/scale.y+center.y),q,exception);
+          if (status == MagickFalse)
+            break;
         }
       p+=GetPixelChannels(canvas);
       q+=GetPixelChannels(implode_image);
@@ -3554,7 +3583,7 @@ MagickExport Image *MorphImages(const Image *image,const size_t number_frames,
       image_view=AcquireVirtualCacheView(morph_image,exception);
       morph_view=AcquireAuthenticCacheView(morph_images,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         magick_number_threads(morph_image,morph_image,morph_image->rows,1)
 #endif
       for (y=0; y < (ssize_t) morph_images->rows; y++)
@@ -4055,7 +4084,7 @@ MagickExport Image *PolaroidImage(const Image *image,const DrawInfo *draw_info,
           caption_image->background_color=image->border_color;
           (void) SetImageBackgroundColor(caption_image,exception);
           (void) CloneString(&annotate_info->text,text);
-          (void) FormatLocaleString(geometry,MagickPathExtent,"+0+%g",
+          (void) FormatLocaleString(geometry,MagickPathExtent,"+0+%.20g",
             metrics.ascent);
           if (annotate_info->gravity == UndefinedGravity)
             (void) CloneString(&annotate_info->geometry,AcquireString(
@@ -4213,7 +4242,7 @@ MagickExport Image *SepiaToneImage(const Image *image,const double threshold,
   image_view=AcquireVirtualCacheView(image,exception);
   sepia_view=AcquireAuthenticCacheView(sepia_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,sepia_image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -4507,7 +4536,7 @@ MagickExport Image *SketchImage(const Image *image,const double radius,
   random_view=AcquireAuthenticCacheView(random_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
   key=GetRandomSecretKey(random_info[0]);
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(random_image,random_image,random_image->rows,key == ~0UL)
 #endif
   for (y=0; y < (ssize_t) random_image->rows; y++)
@@ -4677,7 +4706,7 @@ MagickExport MagickBooleanType SolarizeImage(Image *image,
   progress=0;
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -5162,7 +5191,7 @@ MagickExport Image *SwirlImage(const Image *image,double degrees,
   interpolate_view=AcquireVirtualCacheView(image,exception);
   swirl_view=AcquireAuthenticCacheView(swirl_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(canvas,swirl_image,canvas->rows,1)
 #endif
   for (y=0; y < (ssize_t) canvas->rows; y++)
@@ -5240,6 +5269,8 @@ MagickExport Image *SwirlImage(const Image *image,double degrees,
           status=InterpolatePixelChannels(canvas,interpolate_view,swirl_image,
             method,((cosine*delta.x-sine*delta.y)/scale.x+center.x),(double)
             ((sine*delta.x+cosine*delta.y)/scale.y+center.y),q,exception);
+          if (status == MagickFalse)
+            break;
         }
       p+=GetPixelChannels(canvas);
       q+=GetPixelChannels(swirl_image);
@@ -5391,7 +5422,7 @@ MagickExport Image *TintImage(const Image *image,const char *blend,
   image_view=AcquireVirtualCacheView(image,exception);
   tint_view=AcquireAuthenticCacheView(tint_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(image,tint_image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -5423,37 +5454,27 @@ MagickExport Image *TintImage(const Image *image,const char *blend,
       double
         weight;
 
-      register ssize_t
-        i;
-
-      for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
-      {
-        PixelChannel channel = GetPixelChannelChannel(image,i);
-        PixelTrait traits = GetPixelChannelTraits(image,channel);
-        PixelTrait tint_traits=GetPixelChannelTraits(tint_image,channel);
-        if ((traits == UndefinedPixelTrait) ||
-            (tint_traits == UndefinedPixelTrait))
-          continue;
-        if (((tint_traits & CopyPixelTrait) != 0) ||
-            (GetPixelWriteMask(image,p) <= (QuantumRange/2)))
-          {
-            SetPixelChannel(tint_image,channel,p[i],q);
-            continue;
-          }
-      }
       GetPixelInfo(image,&pixel);
+      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
+        {
+          SetPixelViaPixelInfo(tint_image,&pixel,q);
+          p+=GetPixelChannels(image);
+          q+=GetPixelChannels(tint_image);
+          continue;
+        }
       weight=QuantumScale*GetPixelRed(image,p)-0.5;
-      pixel.red=(double) GetPixelRed(image,p)+color_vector.red*(1.0-(4.0*
-        (weight*weight)));
+      pixel.red=(MagickRealType) GetPixelRed(image,p)+color_vector.red*
+        (1.0-(4.0*(weight*weight)));
       weight=QuantumScale*GetPixelGreen(image,p)-0.5;
-      pixel.green=(double) GetPixelGreen(image,p)+color_vector.green*(1.0-(4.0*
-        (weight*weight)));
+      pixel.green=(MagickRealType) GetPixelGreen(image,p)+color_vector.green*
+        (1.0-(4.0*(weight*weight)));
       weight=QuantumScale*GetPixelBlue(image,p)-0.5;
-      pixel.blue=(double) GetPixelBlue(image,p)+color_vector.blue*(1.0-(4.0*
-        (weight*weight)));
+      pixel.blue=(MagickRealType) GetPixelBlue(image,p)+color_vector.blue*
+        (1.0-(4.0*(weight*weight)));
       weight=QuantumScale*GetPixelBlack(image,p)-0.5;
-      pixel.black=(double) GetPixelBlack(image,p)+color_vector.black*(1.0-(4.0*
-        (weight*weight)));
+      pixel.black=(MagickRealType) GetPixelBlack(image,p)+color_vector.black*
+        (1.0-(4.0*(weight*weight)));
+      pixel.alpha=(MagickRealType) GetPixelAlpha(image,p);
       SetPixelViaPixelInfo(tint_image,&pixel,q);
       p+=GetPixelChannels(image);
       q+=GetPixelChannels(tint_image);
@@ -5695,7 +5716,7 @@ MagickExport Image *WaveImage(const Image *image,const double amplitude,
   (void) SetCacheViewVirtualPixelMethod(canvas_view,
     BackgroundVirtualPixelMethod);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(progress,status) \
+  #pragma omp parallel for schedule(static) shared(progress,status) \
     magick_number_threads(canvas,wave_image,wave_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) wave_image->rows; y++)
@@ -5719,6 +5740,8 @@ MagickExport Image *WaveImage(const Image *image,const double amplitude,
     {
       status=InterpolatePixelChannels(canvas,canvas_view,wave_image,method,
         (double) x,(double) (y-sine_map[x]),q,exception);
+      if (status == MagickFalse)
+        break;
       q+=GetPixelChannels(wave_image);
     }
     if (SyncCacheViewAuthenticPixels(wave_view,exception) == MagickFalse)

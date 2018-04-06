@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
   
   You may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ static inline void GetFillColor(const DrawInfo *draw_info,const ssize_t x,
     pattern=draw_info->fill_pattern;
     (void) GetOneVirtualPixelInfo(pattern,TileVirtualPixelMethod,x+
       pattern->tile_offset.x,y+pattern->tile_offset.y,fill,exception);
+    fill->alpha*=QuantumScale*draw_info->fill_alpha;
   }
 }
 
@@ -59,6 +60,7 @@ static inline void GetStrokeColor(const DrawInfo *draw_info,const ssize_t x,
     pattern=draw_info->stroke_pattern;
     (void) GetOneVirtualPixelInfo(pattern,TileVirtualPixelMethod,x+
       pattern->tile_offset.x,y+pattern->tile_offset.y,stroke,exception);
+    stroke->alpha*=QuantumScale*draw_info->stroke_alpha;
   }
 }
 

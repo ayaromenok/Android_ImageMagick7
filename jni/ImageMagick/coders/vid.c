@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -101,7 +101,8 @@ static Image *ReadVIDImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
   char
     **filelist,
-    *label;
+    *label,
+    **list;
 
   Image
     *image,
@@ -139,12 +140,15 @@ static Image *ReadVIDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
   image=AcquireImage(image_info,exception);
-  filelist=(char **) AcquireMagickMemory(sizeof(*filelist));
-  if (filelist == (char **) NULL)
+  list=(char **) AcquireMagickMemory(sizeof(*filelist));
+  if (list == (char **) NULL)
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
-  filelist[0]=ConstantString(image_info->filename);
+  list[0]=ConstantString(image_info->filename);
+  filelist=list;
   number_files=1;
   status=ExpandFilenames(&number_files,&filelist);
+  list[0]=DestroyString(list[0]);
+  list=(char **) RelinquishMagickMemory(list);
   if ((status == MagickFalse) || (number_files == 0))
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
   image=DestroyImage(image);

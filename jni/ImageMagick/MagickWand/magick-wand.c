@@ -23,7 +23,7 @@
 %                                 August 2003                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -124,7 +124,7 @@ WandExport MagickWand *CloneMagickWand(const MagickWand *wand)
   if (clone_wand == (MagickWand *) NULL)
     ThrowWandFatalException(ResourceLimitFatalError,"MemoryAllocationFailed",
       wand->name);
-  (void) ResetMagickMemory(clone_wand,0,sizeof(*clone_wand));
+  (void) memset(clone_wand,0,sizeof(*clone_wand));
   clone_wand->id=AcquireWandId();
   (void) FormatLocaleString(clone_wand->name,MagickPathExtent,"%s-%.20g",
     MagickWandId,(double) clone_wand->id);
@@ -545,7 +545,7 @@ WandExport double *MagickQueryFontMetrics(MagickWand *wand,
       return((double *) NULL);
     }
   (void) CloneString(&draw_info->text,text);
-  (void) ResetMagickMemory(&metrics,0,sizeof(metrics));
+  (void) memset(&metrics,0,sizeof(metrics));
   status=GetTypeMetrics(wand->images,draw_info,&metrics,wand->exception);
   draw_info=DestroyDrawInfo(draw_info);
   if (status == MagickFalse)
@@ -652,7 +652,7 @@ WandExport double *MagickQueryMultilineFontMetrics(MagickWand *wand,
       return((double *) NULL);
     }
   (void) CloneString(&draw_info->text,text);
-  (void) ResetMagickMemory(&metrics,0,sizeof(metrics));
+  (void) memset(&metrics,0,sizeof(metrics));
   status=GetMultilineTypeMetrics(wand->images,draw_info,&metrics,
     wand->exception);
   draw_info=DestroyDrawInfo(draw_info);
@@ -1066,7 +1066,7 @@ WandExport MagickWand *NewMagickWand(void)
   if (wand == (MagickWand *) NULL)
     ThrowWandFatalException(ResourceLimitFatalError,"MemoryAllocationFailed",
       GetExceptionMessage(errno));
-  (void) ResetMagickMemory(wand,0,sizeof(*wand));
+  (void) memset(wand,0,sizeof(*wand));
   wand->id=AcquireWandId();
   (void) FormatLocaleString(wand->name,MagickPathExtent,"%s-%.20g",MagickWandId,
     (double) wand->id);

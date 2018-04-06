@@ -17,7 +17,7 @@
 %                               December 2003                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -1337,6 +1337,7 @@ WandExport MagickBooleanType CompareImagesCommand(ImageInfo *image_info,
                       channel_distortion[AlphaPixelChannel]);
                   break;
                 }
+                case LinearGRAYColorspace:
                 case GRAYColorspace:
                 {
                   (void) FormatLocaleFile(stderr,"    gray: %g (%g)\n",
@@ -1392,6 +1393,7 @@ WandExport MagickBooleanType CompareImagesCommand(ImageInfo *image_info,
                       channel_distortion[AlphaPixelChannel]);
                   break;
                 }
+                case LinearGRAYColorspace:
                 case GRAYColorspace:
                 {
                   (void) FormatLocaleFile(stderr,"    gray: %g\n",

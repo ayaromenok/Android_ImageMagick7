@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
 
   You may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@
 #ifndef MAGICKCORE_QUANTUM_PRIVATE_H
 #define MAGICKCORE_QUANTUM_PRIVATE_H
 
+#include "MagickCore/memory_.h"
 #include "MagickCore/cache.h"
+#include "MagickCore/image-private.h"
+#include "MagickCore/pixel-accessor.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -66,7 +69,7 @@ struct _QuantumInfo
   size_t
     number_threads;
 
-  unsigned char
+  MemoryInfo
     **pixels;
 
   size_t
@@ -93,8 +96,15 @@ static inline MagickSizeType GetQuantumRange(const size_t depth)
   MagickSizeType
     one;
 
+  size_t
+    max_depth;
+
+  if (depth == 0)
+    return(0);
   one=1;
-  return((MagickSizeType) ((one << (depth-1))+((one << (depth-1))-1)));
+  max_depth=8*sizeof(MagickSizeType);
+  return((MagickSizeType) ((one << (MagickMin(depth,max_depth)-1))+
+    ((one << (MagickMin(depth,max_depth)-1))-1)));
 }
 
 static inline float HalfToSinglePrecision(const unsigned short half)
@@ -268,15 +278,46 @@ static inline const unsigned char *PushShortPixel(const EndianType endian,
   return(pixels);
 }
 
+static inline const unsigned char *PushFloatPixel(const EndianType endian,
+  const unsigned char *pixels,MagickFloatType *pixel)
+{
+  union
+  {
+    unsigned int
+      unsigned_value;
+
+    MagickFloatType
+      float_value;
+  } quantum;
+
+  if (endian == LSBEndian)
+    {
+      quantum.unsigned_value=((unsigned int) *pixels++);
+      quantum.unsigned_value|=((unsigned int) *pixels++ << 8);
+      quantum.unsigned_value|=((unsigned int) *pixels++ << 16);
+      quantum.unsigned_value|=((unsigned int) *pixels++ << 24);
+      *pixel=quantum.float_value;
+      return(pixels);
+    }
+  quantum.unsigned_value=((unsigned int) *pixels++ << 24);
+  quantum.unsigned_value|=((unsigned int) *pixels++ << 16);
+  quantum.unsigned_value|=((unsigned int) *pixels++ << 8);
+  quantum.unsigned_value|=((unsigned int) *pixels++);
+  *pixel=quantum.float_value;
+  return(pixels);
+}
+
 static inline Quantum ScaleAnyToQuantum(const QuantumAny quantum,
   const QuantumAny range)
 {
   if (quantum > range)
     return(QuantumRange);
 #if !defined(MAGICKCORE_HDRI_SUPPORT)
-  return((Quantum) (((double) QuantumRange*quantum)/range+0.5));
+  return((Quantum) (((double) QuantumRange*quantum)*
+    PerceptibleReciprocal((double) range)+0.5));
 #else
-  return((Quantum) (((double) QuantumRange*quantum)/range));
+  return((Quantum) (((double) QuantumRange*quantum)*
+    PerceptibleReciprocal((double) range)));
 #endif
 }
 

@@ -17,7 +17,7 @@
 %                                 April 2014                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -179,7 +179,7 @@ static Image *ReadSCREENSHOTImage(const ImageInfo *image_info,
           DeleteDC(hDC);
           ThrowReaderException(CoderError,"UnableToCreateDC");
         }
-      (void) ResetMagickMemory(&bmi,0,sizeof(BITMAPINFO));
+      (void) memset(&bmi,0,sizeof(BITMAPINFO));
       bmi.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
       bmi.bmiHeader.biWidth=(LONG) screen->columns;
       bmi.bmiHeader.biHeight=(-1)*(LONG) screen->rows;

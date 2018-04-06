@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -133,7 +133,8 @@ static Image *ReadTILEImage(const ImageInfo *image_info,
     }
   (void) TextureImage(image,tile_image,exception);
   tile_image=DestroyImage(tile_image);
-  if (image->colorspace == GRAYColorspace)
+  if ((image->colorspace == LinearGRAYColorspace) ||
+      (image->colorspace == GRAYColorspace))
     image->type=GrayscaleType;
   return(GetFirstImageInList(image));
 }

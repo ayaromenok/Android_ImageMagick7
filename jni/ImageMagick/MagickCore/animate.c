@@ -17,7 +17,7 @@
 %                                July 1992                                    %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -312,7 +312,7 @@ MagickExport MagickBooleanType AnimateImages(const ImageInfo *image_info,
     CatchException(exception);
   (void) XSetErrorHandler(XError);
   resource_database=XGetResourceDatabase(display,GetClientName());
-  (void) ResetMagickMemory(&resource_info,0,sizeof(XResourceInfo));
+  (void) memset(&resource_info,0,sizeof(XResourceInfo));
   XGetResourceInfo(image_info,resource_database,GetClientName(),&resource_info);
   if (image_info->page != (char *) NULL)
     resource_info.image_geometry=AcquireString(image_info->page);

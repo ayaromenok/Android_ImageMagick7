@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -64,6 +64,7 @@
 #include "MagickCore/montage.h"
 #include "MagickCore/pixel-accessor.h"
 #include "MagickCore/resize.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/quantum-private.h"
 #include "MagickCore/static.h"
 #include "MagickCore/string_.h"
@@ -411,7 +412,7 @@ static Image *OverviewImage(const ImageInfo *image_info,Image *image,
   montage_info=DestroyMontageInfo(montage_info);
   if (montage_image == (Image *) NULL)
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
-  image=DestroyImage(image);
+  image=DestroyImageList(image);
   return(montage_image);
 }
 
@@ -464,7 +465,7 @@ static void Upsample(const size_t width,const size_t height,
   }
   p=pixels+(2*height-2)*scaled_width;
   q=pixels+(2*height-1)*scaled_width;
-  (void) CopyMagickMemory(q,p,(size_t) (2*width));
+  (void) memcpy(q,p,(size_t) (2*width));
 }
 
 static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
@@ -537,9 +538,13 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   if (header == (unsigned char *) NULL)
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
   count=ReadBlob(image,3*0x800,header);
+  if (count != (3*0x800))
+    {
+      header=(unsigned char *) RelinquishMagickMemory(header);
+      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+    }
   overview=LocaleNCompare((char *) header,"PCD_OPA",7) == 0;
-  if ((count != (3*0x800)) ||
-      ((LocaleNCompare((char *) header+0x800,"PCD",3) != 0) && (overview ==0)))
+  if ((LocaleNCompare((char *) header+0x800,"PCD",3) != 0) && (overview == 0))
     {
       header=(unsigned char *) RelinquishMagickMemory(header);
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -549,6 +554,8 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   header=(unsigned char *) RelinquishMagickMemory(header);
   if (number_images > 65535)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+  if (AcquireMagickResource(ListLengthResource,number_images) == MagickFalse)
+    ThrowReaderException(ResourceLimitError,"ListLengthExceedsLimit");
   /*
     Determine resolution by scene specification.
   */
@@ -591,6 +598,9 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   status=SetImageExtent(image,image->columns,image->rows,exception);
   if (status == MagickFalse)
     return(DestroyImageList(image));
+  status=ResetImagePixels(image,exception);
+  if (status == MagickFalse)
+    return(DestroyImageList(image));
   /*
     Allocate luma and chroma memory.
   */
@@ -614,6 +624,12 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
         luma=(unsigned char *) RelinquishMagickMemory(luma);
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
     }
+  (void) memset(chroma1,0,(image->columns+1UL)*image->rows*
+    10*sizeof(*chroma1));
+  (void) memset(chroma2,0,(image->columns+1UL)*image->rows*
+    10*sizeof(*chroma2));
+  (void) memset(luma,0,(image->columns+1UL)*image->rows*
+    10*sizeof(*luma));
   /*
     Advance to image data.
   */
@@ -694,6 +710,8 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
         image->colorspace=YCCColorspace;
         if (LocaleCompare(image_info->magick,"PCDS") == 0)
           (void) SetImageColorspace(image,sRGBColorspace,exception);
+        if (EOFBlob(image) != MagickFalse)
+          break;
         if (j < (ssize_t) number_images)
           {
             /*
@@ -1111,6 +1129,8 @@ static MagickBooleanType WritePCDImage(const ImageInfo *image_info,Image *image,
       if (rotate_image == (Image *) NULL)
         return(MagickFalse);
       pcd_image=rotate_image;
+      DestroyBlob(rotate_image);
+      pcd_image->blob=ReferenceBlob(image->blob);
     }
   /*
     Open output image file.

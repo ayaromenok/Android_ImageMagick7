@@ -18,7 +18,7 @@
 %                             November 1998                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -80,6 +80,7 @@
 #include "MagickCore/semaphore-private.h"
 #include "MagickCore/signature-private.h"
 #include "MagickCore/splay-tree.h"
+#include "MagickCore/static.h"
 #include "MagickCore/string_.h"
 #include "MagickCore/string-private.h"
 #include "MagickCore/thread_.h"
@@ -128,6 +129,9 @@ static volatile MagickBooleanType
   instantiate_magickcore = MagickFalse,
   magickcore_signal_in_progress = MagickFalse,
   magick_list_initialized = MagickFalse;
+
+static int
+  magick_precision = 0;
 
 /*
   Forward declarations.
@@ -165,8 +169,8 @@ static MagickBooleanType
 %      associated with the MagickInfo structure.
 %
 */
-MagickExport MagickInfo *AcquireMagickInfo(const char *module,
-  const char *name, const char *description)
+MagickExport MagickInfo *AcquireMagickInfo(const char *module,const char *name,
+  const char *description)
 {
   MagickInfo
     *magick_info;
@@ -176,7 +180,7 @@ MagickExport MagickInfo *AcquireMagickInfo(const char *module,
   assert(description != (const char *) NULL);
   (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",name);
   magick_info=(MagickInfo *) AcquireCriticalMemory(sizeof(*magick_info));
-  (void) ResetMagickMemory(magick_info,0,sizeof(*magick_info));
+  (void) memset(magick_info,0,sizeof(*magick_info));
   magick_info->module=ConstantString(module);
   magick_info->name=ConstantString(name);
   magick_info->description=ConstantString(description);
@@ -607,22 +611,28 @@ MagickExport const MagickInfo *GetMagickInfo(const char *name,
   if (IsMagickTreeInstantiated(exception) == MagickFalse)
     return((const MagickInfo *) NULL);
   magick_info=(const MagickInfo *) NULL;
-#if defined(MAGICKCORE_MODULES_SUPPORT)
   if ((name != (const char *) NULL) && (*name != '\0'))
     {
       LockSemaphoreInfo(magick_semaphore);
       if (LocaleCompare(name,"*") == 0)
+#if defined(MAGICKCORE_BUILD_MODULES)
         (void) OpenModules(exception);
+#else
+        RegisterStaticModules();
+#endif
       else
         {
           magick_info=(const MagickInfo *) GetValueFromSplayTree(magick_list,
             name);
           if (magick_info == (const MagickInfo *) NULL)
+#if defined(MAGICKCORE_BUILD_MODULES)
             (void) OpenModule(name,exception);
+#else
+            (void) RegisterStaticModule(name,exception);
+#endif
         }
       UnlockSemaphoreInfo(magick_semaphore);
     }
-#endif
   if ((name == (const char *) NULL) || (LocaleCompare(name,"*") == 0))
     magick_info=(const MagickInfo *) GetRootValueFromSplayTree(magick_list);
   if (magick_info == (const MagickInfo *) NULL)
@@ -1025,9 +1035,6 @@ static MagickBooleanType IsMagickTreeInstantiated(ExceptionInfo *exception)
 #if defined(MAGICKCORE_MODULES_SUPPORT)
           (void) GetModuleInfo((char *) NULL,exception);
 #endif
-#if !defined(MAGICKCORE_BUILD_MODULES)
-          RegisterStaticModules();
-#endif
           magick_list_initialized=MagickTrue;
         }
       UnlockSemaphoreInfo(magick_semaphore);
@@ -1311,6 +1318,9 @@ static SignalHandler *SetMagickSignalHandler(int signal_number,
   action.sa_flags=0;
 #if defined(SA_INTERRUPT)
   action.sa_flags|=SA_INTERRUPT;
+#endif
+#if defined(SA_ONSTACK)
+  action.sa_flags|=SA_ONSTACK;
 #endif
   status=sigaction(signal_number,&action,&previous_action);
   if (status < 0)
@@ -1631,6 +1641,29 @@ MagickExport MagickBooleanType RegisterMagickInfo(MagickInfo *magick_info)
 %                                                                             %
 %                                                                             %
 %                                                                             %
++   R e s e t M a g i c k P r e c i s i o n                                   %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ResetMagickPrecision() resets the magick_precision value.
+%
+%  The format of the ResetMagickPrecision method is:
+%
+%      void ResetMagickPrecision(void)
+%
+*/
+MagickPrivate void ResetMagickPrecision(void)
+{
+  magick_precision=0;
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
 %   S e t M a g i c k P r e c i s i o n                                       %
 %                                                                             %
 %                                                                             %
@@ -1658,9 +1691,6 @@ MagickExport MagickBooleanType RegisterMagickInfo(MagickInfo *magick_info)
 MagickExport int SetMagickPrecision(const int precision)
 {
 #define MagickPrecision  6
-
-  static int
-    magick_precision = 0;
 
   (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   if (precision > 0)

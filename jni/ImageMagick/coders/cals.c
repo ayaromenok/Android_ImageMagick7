@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -196,7 +196,7 @@ static Image *ReadCALSImage(const ImageInfo *image_info,
   /*
     Read CALS header.
   */
-  (void) ResetMagickMemory(header,0,sizeof(header));
+  (void) memset(header,0,sizeof(header));
   density=0;
   direction=0;
   orientation=1;
@@ -416,7 +416,7 @@ static ssize_t WriteCALSRecord(Image *image,const char *data)
   if (i < 128)
     {
       i=128-i;
-      (void) ResetMagickMemory(pad,' ',(size_t) i);
+      (void) memset(pad,' ',(size_t) i);
       count=WriteBlob(image,(size_t) i,(const unsigned char *) pad);
     }
   return(count);
@@ -545,7 +545,7 @@ static MagickBooleanType WriteCALSImage(const ImageInfo *image_info,
     (unsigned long) density);
   count=WriteCALSRecord(image,header);
   count=WriteCALSRecord(image,"notes: NONE");
-  (void) ResetMagickMemory(header,' ',128);
+  (void) memset(header,' ',128);
   for (i=0; i < 5; i++)
     (void) WriteBlob(image,128,(unsigned char *) header);
   /*

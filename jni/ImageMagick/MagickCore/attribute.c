@@ -17,7 +17,7 @@
 %                                October 2002                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -174,7 +174,7 @@ MagickExport RectangleInfo GetImageBoundingBox(const Image *image,
   status=MagickTrue;
   GetPixelInfo(image,&zero);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -381,7 +381,7 @@ MagickExport size_t GetImageDepth(const Image *image,ExceptionInfo *exception)
         depth_map[i]=depth;
       }
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         magick_number_threads(image,image,image->rows,1)
 #endif
       for (y=0; y < (ssize_t) image->rows; y++)
@@ -441,7 +441,7 @@ MagickExport size_t GetImageDepth(const Image *image,ExceptionInfo *exception)
     Compute pixel depth.
   */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -727,8 +727,8 @@ MagickExport MagickBooleanType IdentifyImageMonochrome(const Image *image,
   CacheView
     *image_view;
 
-  ImageType
-    type;
+  MagickBooleanType
+    bilevel;
 
   register ssize_t
     x;
@@ -747,7 +747,7 @@ MagickExport MagickBooleanType IdentifyImageMonochrome(const Image *image,
     return(MagickTrue);
   if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
     return(MagickFalse);
-  type=BilevelType;
+  bilevel=MagickTrue;
   image_view=AcquireVirtualCacheView(image,exception);
   for (y=0; y < (ssize_t) image->rows; y++)
   {
@@ -758,18 +758,16 @@ MagickExport MagickBooleanType IdentifyImageMonochrome(const Image *image,
     {
       if (IsPixelMonochrome(image,p) == MagickFalse)
         {
-          type=UndefinedType;
+          bilevel=MagickFalse;
           break;
         }
       p+=GetPixelChannels(image);
     }
-    if (type == UndefinedType)
+    if (bilevel == MagickFalse)
       break;
   }
   image_view=DestroyCacheView(image_view);
-  if (type == BilevelType)
-    return(MagickTrue);
-  return(MagickFalse);
+  return(bilevel);
 }
 
 /*
@@ -1031,7 +1029,7 @@ MagickExport MagickBooleanType SetImageDepth(Image *image,
         i;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         magick_number_threads(image,image,image->colors,1)
 #endif
       for (i=0; i < (ssize_t) image->colors; i++)
@@ -1071,7 +1069,7 @@ MagickExport MagickBooleanType SetImageDepth(Image *image,
         depth_map[i]=ScaleAnyToQuantum(ScaleQuantumToAny((Quantum) i,range),
           range);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         magick_number_threads(image,image,image->rows,1)
 #endif
       for (y=0; y < (ssize_t) image->rows; y++)
@@ -1136,7 +1134,7 @@ MagickExport MagickBooleanType SetImageDepth(Image *image,
     Scale pixels to desired depth.
   */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1256,38 +1254,32 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
   {
     case BilevelType:
     {
-      if (SetImageMonochrome(image,exception) == MagickFalse)
-        {
-          status=TransformImageColorspace(image,GRAYColorspace,exception);
-          (void) NormalizeImage(image,exception);
-          quantize_info=AcquireQuantizeInfo(image_info);
-          quantize_info->number_colors=2;
-          quantize_info->colorspace=GRAYColorspace;
-          status=QuantizeImage(quantize_info,image,exception);
-          quantize_info=DestroyQuantizeInfo(quantize_info);
-        }
+      status=TransformImageColorspace(image,GRAYColorspace,exception);
+      (void) NormalizeImage(image,exception);
+      quantize_info=AcquireQuantizeInfo(image_info);
+      quantize_info->number_colors=2;
+      quantize_info->colorspace=GRAYColorspace;
+      status=QuantizeImage(quantize_info,image,exception);
+      quantize_info=DestroyQuantizeInfo(quantize_info);
       image->alpha_trait=UndefinedPixelTrait;
       break;
     }
     case GrayscaleType:
     {
-      if (SetImageGray(image,exception) == MagickFalse)
-        status=TransformImageColorspace(image,GRAYColorspace,exception);
+      status=TransformImageColorspace(image,GRAYColorspace,exception);
       image->alpha_trait=UndefinedPixelTrait;
       break;
     }
     case GrayscaleAlphaType:
     {
-      if (SetImageGray(image,exception) == MagickFalse)
-        status=TransformImageColorspace(image,GRAYColorspace,exception);
+      status=TransformImageColorspace(image,GRAYColorspace,exception);
       if (image->alpha_trait == UndefinedPixelTrait)
         (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       break;
     }
     case PaletteType:
     {
-      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
-        status=TransformImageColorspace(image,sRGBColorspace,exception);
+      status=TransformImageColorspace(image,sRGBColorspace,exception);
       if ((image->storage_class == DirectClass) || (image->colors > 256))
         {
           quantize_info=AcquireQuantizeInfo(image_info);
@@ -1303,8 +1295,7 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
       ChannelType
         channel_mask;
 
-      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
-        status=TransformImageColorspace(image,sRGBColorspace,exception);
+      status=TransformImageColorspace(image,sRGBColorspace,exception);
       if (image->alpha_trait == UndefinedPixelTrait)
         (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       channel_mask=SetImageChannelMask(image,AlphaChannel);
@@ -1317,8 +1308,7 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case PaletteAlphaType:
     {
-      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
-        status=TransformImageColorspace(image,sRGBColorspace,exception);
+      status=TransformImageColorspace(image,sRGBColorspace,exception);
       if (image->alpha_trait == UndefinedPixelTrait)
         (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       quantize_info=AcquireQuantizeInfo(image_info);
@@ -1329,8 +1319,7 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case TrueColorType:
     {
-      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
-        status=TransformImageColorspace(image,sRGBColorspace,exception);
+      status=TransformImageColorspace(image,sRGBColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
       image->alpha_trait=UndefinedPixelTrait;
@@ -1338,8 +1327,7 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case TrueColorAlphaType:
     {
-      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
-        status=TransformImageColorspace(image,sRGBColorspace,exception);
+      status=TransformImageColorspace(image,sRGBColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
       if (image->alpha_trait == UndefinedPixelTrait)
@@ -1348,12 +1336,7 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case ColorSeparationType:
     {
-      if (image->colorspace != CMYKColorspace)
-        {
-          if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
-            status=TransformImageColorspace(image,sRGBColorspace,exception);
-          status=TransformImageColorspace(image,CMYKColorspace,exception);
-        }
+      status=TransformImageColorspace(image,CMYKColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
       image->alpha_trait=UndefinedPixelTrait;
@@ -1361,12 +1344,7 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case ColorSeparationAlphaType:
     {
-      if (image->colorspace != CMYKColorspace)
-        {
-          if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
-            status=TransformImageColorspace(image,sRGBColorspace,exception);
-          status=TransformImageColorspace(image,CMYKColorspace,exception);
-        }
+      status=TransformImageColorspace(image,CMYKColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
       if (image->alpha_trait == UndefinedPixelTrait)

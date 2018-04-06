@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
 
   You may not use this file except in compliance with the License.
@@ -156,7 +156,8 @@ typedef struct _CacheInfo
     type;
 
   MapMode
-    mode;
+    mode,
+    disk_mode;
 
   MagickBooleanType
     mapped;
@@ -244,7 +245,6 @@ extern MagickPrivate const Quantum
   *GetVirtualPixelsNexus(const Cache,NexusInfo *magick_restrict);
 
 extern MagickPrivate const void
-  *AcquirePixelCachePixels(const Image *,MagickSizeType *,ExceptionInfo *),
   *GetVirtualMetacontentFromNexus(const Cache,NexusInfo *magick_restrict);
 
 extern MagickPrivate MagickBooleanType
@@ -279,6 +279,7 @@ extern MagickPrivate void
   ClonePixelCacheMethods(Cache,const Cache),
   GetPixelCacheTileSize(const Image *,size_t *,size_t *),
   GetPixelCacheMethods(CacheMethods *),
+  ResetCacheAnonymousMemory(void),
   ResetPixelCacheEpoch(void),
   ResetPixelCacheChannels(Image *),
   SetPixelCacheMethods(Cache,CacheMethods *);

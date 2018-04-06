@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -366,6 +366,7 @@ static Image *ReadXPMImage(const ImageInfo *image_info,ExceptionInfo *exception)
     (void *(*)(void *)) NULL);
   if (AcquireImageColormap(image,image->colors,exception) == MagickFalse)
     {
+      xpm_colors=DestroySplayTree(xpm_colors);
       xpm_buffer=DestroyString(xpm_buffer);
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
     }
@@ -378,6 +379,8 @@ static Image *ReadXPMImage(const ImageInfo *image_info,ExceptionInfo *exception)
   {
     p=next;
     next=NextXPMLine(p);
+    if (next == (char *) NULL)
+      break;
     (void) CopyXPMColor(key,p,MagickMin((size_t) width,MagickPathExtent-1));
     status=AddValueToSplayTree(xpm_colors,ConstantString(key),(void *) j);
     /*
@@ -430,7 +433,11 @@ static Image *ReadXPMImage(const ImageInfo *image_info,ExceptionInfo *exception)
       */
       status=SetImageExtent(image,image->columns,image->rows,exception);
       if (status == MagickFalse)
-        return(DestroyImageList(image));
+        {
+          xpm_colors=DestroySplayTree(xpm_colors);
+          xpm_buffer=DestroyString(xpm_buffer);
+          return(DestroyImageList(image));
+        }
       for (y=0; y < (ssize_t) image->rows; y++)
       {
         p=NextXPMLine(p);
@@ -772,7 +779,7 @@ static MagickBooleanType WritePICONImage(const ImageInfo *image_info,
   (void) WriteBlobString(image,"/* XPM */\n");
   GetPathComponent(picon->filename,BasePath,basename);
   (void) FormatLocaleString(buffer,MagickPathExtent,
-    "static char *%s[] = {\n",basename);
+    "static char *%.1024s[] = {\n",basename);
   (void) WriteBlobString(image,buffer);
   (void) WriteBlobString(image,"/* columns rows colors chars-per-pixel */\n");
   (void) FormatLocaleString(buffer,MagickPathExtent,
@@ -806,8 +813,8 @@ static MagickBooleanType WritePICONImage(const ImageInfo *image_info,
       symbol[j]=Cixel[k];
     }
     symbol[j]='\0';
-    (void) FormatLocaleString(buffer,MagickPathExtent,"\"%s c %s\",\n",
-       symbol,name);
+    (void) FormatLocaleString(buffer,MagickPathExtent,
+      "\"%.1024s c %.1024s\",\n",symbol,name);
     (void) WriteBlobString(image,buffer);
   }
   /*
@@ -834,7 +841,7 @@ static MagickBooleanType WritePICONImage(const ImageInfo *image_info,
       (void) WriteBlobString(image,buffer);
       p+=GetPixelChannels(picon);
     }
-    (void) FormatLocaleString(buffer,MagickPathExtent,"\"%s\n",
+    (void) FormatLocaleString(buffer,MagickPathExtent,"\"%.1024s\n",
       y == (ssize_t) (picon->rows-1) ? "" : ",");
     (void) WriteBlobString(image,buffer);
     status=SetImageProgress(image,SaveImageTag,(MagickOffsetType) y,
@@ -999,7 +1006,7 @@ static MagickBooleanType WriteXPMImage(const ImageInfo *image_info,Image *image,
   GetPathComponent(image->filename,BasePath,basename);
   if (isalnum((int) ((unsigned char) *basename)) == 0)
     {
-      (void) FormatLocaleString(buffer,MagickPathExtent,"xpm_%s",basename);
+      (void) FormatLocaleString(buffer,MagickPathExtent,"xpm_%.1024s",basename);
       (void) CopyMagickString(basename,buffer,MagickPathExtent);
     }
   if (isalpha((int) ((unsigned char) basename[0])) == 0)
@@ -1008,7 +1015,7 @@ static MagickBooleanType WriteXPMImage(const ImageInfo *image_info,Image *image,
     if (isalnum((int) ((unsigned char) basename[i])) == 0)
       basename[i]='_';
   (void) FormatLocaleString(buffer,MagickPathExtent,
-    "static char *%s[] = {\n",basename);
+    "static char *%.1024s[] = {\n",basename);
   (void) WriteBlobString(image,buffer);
   (void) WriteBlobString(image,"/* columns rows colors chars-per-pixel */\n");
   (void) FormatLocaleString(buffer,MagickPathExtent,
@@ -1039,8 +1046,8 @@ static MagickBooleanType WriteXPMImage(const ImageInfo *image_info,Image *image,
       symbol[j]=Cixel[k];
     }
     symbol[j]='\0';
-    (void) FormatLocaleString(buffer,MagickPathExtent,"\"%s c %s\",\n",symbol,
-      name);
+    (void) FormatLocaleString(buffer,MagickPathExtent,
+      "\"%.1024s c %.1024s\",\n",symbol,name);
     (void) WriteBlobString(image,buffer);
   }
   /*
@@ -1067,7 +1074,7 @@ static MagickBooleanType WriteXPMImage(const ImageInfo *image_info,Image *image,
       (void) WriteBlobString(image,buffer);
       p+=GetPixelChannels(image);
     }
-    (void) FormatLocaleString(buffer,MagickPathExtent,"\"%s\n",
+    (void) FormatLocaleString(buffer,MagickPathExtent,"\"%.1024s\n",
       (y == (ssize_t) (image->rows-1) ? "" : ","));
     (void) WriteBlobString(image,buffer);
     if (image->previous == (Image *) NULL)

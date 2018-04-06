@@ -17,7 +17,7 @@
 %                              July 1992                                      %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -315,7 +315,7 @@ WandExport MagickBooleanType ImportImageCommand(ImageInfo *image_info,
   pend=MagickFalse;
   resource_database=(XrmDatabase) NULL;
   respect_parenthesis=MagickFalse;
-  (void) ResetMagickMemory(&resource_info,0,sizeof(resource_info));
+  (void) memset(&resource_info,0,sizeof(resource_info));
   server_name=(char *) NULL;
   status=MagickTrue;
   SetNotifyHandlers;

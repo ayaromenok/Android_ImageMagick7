@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -810,7 +810,7 @@ static Image *ReadDJVUImage(const ImageInfo *image_info,
   /*
    * Initialize members of the MngInfo structure.
    */
-  (void) ResetMagickMemory(lc,0,sizeof(LoadContext));
+  (void) memset(lc,0,sizeof(LoadContext));
 
   lc->image = image;
   lc->pages = 0;

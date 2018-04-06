@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
 
   You may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "MagickCore/colorspace.h"
 #include "MagickCore/gem.h"
 #include "MagickCore/image.h"
+#include "MagickCore/memory_.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -377,33 +378,41 @@ static inline PixelTrait GetPixelRedTraits(const Image *magick_restrict image)
 static inline void GetPixelInfoPixel(const Image *magick_restrict image,
   const Quantum *magick_restrict pixel,PixelInfo *magick_restrict pixel_info)
 {
-  pixel_info->storage_class=image->storage_class;
-  pixel_info->colorspace=image->colorspace;
-  pixel_info->fuzz=image->fuzz;
-  pixel_info->depth=image->depth;
-  pixel_info->red=(MagickRealType)
-    pixel[image->channel_map[RedPixelChannel].offset];
-  pixel_info->green=(MagickRealType)
-    pixel[image->channel_map[GreenPixelChannel].offset];
-  pixel_info->blue=(MagickRealType)
-    pixel[image->channel_map[BluePixelChannel].offset];
-  pixel_info->black=0.0f;
-  if (image->channel_map[BlackPixelChannel].traits != UndefinedPixelTrait)
-    pixel_info->black=(MagickRealType)
-      pixel[image->channel_map[BlackPixelChannel].offset];
-  pixel_info->alpha=(MagickRealType) OpaqueAlpha;
+  (void) ResetMagickMemory(pixel_info,0,sizeof(*pixel_info));
+  pixel_info->storage_class=DirectClass;
+  pixel_info->colorspace=sRGBColorspace;
+  pixel_info->depth=MAGICKCORE_QUANTUM_DEPTH;
   pixel_info->alpha_trait=UndefinedPixelTrait;
-  if (image->channel_map[AlphaPixelChannel].traits != UndefinedPixelTrait)
+  pixel_info->alpha=(MagickRealType) OpaqueAlpha;
+  if (image != (Image *) NULL)
     {
-      pixel_info->alpha=(MagickRealType)
-        pixel[image->channel_map[AlphaPixelChannel].offset];
-      pixel_info->alpha_trait=BlendPixelTrait;
+      pixel_info->storage_class=image->storage_class;
+      pixel_info->colorspace=image->colorspace;
+      pixel_info->fuzz=image->fuzz;
+      pixel_info->depth=image->depth;
+      pixel_info->alpha_trait=image->alpha_trait;
     }
-  pixel_info->index=0.0f;
-  if (image->channel_map[IndexPixelChannel].traits != UndefinedPixelTrait)
-    pixel_info->index=(MagickRealType)
+  if (pixel != (Quantum *) NULL)
+    {
+      pixel_info->red=(MagickRealType)
+        pixel[image->channel_map[RedPixelChannel].offset];
+      pixel_info->green=(MagickRealType)
+        pixel[image->channel_map[GreenPixelChannel].offset];
+      pixel_info->blue=(MagickRealType)
+        pixel[image->channel_map[BluePixelChannel].offset];
+      if (image->channel_map[BlackPixelChannel].traits != UndefinedPixelTrait)
+        pixel_info->black=(MagickRealType)
+          pixel[image->channel_map[BlackPixelChannel].offset];
+      if (image->channel_map[AlphaPixelChannel].traits != UndefinedPixelTrait)
+        {
+          pixel_info->alpha=(MagickRealType)
+            pixel[image->channel_map[AlphaPixelChannel].offset];
+          pixel_info->alpha_trait=BlendPixelTrait;
+        }
+      if (image->channel_map[IndexPixelChannel].traits != UndefinedPixelTrait)
+        pixel_info->index=(MagickRealType)
       pixel[image->channel_map[IndexPixelChannel].offset];
-  pixel_info->count=0;
+    }
 }
 
 static inline PixelTrait GetPixelTraits(const Image *magick_restrict image,

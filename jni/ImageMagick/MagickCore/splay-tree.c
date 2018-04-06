@@ -23,7 +23,7 @@
 %                               December 2002                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -1146,7 +1146,7 @@ MagickExport SplayTreeInfo *NewSplayTree(
     *splay_tree;
 
   splay_tree=(SplayTreeInfo *) AcquireCriticalMemory(sizeof(*splay_tree));
-  (void) ResetMagickMemory(splay_tree,0,sizeof(*splay_tree));
+  (void) memset(splay_tree,0,sizeof(*splay_tree));
   splay_tree->root=(NodeInfo *) NULL;
   splay_tree->compare=compare;
   splay_tree->relinquish_key=relinquish_key;

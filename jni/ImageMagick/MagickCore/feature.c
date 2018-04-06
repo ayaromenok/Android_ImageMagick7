@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -310,7 +310,7 @@ MagickExport Image *CannyEdgeImage(const Image *image,const double radius,
   status=MagickTrue;
   edge_view=AcquireVirtualCacheView(edge_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(edge_image,edge_image,edge_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) edge_image->rows; y++)
@@ -357,7 +357,7 @@ MagickExport Image *CannyEdgeImage(const Image *image,const double radius,
           { -1.0, -1.0 }
         };
 
-      (void) ResetMagickMemory(&pixel,0,sizeof(pixel));
+      (void) memset(&pixel,0,sizeof(pixel));
       dx=0.0;
       dy=0.0;
       kernel_pixels=p;
@@ -422,7 +422,7 @@ MagickExport Image *CannyEdgeImage(const Image *image,const double radius,
   min=element.intensity;
   edge_view=AcquireAuthenticCacheView(edge_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(edge_image,edge_image,edge_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) edge_image->rows; y++)
@@ -679,7 +679,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
     sizeof(*channel_features));
   if (channel_features == (ChannelFeatures *) NULL)
     ThrowFatalException(ResourceLimitFatalError,"MemoryAllocationFailed");
-  (void) ResetMagickMemory(channel_features,0,length*
+  (void) memset(channel_features,0,length*
     sizeof(*channel_features));
   /*
     Form grays.
@@ -704,7 +704,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
   status=MagickTrue;
   image_view=AcquireVirtualCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (r=0; r < (ssize_t) image->rows; r++)
@@ -748,7 +748,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
         channel_features);
       return(channel_features);
     }
-  (void) ResetMagickMemory(&gray,0,sizeof(gray));
+  (void) memset(&gray,0,sizeof(gray));
   for (i=0; i <= (ssize_t) MaxMap; i++)
   {
     if (grays[i].red != ~0U)
@@ -824,20 +824,20 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
         ResourceLimitError,"MemoryAllocationFailed","`%s'",image->filename);
       return(channel_features);
     }
-  (void) ResetMagickMemory(&correlation,0,sizeof(correlation));
-  (void) ResetMagickMemory(density_x,0,2*(number_grays+1)*sizeof(*density_x));
-  (void) ResetMagickMemory(density_xy,0,2*(number_grays+1)*sizeof(*density_xy));
-  (void) ResetMagickMemory(density_y,0,2*(number_grays+1)*sizeof(*density_y));
-  (void) ResetMagickMemory(&mean,0,sizeof(mean));
-  (void) ResetMagickMemory(sum,0,number_grays*sizeof(*sum));
-  (void) ResetMagickMemory(&sum_squares,0,sizeof(sum_squares));
-  (void) ResetMagickMemory(density_xy,0,2*number_grays*sizeof(*density_xy));
-  (void) ResetMagickMemory(&entropy_x,0,sizeof(entropy_x));
-  (void) ResetMagickMemory(&entropy_xy,0,sizeof(entropy_xy));
-  (void) ResetMagickMemory(&entropy_xy1,0,sizeof(entropy_xy1));
-  (void) ResetMagickMemory(&entropy_xy2,0,sizeof(entropy_xy2));
-  (void) ResetMagickMemory(&entropy_y,0,sizeof(entropy_y));
-  (void) ResetMagickMemory(&variance,0,sizeof(variance));
+  (void) memset(&correlation,0,sizeof(correlation));
+  (void) memset(density_x,0,2*(number_grays+1)*sizeof(*density_x));
+  (void) memset(density_xy,0,2*(number_grays+1)*sizeof(*density_xy));
+  (void) memset(density_y,0,2*(number_grays+1)*sizeof(*density_y));
+  (void) memset(&mean,0,sizeof(mean));
+  (void) memset(sum,0,number_grays*sizeof(*sum));
+  (void) memset(&sum_squares,0,sizeof(sum_squares));
+  (void) memset(density_xy,0,2*number_grays*sizeof(*density_xy));
+  (void) memset(&entropy_x,0,sizeof(entropy_x));
+  (void) memset(&entropy_xy,0,sizeof(entropy_xy));
+  (void) memset(&entropy_xy1,0,sizeof(entropy_xy1));
+  (void) memset(&entropy_xy2,0,sizeof(entropy_xy2));
+  (void) memset(&entropy_y,0,sizeof(entropy_y));
+  (void) memset(&variance,0,sizeof(variance));
   for (i=0; i < (ssize_t) number_grays; i++)
   {
     cooccurrence[i]=(ChannelStatistics *) AcquireQuantumMemory(number_grays,
@@ -846,9 +846,9 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
     if ((cooccurrence[i] == (ChannelStatistics *) NULL) ||
         (Q[i] == (ChannelStatistics *) NULL))
       break;
-    (void) ResetMagickMemory(cooccurrence[i],0,number_grays*
+    (void) memset(cooccurrence[i],0,number_grays*
       sizeof(**cooccurrence));
-    (void) ResetMagickMemory(Q[i],0,number_grays*sizeof(**Q));
+    (void) memset(Q[i],0,number_grays*sizeof(**Q));
   }
   if (i < (ssize_t) number_grays)
     {
@@ -1074,7 +1074,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
     Compute texture features.
   */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,number_grays,1)
 #endif
   for (i=0; i < 4; i++)
@@ -1259,7 +1259,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
     Compute more texture features.
   */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,number_grays,1)
 #endif
   for (i=0; i < 4; i++)
@@ -1335,7 +1335,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
     Compute more texture features.
   */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,number_grays,1)
 #endif
   for (i=0; i < 4; i++)
@@ -1447,10 +1447,10 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
   /*
     Compute more texture features.
   */
-  (void) ResetMagickMemory(&variance,0,sizeof(variance));
-  (void) ResetMagickMemory(&sum_squares,0,sizeof(sum_squares));
+  (void) memset(&variance,0,sizeof(variance));
+  (void) memset(&sum_squares,0,sizeof(sum_squares));
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,number_grays,1)
 #endif
   for (i=0; i < 4; i++)
@@ -1602,7 +1602,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
     Compute more texture features.
   */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,number_grays,1)
 #endif
   for (i=0; i < 4; i++)
@@ -1618,7 +1618,7 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
       ChannelStatistics
         pixel;
 
-      (void) ResetMagickMemory(&pixel,0,sizeof(pixel));
+      (void) memset(&pixel,0,sizeof(pixel));
       for (y=0; y < (ssize_t) number_grays; y++)
       {
         register ssize_t
@@ -1812,7 +1812,7 @@ static Image *RenderHoughLines(const ImageInfo *image_info,const size_t columns,
         GetBlobSize(image)+1);
       if (draw_info->primitive != (char *) NULL)
         {
-          (void) CopyMagickMemory(draw_info->primitive,GetBlobStreamData(image),
+          (void) memcpy(draw_info->primitive,GetBlobStreamData(image),
             (size_t) GetBlobSize(image));
           draw_info->primitive[GetBlobSize(image)]='\0';
         }
@@ -2188,7 +2188,7 @@ MagickExport Image *MeanShiftImage(const Image *image,const size_t width,
   pixel_view=AcquireVirtualCacheView(image,exception);
   mean_view=AcquireAuthenticCacheView(mean_image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status,progress) \
+  #pragma omp parallel for schedule(static) shared(status,progress) \
     magick_number_threads(mean_image,mean_image,mean_image->rows,1)
 #endif
   for (y=0; y < (ssize_t) mean_image->rows; y++)

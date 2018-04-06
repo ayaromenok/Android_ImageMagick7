@@ -17,7 +17,7 @@
 %                                 March 2000                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -163,7 +163,7 @@ MagickExport StreamInfo *AcquireStreamInfo(const ImageInfo *image_info,
     *stream_info;
 
   stream_info=(StreamInfo *) AcquireCriticalMemory(sizeof(*stream_info));
-  (void) ResetMagickMemory(stream_info,0,sizeof(*stream_info));
+  (void) memset(stream_info,0,sizeof(*stream_info));
   stream_info->pixels=(unsigned char *) MagickAssumeAligned(
     AcquireAlignedMemory(1,sizeof(*stream_info->pixels)));
   if (stream_info->pixels == (unsigned char *) NULL)
@@ -1055,6 +1055,29 @@ MagickExport Image *ReadStream(const ImageInfo *image_info,StreamHandler stream,
 %                                                                             %
 %                                                                             %
 %                                                                             %
++   R e s e t S t r e a m A n o n y m o u s M e m o r y                       %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ResetStreamAnonymousMemory() resets the anonymous_memory value.
+%
+%  The format of the ResetStreamAnonymousMemory method is:
+%
+%      void ResetStreamAnonymousMemory(void)
+%
+*/
+MagickPrivate void ResetStreamAnonymousMemory(void)
+{
+  cache_anonymous_memory=0;
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
 +   S e t S t r e a m I n f o C l i e n t D a t a                             %
 %                                                                             %
 %                                                                             %
@@ -1228,7 +1251,7 @@ static size_t WriteStreamImage(const Image *image,const void *pixels,
       stream_info->pixels=(unsigned char *) AcquireAlignedMemory(1,length);
       if (stream_info->pixels == (unsigned char *) NULL)
         return(0);
-      (void) ResetMagickMemory(stream_info->pixels,0,length);
+      (void) memset(stream_info->pixels,0,length);
       stream_info->image=image;
       write_info=CloneImageInfo(stream_info->image_info);
       (void) SetImageInfo(write_info,1,stream_info->exception);

@@ -21,7 +21,7 @@
 %                                April 2016                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -114,6 +114,7 @@ static MagickBooleanType checkAccelerateCondition(const Image* image)
   /* check if the image's colorspace is supported */
   if (image->colorspace != RGBColorspace &&
       image->colorspace != sRGBColorspace &&
+      image->colorspace != LinearGRAYColorspace &&
       image->colorspace != GRAYColorspace)
     return(MagickFalse);
 
@@ -259,9 +260,6 @@ static cl_mem createKernelInfo(MagickCLDevice device,const double radius,
   char
     geometry[MagickPathExtent];
 
-  cl_int
-    status;
-
   cl_mem
     imageKernelBuffer;
 
@@ -395,13 +393,13 @@ cleanup:
 */
 
 static Image *ComputeAddNoiseImage(const Image *image,MagickCLEnv clEnv,
-  const NoiseType noise_type,ExceptionInfo *exception)
+  const NoiseType noise_type,const double attenuate,ExceptionInfo *exception)
 {
   cl_command_queue
     queue;
 
   cl_float
-    attenuate;
+    cl_attenuate;
 
   cl_int
     status;
@@ -422,9 +420,6 @@ static Image *ComputeAddNoiseImage(const Image *image,MagickCLEnv clEnv,
     seed0,
     seed1,
     workItemCount;
-
-  const char
-    *option;
 
   const unsigned long
     *s;
@@ -521,10 +516,7 @@ static Image *ComputeAddNoiseImage(const Image *image,MagickCLEnv clEnv,
 
   number_channels=(cl_uint) image->number_channels;
   bufferLength=(cl_uint) (image->columns*image->rows*image->number_channels);
-  attenuate=1.0f;
-  option=GetImageArtifact(image,"attenuate");
-  if (option != (char *) NULL)
-    attenuate=(float)StringToDouble(option,(char **) NULL);
+  cl_attenuate=(cl_float) attenuate;
 
   i=0;
   status =SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_mem),(void *)&imageBuffer);
@@ -533,7 +525,7 @@ static Image *ComputeAddNoiseImage(const Image *image,MagickCLEnv clEnv,
   status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_uint),(void *)&bufferLength);
   status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_uint),(void *)&pixelsPerWorkitem);
   status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(NoiseType),(void *)&noise_type);
-  status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_float),(void *)&attenuate);
+  status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_float),(void *)&cl_attenuate);
   status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_uint),(void *)&seed0);
   status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_uint),(void *)&seed1);
   status|=SetOpenCLKernelArg(addNoiseKernel,i++,sizeof(cl_uint),(void *)&numRandomNumberPerPixel);
@@ -567,7 +559,7 @@ cleanup:
 }
 
 MagickPrivate Image *AccelerateAddNoiseImage(const Image *image,
-  const NoiseType noise_type,ExceptionInfo *exception)
+  const NoiseType noise_type,const double attenuate,ExceptionInfo *exception)
 {
   Image
     *filteredImage;
@@ -585,7 +577,8 @@ MagickPrivate Image *AccelerateAddNoiseImage(const Image *image,
   if (clEnv == (MagickCLEnv) NULL)
     return((Image *) NULL);
 
-  filteredImage=ComputeAddNoiseImage(image,clEnv,noise_type,exception);
+  filteredImage=ComputeAddNoiseImage(image,clEnv,noise_type,attenuate,
+    exception);
   return(filteredImage);
 }
 
@@ -822,9 +815,6 @@ static MagickBooleanType ComputeContrastImage(Image *image,MagickCLEnv clEnv,
   cl_kernel
     contrastKernel;
 
-  cl_event
-    event;
-
   cl_mem
     imageBuffer;
 
@@ -1026,7 +1016,7 @@ static MagickBooleanType ComputeContrastStretchImage(Image *image,
     ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed", image->filename);
  
   /* reset histogram */
-  (void) ResetMagickMemory(histogram,0,(MaxMap+1)*sizeof(*histogram));
+  (void) memset(histogram,0,(MaxMap+1)*sizeof(*histogram));
 
   /*
   if (IsGrayImage(image,exception) != MagickFalse)
@@ -1229,7 +1219,7 @@ static MagickBooleanType ComputeContrastStretchImage(Image *image,
   /*
     Stretch the histogram to create the stretched image mapping.
   */
-  (void) ResetMagickMemory(stretch_map,0,(MaxMap+1)*sizeof(*stretch_map));
+  (void) memset(stretch_map,0,(MaxMap+1)*sizeof(*stretch_map));
   for (i=0; i <= (ssize_t) MaxMap; i++)
   {
     if ((image->channel_mask & RedChannel) != 0)
@@ -2343,7 +2333,7 @@ static MagickBooleanType ComputeEqualizeImage(Image *image,MagickCLEnv clEnv,
       ThrowBinaryException(ResourceLimitWarning,"MemoryAllocationFailed", image->filename);
 
   /* reset histogram */
-  (void) ResetMagickMemory(histogram,0,(MaxMap+1)*sizeof(*histogram));
+  (void) memset(histogram,0,(MaxMap+1)*sizeof(*histogram));
 
   /* Create and initialize OpenCL buffers. */
   /* inputPixels = AcquirePixelCachePixels(image, &length, exception); */
@@ -2448,7 +2438,7 @@ static MagickBooleanType ComputeEqualizeImage(Image *image,MagickCLEnv clEnv,
   /*
     Integrate the histogram to get the equalization map.
   */
-  (void) ResetMagickMemory(&intensity,0,sizeof(intensity));
+  (void) memset(&intensity,0,sizeof(intensity));
   for (i=0; i <= (ssize_t) MaxMap; i++)
   {
     if ((image->channel_mask & SyncChannels) != 0)
@@ -2469,7 +2459,7 @@ static MagickBooleanType ComputeEqualizeImage(Image *image,MagickCLEnv clEnv,
   }
   black=map[0];
   white=map[(int) MaxMap];
-  (void) ResetMagickMemory(equalize_map,0,(MaxMap+1)*sizeof(*equalize_map));
+  (void) memset(equalize_map,0,(MaxMap+1)*sizeof(*equalize_map));
   for (i=0; i <= (ssize_t) MaxMap; i++)
   {
     if ((image->channel_mask & SyncChannels) != 0)
@@ -4335,7 +4325,7 @@ static Image *ComputeResizeImage(const Image* image,MagickCLEnv clEnv,
   for (i = 0; i < 7; i++)
     coefficientBuffer[i]=(float) resizeFilterCoefficient[i];
   cubicCoefficientsBuffer=CreateOpenCLBuffer(device,CL_MEM_COPY_HOST_PTR |
-    CL_MEM_READ_ONLY,7*sizeof(*resizeFilterCoefficient),&coefficientBuffer);
+    CL_MEM_READ_ONLY,sizeof(coefficientBuffer),&coefficientBuffer);
   if (cubicCoefficientsBuffer == (cl_mem) NULL)
   {
     (void) OpenCLThrowMagickException(device,exception,GetMagickModule(),

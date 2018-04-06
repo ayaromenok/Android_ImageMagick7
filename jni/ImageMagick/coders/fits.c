@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -302,7 +302,7 @@ static Image *ReadFITSImage(const ImageInfo *image_info,
   /*
     Initialize image header.
   */
-  (void) ResetMagickMemory(&fits_info,0,sizeof(fits_info));
+  (void) memset(&fits_info,0,sizeof(fits_info));
   fits_info.extend=MagickFalse;
   fits_info.simple=MagickFalse;
   fits_info.bits_per_pixel=8;
@@ -394,7 +394,11 @@ static Image *ReadFITSImage(const ImageInfo *image_info,
     if ((fits_info.bits_per_pixel != 8) && (fits_info.bits_per_pixel != 16) &&
         (fits_info.bits_per_pixel != 32) && (fits_info.bits_per_pixel != 64) &&
         (fits_info.bits_per_pixel != -32) && (fits_info.bits_per_pixel != -64))
-      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+      {
+        if (comment != (char *) NULL)
+          comment=DestroyString(comment);
+        ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+      }
     number_pixels=(MagickSizeType) fits_info.columns*fits_info.rows;
     if ((fits_info.simple != MagickFalse) && (fits_info.number_axes >= 1) &&
         (fits_info.number_axes <= 4) && (number_pixels != 0))
@@ -448,7 +452,8 @@ static Image *ReadFITSImage(const ImageInfo *image_info,
     /*
       Convert FITS pixels to pixel packets.
     */
-    scale=QuantumRange/(fits_info.max_data-fits_info.min_data);
+    scale=QuantumRange*PerceptibleReciprocal(fits_info.max_data-
+      fits_info.min_data);
     for (y=(ssize_t) image->rows-1; y >= 0; y--)
     {
       q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
@@ -656,7 +661,7 @@ static MagickBooleanType WriteFITSImage(const ImageInfo *image_info,
   fits_info=(char *) AcquireQuantumMemory(FITSBlocksize,sizeof(*fits_info));
   if (fits_info == (char *) NULL)
     ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
-  (void) ResetMagickMemory(fits_info,' ',FITSBlocksize*sizeof(*fits_info));
+  (void) memset(fits_info,' ',FITSBlocksize*sizeof(*fits_info));
   /*
     Initialize image header.
   */
@@ -664,7 +669,10 @@ static MagickBooleanType WriteFITSImage(const ImageInfo *image_info,
   image->endian=MSBEndian;
   quantum_info=AcquireQuantumInfo(image_info,image);
   if (quantum_info == (QuantumInfo *) NULL)
-    ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
+    {
+      fits_info=DestroyString(fits_info);
+      ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
+    }
   offset=0;
   (void) FormatLocaleString(header,FITSBlocksize,
     "SIMPLE  =                    T");
@@ -829,7 +837,7 @@ static MagickBooleanType WriteFITSImage(const ImageInfo *image_info,
   length=(size_t) (FITSBlocksize-TellBlob(image) % FITSBlocksize);
   if (length != 0)
     {
-      (void) ResetMagickMemory(fits_info,0,length*sizeof(*fits_info));
+      (void) memset(fits_info,0,length*sizeof(*fits_info));
       (void) WriteBlob(image,length,(unsigned char *) fits_info);
     }
   fits_info=DestroyString(fits_info);

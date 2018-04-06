@@ -16,7 +16,7 @@
 %                                 July 2012                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -164,7 +164,7 @@ static Image *ReadJNXImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Read JNX header.
   */
-  (void) ResetMagickMemory(&jnx_info,0,sizeof(jnx_info));
+  (void) memset(&jnx_info,0,sizeof(jnx_info));
   jnx_info.version=ReadBlobLSBSignedLong(image);
   if ((jnx_info.version != 3) && (jnx_info.version != 4))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -191,7 +191,7 @@ static Image *ReadJNXImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Read JNX levels.
   */
-  (void) ResetMagickMemory(&jnx_level_info,0,sizeof(jnx_level_info));
+  (void) memset(&jnx_level_info,0,sizeof(jnx_level_info));
   for (i=0; i < (ssize_t) jnx_info.levels; i++)
   {
     jnx_level_info[i].count=ReadBlobLSBSignedLong(image);
@@ -281,6 +281,8 @@ static Image *ReadJNXImage(const ImageInfo *image_info,ExceptionInfo *exception)
       /*
         Read a tile.
       */
+      if (((MagickSizeType) tile_length) > GetBlobSize(image))
+        ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
       blob=(unsigned char *) AcquireQuantumMemory((size_t) tile_length+2,
         sizeof(*blob));
       if (blob == (unsigned char *) NULL)

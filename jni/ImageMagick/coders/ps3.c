@@ -18,7 +18,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -133,11 +133,13 @@ ModuleExport size_t RegisterPS3Image(void)
   entry->encoder=(EncodeImageHandler *) WritePS3Image;
   entry->mime_type=ConstantString("application/postscript");
   entry->flags|=CoderEncoderSeekableStreamFlag;
+  entry->flags^=CoderBlobSupportFlag;
   (void) RegisterMagickInfo(entry);
   entry=AcquireMagickInfo("PS3","PS3","Level III PostScript");
   entry->encoder=(EncodeImageHandler *) WritePS3Image;
   entry->mime_type=ConstantString("application/postscript");
   entry->flags|=CoderEncoderSeekableStreamFlag;
+  entry->flags^=CoderBlobSupportFlag;
   (void) RegisterMagickInfo(entry);
   return(MagickImageCoderSignature);
 }
@@ -928,7 +930,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     default:
       break;
   }
-  (void) ResetMagickMemory(&bounds,0,sizeof(bounds));
+  (void) memset(&bounds,0,sizeof(bounds));
   page=0;
   scene=0;
   do

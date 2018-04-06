@@ -17,7 +17,7 @@
 %                               September 2002                                %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -133,11 +133,14 @@ MagickExport const char *GetMagickDelegates(void)
 #if defined(MAGICKCORE_FREETYPE_DELEGATE)
   "freetype "
 #endif
-#if defined(MAGICKCORE_GS_DELEGATE)
+#if defined(MAGICKCORE_GS_DELEGATE) || defined(MAGICKCORE_WINDOWS_SUPPORT)
   "gslib "
 #endif
 #if defined(MAGICKCORE_GVC_DELEGATE)
   "gvc "
+#endif
+#if defined(MAGICKCORE_HEIC_DELEGATE)
+  "heic "
 #endif
 #if defined(MAGICKCORE_JBIG_DELEGATE)
   "jbig "
@@ -172,7 +175,8 @@ MagickExport const char *GetMagickDelegates(void)
 #if defined(MAGICKCORE_PNG_DELEGATE)
   "png "
 #endif
-#if defined(MAGICKCORE_DPS_DELEGATE) || defined(MAGICKCORE_GS_DELEGATE) || defined(WIN32)
+#if defined(MAGICKCORE_DPS_DELEGATE) || defined(MAGICKCORE_GS_DELEGATE) || \
+    defined(MAGICKCORE_WINDOWS_SUPPORT)
   "ps "
 #endif
 #if defined(MAGICKCORE_RAW_R_DELEGATE)

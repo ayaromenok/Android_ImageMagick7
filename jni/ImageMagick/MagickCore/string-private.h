@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
 
   You may not use this file except in compliance with the License.
@@ -68,6 +68,30 @@ static inline int StringToInteger(const char *magick_restrict value)
 static inline long StringToLong(const char *magick_restrict value)
 {
   return(strtol(value,(char **) NULL,10));
+}
+
+static inline MagickSizeType StringToMagickSizeType(const char *string,
+  const double interval)
+{
+  double
+    value;
+
+  value=SiPrefixToDoubleInterval(string,interval);
+  if (value >= (double) MagickULLConstant(~0))
+    return(MagickULLConstant(~0));
+  return((MagickSizeType) value);
+}
+
+static inline size_t StringToSizeType(const char *string,
+  const double interval)
+{
+  double
+    value;
+
+  value=SiPrefixToDoubleInterval(string,interval);
+  if (value >= (double) MagickULLConstant(~0))
+    return((size_t) MagickULLConstant(~0));
+  return((size_t) value);
 }
 
 static inline unsigned long StringToUnsignedLong(

@@ -208,7 +208,8 @@ static void InsertRow(Image *image,ssize_t depth,unsigned char *p,ssize_t y,
     case 8: /* Convert PseudoColor scanline. */
       {
         q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
-        if (q == (Quantum *) NULL) break;
+        if (q == (Quantum *) NULL)
+          break;
         for (x=0; x < (ssize_t) image->columns; x++)
         {
           index=ConstrainColormapIndex(image,*p,exception);
@@ -559,7 +560,7 @@ static Image *ReadCUTImage(const ImageInfo *image_info,ExceptionInfo *exception)
           if((int) RunCount>0x80)
             {
               RunValue=(unsigned char) ReadBlobByte(image);
-              (void) ResetMagickMemory(ptrB,(int) RunValue,(size_t) RunCountMasked);
+              (void) memset(ptrB,(int) RunValue,(size_t) RunCountMasked);
             }
           else {
             (void) ReadBlob(image,(size_t) RunCountMasked,ptrB);

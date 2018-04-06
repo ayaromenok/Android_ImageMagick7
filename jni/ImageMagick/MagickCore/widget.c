@@ -18,7 +18,7 @@
 %                              September 1993                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -1107,7 +1107,7 @@ static void XEditText(Display *display,XWidgetInfo *text_info,
       if (text_info->cursor != text_info->text)
         {
           text_info->cursor--;
-          (void) CopyMagickString(text_info->cursor,text_info->cursor+1,
+          (void) memmove(text_info->cursor,text_info->cursor+1,
             MagickPathExtent);
           text_info->highlight=MagickFalse;
           break;

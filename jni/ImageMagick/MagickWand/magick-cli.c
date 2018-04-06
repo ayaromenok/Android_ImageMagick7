@@ -22,7 +22,7 @@
 %                               January 2012                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -595,6 +595,8 @@ static void MagickUsage(MagickBooleanType verbose)
   }
   else {
     /* magick usage */
+    (void) FormatLocaleFile(stdout,
+       "Usage: %s tool [ {option} | {image} ... ] {output_image}\n",name);
     (void) FormatLocaleFile(stdout,
        "Usage: %s [ {option} | {image} ... ] {output_image}\n",name);
     (void) FormatLocaleFile(stdout,

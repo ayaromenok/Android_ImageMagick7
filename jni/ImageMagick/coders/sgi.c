@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -312,7 +312,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Read SGI raster header.
   */
-  (void) ResetMagickMemory(&iris_info,0,sizeof(iris_info));
+  (void) memset(&iris_info,0,sizeof(iris_info));
   iris_info.magic=ReadBlobMSBShort(image);
   do
   {
@@ -375,6 +375,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
       return(DestroyImageList(image));
+    (void) SetImageBackgroundColor(image,exception);
     /*
       Allocate SGI pixels.
     */
@@ -388,6 +389,8 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
     if (pixel_info == (MemoryInfo *) NULL)
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
     pixels=(unsigned char *) GetVirtualMemoryBlob(pixel_info);
+    (void) memset(pixels,0,iris_info.columns*iris_info.rows*4*
+      bytes_per_pixel*sizeof(*pixels));
     if ((int) iris_info.storage != 0x01)
       {
         unsigned char
@@ -950,7 +953,7 @@ static MagickBooleanType WriteSGIImage(const ImageInfo *image_info,Image *image,
       Initialize SGI raster file header.
     */
     (void) TransformImageColorspace(image,sRGBColorspace,exception);
-    (void) ResetMagickMemory(&iris_info,0,sizeof(iris_info));
+    (void) memset(&iris_info,0,sizeof(iris_info));
     iris_info.magic=0x01DA;
     compression=image->compression;
     if (image_info->compression != UndefinedCompression)
@@ -1126,6 +1129,7 @@ static MagickBooleanType WriteSGIImage(const ImageInfo *image_info,Image *image,
               runlength=(size_t *) RelinquishMagickMemory(runlength);
             if (packet_info != (MemoryInfo *) NULL)
               packet_info=RelinquishVirtualMemory(packet_info);
+            pixel_info=RelinquishVirtualMemory(pixel_info);
             ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
           }
         packets=(unsigned char *) GetVirtualMemoryBlob(packet_info);

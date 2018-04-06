@@ -17,7 +17,7 @@
 %                                  July 1992                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -1552,13 +1552,15 @@ MagickPrivate void XClientMessage(Display *display,const Window window,
     client_event;
 
   assert(display != (Display *) NULL);
+  (void) memset(&client_event,0,sizeof(client_event));
   client_event.type=ClientMessage;
   client_event.window=window;
   client_event.message_type=protocol;
   client_event.format=32;
   client_event.data.l[0]=(long) reason;
   client_event.data.l[1]=(long) timestamp;
-  (void) XSendEvent(display,window,MagickFalse,NoEventMask,(XEvent *) &client_event);
+  (void) XSendEvent(display,window,MagickFalse,NoEventMask,(XEvent *)
+    &client_event);
 }
 
 /*
@@ -1832,7 +1834,7 @@ MagickExport void XDestroyResourceInfo(XResourceInfo *resource_info)
       RelinquishMagickMemory(resource_info->client_name);
   if (resource_info->name != (char *) NULL)
     resource_info->name=DestroyString(resource_info->name);
-  (void) ResetMagickMemory(resource_info,0,sizeof(*resource_info));
+  (void) memset(resource_info,0,sizeof(*resource_info));
 }
 
 /*
@@ -3118,13 +3120,13 @@ MagickPrivate void XGetPixelInfo(Display *display,
   /*
     Set highlight color.
   */
-  pixel->highlight_color.red=(unsigned short) (((double) 
+  pixel->highlight_color.red=(unsigned short) (((double)
     pixel->matte_color.red*ScaleQuantumToShort(HighlightModulate))/65535L+
     (ScaleQuantumToShort((Quantum) (QuantumRange-HighlightModulate))));
-  pixel->highlight_color.green=(unsigned short) (((double) 
+  pixel->highlight_color.green=(unsigned short) (((double)
     pixel->matte_color.green*ScaleQuantumToShort(HighlightModulate))/65535L+
     (ScaleQuantumToShort((Quantum) (QuantumRange-HighlightModulate))));
-  pixel->highlight_color.blue=(unsigned short) (((double) 
+  pixel->highlight_color.blue=(unsigned short) (((double)
     pixel->matte_color.blue*ScaleQuantumToShort(HighlightModulate))/65535L+
     (ScaleQuantumToShort((Quantum) (QuantumRange-HighlightModulate))));
   pixel->highlight_color.pixel=XStandardPixel(map_info,&pixel->highlight_color);
@@ -3464,7 +3466,7 @@ MagickExport void XGetResourceInfo(const ImageInfo *image_info,
   */
   (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   assert(resource_info != (XResourceInfo *) NULL);
-  (void) ResetMagickMemory(resource_info,0,sizeof(*resource_info));
+  (void) memset(resource_info,0,sizeof(*resource_info));
   resource_info->resource_database=database;
   resource_info->image_info=(ImageInfo *) image_info;
   (void) SetImageInfoProgressMonitor(resource_info->image_info,
@@ -3912,7 +3914,7 @@ MagickPrivate MagickBooleanType XGetWindowColor(Display *display,
   pixel.red=(double) ScaleShortToQuantum(color.red);
   pixel.green=(double) ScaleShortToQuantum(color.green);
   pixel.blue=(double) ScaleShortToQuantum(color.blue);
-  pixel.alpha=OpaqueAlpha;
+  pixel.alpha=(MagickRealType) OpaqueAlpha;
   (void) QueryColorname(windows->image.image,&pixel,X11Compliance,name,
     exception);
   return(MagickTrue);
@@ -5138,7 +5140,7 @@ MagickPrivate XWindows *XInitializeWindows(Display *display,
         "...");
       return((XWindows *) NULL);
     }
-  (void) ResetMagickMemory(windows,0,sizeof(*windows));
+  (void) memset(windows,0,sizeof(*windows));
   windows->pixel_info=(XPixelInfo *) AcquireMagickMemory(
     sizeof(*windows->pixel_info));
   windows->icon_pixel=(XPixelInfo *) AcquireMagickMemory(
@@ -5641,12 +5643,22 @@ MagickPrivate MagickBooleanType XMakeImage(Display *display,
     }
   if (window->shared_memory == MagickFalse)
     {
-      if (ximage->format != XYBitmap)
-        ximage->data=(char *) malloc((size_t) ximage->bytes_per_line*
-          ximage->height);
+      if (ximage->format == XYBitmap)
+        {
+          ximage->data=(char *) AcquireQuantumMemory((size_t)
+            ximage->bytes_per_line,(size_t) ximage->depth*ximage->height);
+          if (ximage->data != (char *) NULL)
+            (void) memset(ximage->data,0,(size_t)
+              ximage->bytes_per_line*ximage->depth*ximage->height);
+        }
       else
-        ximage->data=(char *) malloc((size_t) ximage->bytes_per_line*
-          ximage->depth*ximage->height);
+        {
+          ximage->data=(char *) AcquireQuantumMemory((size_t)
+            ximage->bytes_per_line,(size_t) ximage->height);
+          if (ximage->data != (char *) NULL)
+            (void) memset(ximage->data,0,(size_t)
+              ximage->bytes_per_line*ximage->height);
+        }
     }
   if (ximage->data == (char *) NULL)
     {
@@ -8406,7 +8418,7 @@ MagickPrivate void XMakeWindow(Display *display,Window parent,char **argv,
         if ((isspace((int) ((unsigned char) *p)) == 0) && (*p != '%'))
           p++;
         else
-          (void) CopyMagickString(p,p+1,MagickPathExtent-(p-geometry));
+          (void) memmove(p,p+1,MagickPathExtent-(p-geometry));
       }
       flags=XWMGeometry(display,window_info->screen,geometry,default_geometry,
         window_info->border_width,size_hints,&size_hints->x,&size_hints->y,
@@ -9109,7 +9121,7 @@ MagickPrivate MagickBooleanType XRenderImage(Image *image,
   metrics->ascent=(double) font_info->ascent+4;
   metrics->descent=(double) (-font_info->descent);
   metrics->width=annotate_info.width/ExpandAffine(&draw_info->affine);
-  metrics->height=font_info->ascent+font_info->descent;
+  metrics->height=(double) font_info->ascent+font_info->descent;
   metrics->max_advance=(double) font_info->max_bounds.width;
   metrics->bounds.x1=0.0;
   metrics->bounds.y1=metrics->descent;
@@ -9138,9 +9150,12 @@ MagickPrivate MagickBooleanType XRenderImage(Image *image,
     "%.20gx%.20g%+.20g%+.20g",(double) width,(double) height,
     ceil(offset->x-0.5),ceil(offset->y-metrics->ascent-metrics->descent+
     draw_info->interline_spacing-0.5));
-  pixel.pen_color.red=ScaleQuantumToShort(draw_info->fill.red);
-  pixel.pen_color.green=ScaleQuantumToShort(draw_info->fill.green);
-  pixel.pen_color.blue=ScaleQuantumToShort(draw_info->fill.blue);
+  pixel.pen_color.red=ScaleQuantumToShort(
+    ClampToQuantum(draw_info->fill.red));
+  pixel.pen_color.green=ScaleQuantumToShort(
+    ClampToQuantum(draw_info->fill.green));
+  pixel.pen_color.blue=ScaleQuantumToShort(
+    ClampToQuantum(draw_info->fill.blue));
   status=XAnnotateImage(display,&pixel,&annotate_info,image,exception);
   if (status == 0)
     {
@@ -9930,6 +9945,7 @@ MagickExport Image *XImportImage(const ImageInfo *image_info,
   assert(ximage_info != (XImportInfo *) NULL);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
+  (void) exception;
   return((Image *) NULL);
 }
 

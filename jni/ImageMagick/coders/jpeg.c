@@ -425,7 +425,15 @@ static boolean ReadComment(j_decompress_ptr jpeg_info)
   error_manager->profile=comment;
   p=GetStringInfoDatum(comment);
   for (i=0; i < (ssize_t) GetStringInfoLength(comment); i++)
-    *p++=(unsigned char) GetCharacter(jpeg_info);
+  {
+    int
+      c;
+
+    c=GetCharacter(jpeg_info);
+    if (c == EOF)
+      break;
+    *p++=(unsigned char) c;
+  }
   *p='\0';
   error_manager->profile=NULL;
   p=GetStringInfoDatum(comment);
@@ -473,7 +481,8 @@ static boolean ReadICCProfile(j_decompress_ptr jpeg_info)
   if (length <= 14)
     {
       while (length-- > 0)
-        (void) GetCharacter(jpeg_info);
+        if (GetCharacter(jpeg_info) == EOF)
+          break;
       return(TRUE);
     }
   for (i=0; i < 12; i++)
@@ -484,7 +493,8 @@ static boolean ReadICCProfile(j_decompress_ptr jpeg_info)
         Not a ICC profile, return.
       */
       for (i=0; i < (ssize_t) (length-12); i++)
-        (void) GetCharacter(jpeg_info);
+        if (GetCharacter(jpeg_info) == EOF)
+          break;
       return(TRUE);
     }
   (void) GetCharacter(jpeg_info);  /* id */
@@ -503,7 +513,15 @@ static boolean ReadICCProfile(j_decompress_ptr jpeg_info)
   error_manager->profile=profile;
   p=GetStringInfoDatum(profile);
   for (i=(ssize_t) GetStringInfoLength(profile)-1; i >= 0; i--)
-    *p++=(unsigned char) GetCharacter(jpeg_info);
+  {
+    int
+      c;
+
+    c=GetCharacter(jpeg_info);
+    if (c == EOF)
+      break;
+    *p++=(unsigned char) c;
+  }
   error_manager->profile=NULL;
   icc_profile=(StringInfo *) GetImageProfile(image,"icc");
   if (icc_profile != (StringInfo *) NULL)
@@ -567,7 +585,8 @@ static boolean ReadIPTCProfile(j_decompress_ptr jpeg_info)
   if (length <= 14)
     {
       while (length-- > 0)
-        (void) GetCharacter(jpeg_info);
+        if (GetCharacter(jpeg_info) == EOF)
+          break;
       return(TRUE);
     }
   /*
@@ -585,14 +604,16 @@ static boolean ReadIPTCProfile(j_decompress_ptr jpeg_info)
         Not a IPTC profile, return.
       */
       for (i=0; i < (ssize_t) length; i++)
-        (void) GetCharacter(jpeg_info);
+        if (GetCharacter(jpeg_info) == EOF)
+          break;
       return(TRUE);
     }
   /*
     Remove the version number.
   */
   for (i=0; i < 4; i++)
-    (void) GetCharacter(jpeg_info);
+    if (GetCharacter(jpeg_info) == EOF)
+      break;
   if (length <= 11)
     return(TRUE);
   length-=4;
@@ -609,7 +630,15 @@ static boolean ReadIPTCProfile(j_decompress_ptr jpeg_info)
   error_manager->profile=profile;
   p=GetStringInfoDatum(profile);
   for (i=0;  i < (ssize_t) GetStringInfoLength(profile); i++)
-    *p++=(unsigned char) GetCharacter(jpeg_info);
+  {
+    int
+      c;
+
+    c=GetCharacter(jpeg_info);
+    if (c == EOF)
+      break;
+    *p++=(unsigned char) c;
+  }
   error_manager->profile=NULL;
   iptc_profile=(StringInfo *) GetImageProfile(image,"8bim");
   if (iptc_profile != (StringInfo *) NULL)
@@ -692,7 +721,15 @@ static boolean ReadProfile(j_decompress_ptr jpeg_info)
   error_manager->profile=profile;
   p=GetStringInfoDatum(profile);
   for (i=0; i < (ssize_t) GetStringInfoLength(profile); i++)
-    *p++=(unsigned char) GetCharacter(jpeg_info);
+  {
+    int
+      c;
+
+    c=GetCharacter(jpeg_info);
+    if (c == EOF)
+      break;
+    *p++=(unsigned char) c;
+  }
   error_manager->profile=NULL;
   if (marker == 1)
     {
@@ -1070,9 +1107,9 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
   /*
     Initialize JPEG parameters.
   */
-  (void) ResetMagickMemory(&error_manager,0,sizeof(error_manager));
-  (void) ResetMagickMemory(&jpeg_info,0,sizeof(jpeg_info));
-  (void) ResetMagickMemory(&jpeg_error,0,sizeof(jpeg_error));
+  (void) memset(&error_manager,0,sizeof(error_manager));
+  (void) memset(&jpeg_info,0,sizeof(jpeg_info));
+  (void) memset(&jpeg_error,0,sizeof(jpeg_error));
   jpeg_info.err=jpeg_std_error(&jpeg_error);
   jpeg_info.err->emit_message=(void (*)(j_common_ptr,int)) JPEGWarningHandler;
   jpeg_info.err->error_exit=(void (*)(j_common_ptr)) JPEGErrorHandler;
@@ -1263,8 +1300,7 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
     }
   option=GetImageOption(image_info,"jpeg:colors");
   if (option != (const char *) NULL)
-    if (AcquireImageColormap(image,StringToUnsignedLong(option),exception)
-         == MagickFalse)
+    if (AcquireImageColormap(image,StringToUnsignedLong(option),exception) == MagickFalse)
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
   if ((jpeg_info.output_components == 1) && (jpeg_info.quantize_colors == 0))
     {
@@ -1319,7 +1355,7 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
     }
   jpeg_pixels=(JSAMPLE *) GetVirtualMemoryBlob(memory_info);
-  (void) ResetMagickMemory(jpeg_pixels,0,image->columns*
+  (void) memset(jpeg_pixels,0,image->columns*
     jpeg_info.output_components*sizeof(*jpeg_pixels));
   /*
     Convert JPEG pixels to pixel packets.
@@ -1968,14 +2004,14 @@ static void WriteProfile(j_compress_ptr jpeg_info,Image *image,
 
         tag_length=strlen(ICC_PROFILE);
         p=GetStringInfoDatum(custom_profile);
-        (void) CopyMagickMemory(p,ICC_PROFILE,tag_length);
+        (void) memcpy(p,ICC_PROFILE,tag_length);
         p[tag_length]='\0';
         for (i=0; i < (ssize_t) GetStringInfoLength(profile); i+=65519L)
         {
           length=MagickMin(GetStringInfoLength(profile)-i,65519L);
           p[12]=(unsigned char) ((i/65519L)+1);
           p[13]=(unsigned char) (GetStringInfoLength(profile)/65519L+1);
-          (void) CopyMagickMemory(p+tag_length+3,GetStringInfoDatum(profile)+i,
+          (void) memcpy(p+tag_length+3,GetStringInfoDatum(profile)+i,
             length);
           jpeg_write_marker(jpeg_info,ICC_MARKER,GetStringInfoDatum(
             custom_profile),(unsigned int) (length+tag_length+3));
@@ -2003,7 +2039,7 @@ static void WriteProfile(j_compress_ptr jpeg_info,Image *image,
             }
           else
             {
-              (void) CopyMagickMemory(p,"Photoshop 3.0 8BIM\04\04\0\0\0\0",24);
+              (void) memcpy(p,"Photoshop 3.0 8BIM\04\04\0\0\0\0",24);
               tag_length=26;
               p[24]=(unsigned char) (length >> 8);
               p[25]=(unsigned char) (length & 0xff);
@@ -2173,9 +2209,9 @@ static MagickBooleanType WriteJPEGImage(const ImageInfo *image_info,
   /*
     Initialize JPEG parameters.
   */
-  (void) ResetMagickMemory(&error_manager,0,sizeof(error_manager));
-  (void) ResetMagickMemory(&jpeg_info,0,sizeof(jpeg_info));
-  (void) ResetMagickMemory(&jpeg_error,0,sizeof(jpeg_error));
+  (void) memset(&error_manager,0,sizeof(error_manager));
+  (void) memset(&jpeg_info,0,sizeof(jpeg_info));
+  (void) memset(&jpeg_error,0,sizeof(jpeg_error));
   volatile_image=image;
   jpeg_info.client_data=(void *) volatile_image;
   jpeg_info.err=jpeg_std_error(&jpeg_error);
@@ -2216,6 +2252,7 @@ static MagickBooleanType WriteJPEGImage(const ImageInfo *image_info,
       jpeg_info.in_color_space=JCS_YCbCr;
       break;
     }
+    case LinearGRAYColorspace:
     case GRAYColorspace:
     {
       if (image_info->type == TrueColorType)
@@ -2311,7 +2348,8 @@ static MagickBooleanType WriteJPEGImage(const ImageInfo *image_info,
             Perform optimization only if available memory resources permit it.
           */
           status=AcquireMagickResource(MemoryResource,length);
-          RelinquishMagickResource(MemoryResource,length);
+          if (status != MagickFalse)
+            RelinquishMagickResource(MemoryResource,length);
           jpeg_info.optimize_coding=status == MagickFalse ? FALSE : TRUE;
         }
     }

@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -351,6 +351,14 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     image->resolution.x=(double) pcx_info.horizontal_resolution;
     image->resolution.y=(double) pcx_info.vertical_resolution;
     image->colors=16;
+    if ((image_info->ping != MagickFalse) && (image_info->number_scenes != 0))
+      if (image->scene >= (image_info->scene+image_info->number_scenes-1))
+        break;
+    status=SetImageExtent(image,image->columns,image->rows,exception);
+    if (status == MagickFalse)
+      ThrowPCXException(exception->severity,exception->reason);
+    (void) SetImageBackgroundColor(image,exception);
+    (void) memset(pcx_colormap,0,sizeof(pcx_colormap));
     count=ReadBlob(image,3*image->colors,pcx_colormap);
     if (count != (ssize_t) (3*image->colors))
       ThrowPCXException(CorruptImageError,"ImproperImageHeader");
@@ -385,12 +393,6 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     pcx_info.vertical_screensize=ReadBlobLSBShort(image);
     for (i=0; i < 54; i++)
       (void) ReadBlobByte(image);
-    if ((image_info->ping != MagickFalse) && (image_info->number_scenes != 0))
-      if (image->scene >= (image_info->scene+image_info->number_scenes-1))
-        break;
-    status=SetImageExtent(image,image->columns,image->rows,exception);
-    if (status == MagickFalse)
-      ThrowPCXException(exception->severity,exception->reason);
     /*
       Read image data.
     */
@@ -402,6 +404,8 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     pcx_packets=(size_t) pcx_packets*pcx_info.planes;
     if ((size_t) (pcx_info.bits_per_pixel*pcx_info.planes*image->columns) >
         (pcx_packets*8U))
+      ThrowPCXException(CorruptImageError,"ImproperImageHeader");
+    if ((MagickSizeType) (pcx_packets/8) > GetBlobSize(image))
       ThrowPCXException(CorruptImageError,"ImproperImageHeader");
     scanline=(unsigned char *) AcquireQuantumMemory(MagickMax(image->columns,
       pcx_info.bytes_per_line),MagickMax(8,pcx_info.planes)*sizeof(*scanline));
@@ -415,7 +419,10 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
           pixel_info=RelinquishVirtualMemory(pixel_info);
         ThrowPCXException(ResourceLimitError,"MemoryAllocationFailed");
       }
+    (void) memset(scanline,0,(size_t) MagickMax(image->columns,
+      pcx_info.bytes_per_line)*MagickMax(8,pcx_info.planes)*sizeof(*scanline));
     pixels=(unsigned char *) GetVirtualMemoryBlob(pixel_info);
+    (void) memset(pixels,0,(size_t) pcx_packets*(2*sizeof(*pixels)));
     /*
       Uncompress image data.
     */
@@ -611,7 +618,7 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
             }
             case 8:
             {
-              (void) CopyMagickMemory(r,p,image->columns);
+              (void) memcpy(r,p,image->columns);
               break;
             }
             default:
@@ -991,7 +998,11 @@ static MagickBooleanType WritePCXImage(const ImageInfo *image_info,Image *image,
     pcx_colormap=(unsigned char *) AcquireQuantumMemory(256UL,
       3*sizeof(*pcx_colormap));
     if (pcx_colormap == (unsigned char *) NULL)
-      ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
+      {
+        if (page_table != (MagickOffsetType *) NULL)
+          page_table=(MagickOffsetType *) RelinquishMagickMemory(page_table);
+        ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
+      }
     (void) memset(pcx_colormap,0,3*256*sizeof(*pcx_colormap));
     q=pcx_colormap;
     if ((image->storage_class == PseudoClass) && (image->colors <= 256))

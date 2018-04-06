@@ -23,7 +23,7 @@
 %                                March 2002                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -498,7 +498,7 @@ WandExport DrawingWand *CloneDrawingWand(const DrawingWand *wand)
   if (clone_wand == (DrawingWand *) NULL)
     ThrowWandFatalException(ResourceLimitFatalError,
       "MemoryAllocationFailed",GetExceptionMessage(errno));
-  (void) ResetMagickMemory(clone_wand,0,sizeof(*clone_wand));
+  (void) memset(clone_wand,0,sizeof(*clone_wand));
   clone_wand->id=AcquireWandId();
   (void) FormatLocaleString(clone_wand->name,MagickPathExtent,
     "DrawingWand-%.20g",(double) clone_wand->id);
@@ -6715,7 +6715,7 @@ WandExport DrawingWand *NewDrawingWand(void)
   if (wand == (DrawingWand *) NULL)
     ThrowWandFatalException(ResourceLimitFatalError,"MemoryAllocationFailed",
       GetExceptionMessage(errno));
-  (void) ResetMagickMemory(wand,0,sizeof(*wand));
+  (void) memset(wand,0,sizeof(*wand));
   wand->id=AcquireWandId();
   (void) FormatLocaleString(wand->name,MagickPathExtent,"%s-%.20g",
     DrawingWandId,(double) wand->id);
@@ -6782,7 +6782,6 @@ WandExport DrawInfo *PeekDrawingWand(const DrawingWand *wand)
   if (wand->debug != MagickFalse)
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
   draw_info=CloneDrawInfo((ImageInfo *) NULL,CurrentContext);
-  GetAffineMatrix(&draw_info->affine);
   (void) CloneString(&draw_info->primitive,wand->mvg);
   return(draw_info);
 }

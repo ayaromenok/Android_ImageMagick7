@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
   
   You may not use this file except in compliance with the License.
@@ -150,8 +150,9 @@ extern "C" {
 #include "MagickCore/shear.h"
 #include "MagickCore/signature.h"
 #include "MagickCore/splay-tree.h"
-#include "MagickCore/stream.h"
+#include "MagickCore/static.h"
 #include "MagickCore/statistic.h"
+#include "MagickCore/stream.h"
 #include "MagickCore/string_.h"
 #include "MagickCore/timer.h"
 #include "MagickCore/token.h"

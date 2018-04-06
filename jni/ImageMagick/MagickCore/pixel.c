@@ -16,7 +16,7 @@
 %                               October 1998                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -102,7 +102,7 @@ MagickExport PixelChannelMap *AcquirePixelChannelMap(void)
     sizeof(*channel_map));
   if (channel_map == (PixelChannelMap *) NULL)
     ThrowFatalException(ResourceLimitFatalError,"MemoryAllocationFailed");
-  (void) ResetMagickMemory(channel_map,0,MaxPixelChannels*sizeof(*channel_map));
+  (void) memset(channel_map,0,MaxPixelChannels*sizeof(*channel_map));
   for (i=0; i < MaxPixelChannels; i++)
     channel_map[i].channel=(PixelChannel) i;
   return(channel_map);
@@ -139,7 +139,7 @@ MagickExport PixelChannelMap *ClonePixelChannelMap(PixelChannelMap *channel_map)
   clone_map=AcquirePixelChannelMap();
   if (clone_map == (PixelChannelMap *) NULL)
     return((PixelChannelMap *) NULL);
-  (void) CopyMagickMemory(clone_map,channel_map,MaxPixelChannels*
+  (void) memcpy(clone_map,channel_map,MaxPixelChannels*
     sizeof(*channel_map));
   return(clone_map);
 }
@@ -506,9 +506,9 @@ MagickExport MagickRealType EncodePixelGamma(const MagickRealType pixel)
 %
 */
 
-static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,void *pixels,
-  ExceptionInfo *exception)
+static MagickBooleanType ExportCharPixel(const Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -541,7 +541,7 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -559,7 +559,7 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -577,7 +577,7 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -592,7 +592,7 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -609,7 +609,7 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -627,7 +627,7 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -645,7 +645,7 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -710,11 +710,12 @@ static void ExportCharPixel(const Image *image,const RectangleInfo *roi,
       p+=GetPixelChannels(image);
     }
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,void *pixels,
-  ExceptionInfo *exception)
+static MagickBooleanType ExportDoublePixel(const Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -747,7 +748,7 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -765,7 +766,7 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -783,7 +784,7 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -798,7 +799,7 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -815,7 +816,7 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -833,7 +834,7 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -851,7 +852,7 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -917,11 +918,12 @@ static void ExportDoublePixel(const Image *image,const RectangleInfo *roi,
       p+=GetPixelChannels(image);
     }
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,void *pixels,
-  ExceptionInfo *exception)
+static MagickBooleanType ExportFloatPixel(const Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -954,7 +956,7 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -972,7 +974,7 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -990,7 +992,7 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -1005,7 +1007,7 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -1022,7 +1024,7 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -1040,7 +1042,7 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -1058,7 +1060,7 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -1123,11 +1125,12 @@ static void ExportFloatPixel(const Image *image,const RectangleInfo *roi,
       p+=GetPixelChannels(image);
     }
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,void *pixels,
-  ExceptionInfo *exception)
+static MagickBooleanType ExportLongPixel(const Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -1160,7 +1163,7 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -1178,7 +1181,7 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -1196,7 +1199,7 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -1211,7 +1214,7 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -1228,7 +1231,7 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -1246,7 +1249,7 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -1264,7 +1267,7 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -1329,11 +1332,12 @@ static void ExportLongPixel(const Image *image,const RectangleInfo *roi,
       p+=GetPixelChannels(image);
     }
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,void *pixels,
-  ExceptionInfo *exception)
+static MagickBooleanType ExportLongLongPixel(const Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -1366,7 +1370,7 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -1384,7 +1388,7 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -1402,7 +1406,7 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -1418,7 +1422,7 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -1435,7 +1439,7 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -1453,7 +1457,7 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -1471,7 +1475,7 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -1537,11 +1541,12 @@ static void ExportLongLongPixel(const Image *image,const RectangleInfo *roi,
       p+=GetPixelChannels(image);
     }
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,void *pixels,
-  ExceptionInfo *exception)
+static MagickBooleanType ExportQuantumPixel(const Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -1574,7 +1579,7 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -1592,7 +1597,7 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -1610,7 +1615,7 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -1625,7 +1630,7 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -1642,7 +1647,7 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -1660,7 +1665,7 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -1678,7 +1683,7 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -1746,11 +1751,12 @@ static void ExportQuantumPixel(const Image *image,const RectangleInfo *roi,
       p+=GetPixelChannels(image);
     }
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,void *pixels,
-  ExceptionInfo *exception)
+static MagickBooleanType ExportShortPixel(const Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -1783,7 +1789,7 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -1801,7 +1807,7 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -1819,7 +1825,7 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -1834,7 +1840,7 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -1851,7 +1857,7 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -1869,7 +1875,7 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -1887,7 +1893,7 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
           p+=GetPixelChannels(image);
         }
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -1952,12 +1958,16 @@ static void ExportShortPixel(const Image *image,const RectangleInfo *roi,
       p+=GetPixelChannels(image);
     }
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-MagickExport MagickBooleanType ExportImagePixels(const Image *image,const ssize_t x,
-  const ssize_t y,const size_t width,const size_t height,const char *map,
-  const StorageType type,void *pixels,ExceptionInfo *exception)
+MagickExport MagickBooleanType ExportImagePixels(const Image *image,
+  const ssize_t x,const ssize_t y,const size_t width,const size_t height,
+  const char *map,const StorageType type,void *pixels,ExceptionInfo *exception)
 {
+  MagickBooleanType
+    status;
+
   QuantumType
     *quantum_map;
 
@@ -2089,49 +2099,48 @@ MagickExport MagickBooleanType ExportImagePixels(const Image *image,const ssize_
   {
     case CharPixel:
     {
-      ExportCharPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ExportCharPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case DoublePixel:
     {
-      ExportDoublePixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ExportDoublePixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case FloatPixel:
     {
-      ExportFloatPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ExportFloatPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case LongPixel:
     {
-      ExportLongPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ExportLongPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case LongLongPixel:
     {
-      ExportLongLongPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ExportLongLongPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case QuantumPixel:
     {
-      ExportQuantumPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ExportQuantumPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case ShortPixel:
     {
-      ExportShortPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ExportShortPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     default:
     {
-      quantum_map=(QuantumType *) RelinquishMagickMemory(quantum_map);
       (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
         "UnrecognizedPixelMap","`%s'",map);
-      break;
+      status=MagickFalse;
     }
   }
   quantum_map=(QuantumType *) RelinquishMagickMemory(quantum_map);
-  return(MagickTrue);
+  return(status);
 }
 
 /*
@@ -2160,19 +2169,12 @@ MagickExport MagickBooleanType ExportImagePixels(const Image *image,const ssize_
 */
 MagickExport void GetPixelInfo(const Image *image,PixelInfo *pixel)
 {
+  (void) memset(pixel,0,sizeof(*pixel));
   pixel->storage_class=DirectClass;
   pixel->colorspace=sRGBColorspace;
-  pixel->alpha_trait=UndefinedPixelTrait;
-  pixel->fuzz=0.0;
   pixel->depth=MAGICKCORE_QUANTUM_DEPTH;
-  pixel->red=0.0;
-  pixel->green=0.0;
-  pixel->blue=0.0;
-  pixel->black=0.0;
+  pixel->alpha_trait=UndefinedPixelTrait;
   pixel->alpha=(double) OpaqueAlpha;
-  pixel->index=0.0;
-  pixel->count=0;
-  pixel->fuzz=0.0;
   if (image == (const Image *) NULL)
     return;
   pixel->storage_class=image->storage_class;
@@ -2500,7 +2502,7 @@ MagickExport MagickRealType GetPixelIntensity(
 %
 */
 
-static void ImportCharPixel(Image *image,const RectangleInfo *roi,
+static MagickBooleanType ImportCharPixel(Image *image,const RectangleInfo *roi,
   const char *magick_restrict map,const QuantumType *quantum_map,
   const void *pixels,ExceptionInfo *exception)
 {
@@ -2537,7 +2539,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -2557,7 +2559,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRO") == 0)
     {
@@ -2577,7 +2579,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -2597,7 +2599,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -2614,7 +2616,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -2633,7 +2635,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -2653,7 +2655,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBO") == 0)
     {
@@ -2673,7 +2675,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -2693,7 +2695,7 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -2758,11 +2760,12 @@ static void ImportCharPixel(Image *image,const RectangleInfo *roi,
     if (SyncAuthenticPixels(image,exception) == MagickFalse)
       break;
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,
-  const void *pixels,ExceptionInfo *exception)
+static MagickBooleanType ImportDoublePixel(Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,const void *pixels,ExceptionInfo *exception)
 {
   register const double
     *magick_restrict p;
@@ -2800,7 +2803,7 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -2824,7 +2827,7 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -2847,7 +2850,7 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -2865,7 +2868,7 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -2887,7 +2890,7 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -2911,7 +2914,7 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -2933,7 +2936,7 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
    length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -2998,9 +3001,10 @@ static void ImportDoublePixel(Image *image,const RectangleInfo *roi,
     if (SyncAuthenticPixels(image,exception) == MagickFalse)
       break;
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
+static MagickBooleanType ImportFloatPixel(Image *image,const RectangleInfo *roi,
   const char *magick_restrict map,const QuantumType *quantum_map,
   const void *pixels,ExceptionInfo *exception)
 {
@@ -3040,7 +3044,7 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -3064,7 +3068,7 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -3087,7 +3091,7 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -3105,7 +3109,7 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -3127,7 +3131,7 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -3151,7 +3155,7 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -3173,7 +3177,7 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -3238,9 +3242,10 @@ static void ImportFloatPixel(Image *image,const RectangleInfo *roi,
     if (SyncAuthenticPixels(image,exception) == MagickFalse)
       break;
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ImportLongPixel(Image *image,const RectangleInfo *roi,
+static MagickBooleanType ImportLongPixel(Image *image,const RectangleInfo *roi,
   const char *magick_restrict map,const QuantumType *quantum_map,
   const void *pixels,ExceptionInfo *exception)
 {
@@ -3277,7 +3282,7 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -3297,7 +3302,7 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -3317,7 +3322,7 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -3334,7 +3339,7 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -3353,7 +3358,7 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -3373,7 +3378,7 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -3393,7 +3398,7 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -3458,11 +3463,12 @@ static void ImportLongPixel(Image *image,const RectangleInfo *roi,
     if (SyncAuthenticPixels(image,exception) == MagickFalse)
       break;
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,
-  const void *pixels,ExceptionInfo *exception)
+static MagickBooleanType ImportLongLongPixel(Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,const void *pixels,ExceptionInfo *exception)
 {
   register const MagickSizeType
     *magick_restrict p;
@@ -3497,7 +3503,7 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -3517,7 +3523,7 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -3537,7 +3543,7 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -3554,7 +3560,7 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -3573,7 +3579,7 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -3593,7 +3599,7 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -3613,7 +3619,7 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -3678,11 +3684,12 @@ static void ImportLongLongPixel(Image *image,const RectangleInfo *roi,
     if (SyncAuthenticPixels(image,exception) == MagickFalse)
       break;
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
-  const char *magick_restrict map,const QuantumType *quantum_map,
-  const void *pixels,ExceptionInfo *exception)
+static MagickBooleanType ImportQuantumPixel(Image *image,
+  const RectangleInfo *roi,const char *magick_restrict map,
+  const QuantumType *quantum_map,const void *pixels,ExceptionInfo *exception)
 {
   register const Quantum
     *magick_restrict p;
@@ -3717,7 +3724,7 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -3737,7 +3744,7 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -3757,7 +3764,7 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -3774,7 +3781,7 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -3793,7 +3800,7 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -3813,7 +3820,7 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -3833,7 +3840,7 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -3898,9 +3905,10 @@ static void ImportQuantumPixel(Image *image,const RectangleInfo *roi,
     if (SyncAuthenticPixels(image,exception) == MagickFalse)
       break;
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
-static void ImportShortPixel(Image *image,const RectangleInfo *roi,
+static MagickBooleanType ImportShortPixel(Image *image,const RectangleInfo *roi,
   const char *magick_restrict map,const QuantumType *quantum_map,
   const void *pixels,ExceptionInfo *exception)
 {
@@ -3937,7 +3945,7 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRA") == 0)
     {
@@ -3957,7 +3965,7 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"BGRP") == 0)
     {
@@ -3977,7 +3985,7 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"I") == 0)
     {
@@ -3994,7 +4002,7 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGB") == 0)
     {
@@ -4013,7 +4021,7 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBA") == 0)
     {
@@ -4033,7 +4041,7 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   if (LocaleCompare(map,"RGBP") == 0)
     {
@@ -4053,7 +4061,7 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
         if (SyncAuthenticPixels(image,exception) == MagickFalse)
           break;
       }
-      return;
+      return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
     }
   length=strlen(map);
   for (y=0; y < (ssize_t) roi->height; y++)
@@ -4118,12 +4126,16 @@ static void ImportShortPixel(Image *image,const RectangleInfo *roi,
     if (SyncAuthenticPixels(image,exception) == MagickFalse)
       break;
   }
+  return(y < (ssize_t) roi->height ? MagickFalse : MagickTrue);
 }
 
 MagickExport MagickBooleanType ImportImagePixels(Image *image,const ssize_t x,
   const ssize_t y,const size_t width,const size_t height,const char *map,
   const StorageType type,const void *pixels,ExceptionInfo *exception)
 {
+  MagickBooleanType
+    status;
+
   QuantumType
     *quantum_map;
 
@@ -4247,49 +4259,48 @@ MagickExport MagickBooleanType ImportImagePixels(Image *image,const ssize_t x,
   {
     case CharPixel:
     {
-      ImportCharPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ImportCharPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case DoublePixel:
     {
-      ImportDoublePixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ImportDoublePixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case FloatPixel:
     {
-      ImportFloatPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ImportFloatPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case LongPixel:
     {
-      ImportLongPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ImportLongPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case LongLongPixel:
     {
-      ImportLongLongPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ImportLongLongPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case QuantumPixel:
     {
-      ImportQuantumPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ImportQuantumPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     case ShortPixel:
     {
-      ImportShortPixel(image,&roi,map,quantum_map,pixels,exception);
+      status=ImportShortPixel(image,&roi,map,quantum_map,pixels,exception);
       break;
     }
     default:
     {
-      quantum_map=(QuantumType *) RelinquishMagickMemory(quantum_map);
       (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
         "UnrecognizedStorageType","`%d'",type);
-      break;
+      status=MagickFalse;
     }
   }
   quantum_map=(QuantumType *) RelinquishMagickMemory(quantum_map);
-  return(MagickTrue);
+  return(status);
 }
 
 /*
@@ -4327,13 +4338,14 @@ MagickExport void InitializePixelChannelMap(Image *image)
 
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
-  (void) ResetMagickMemory(image->channel_map,0,MaxPixelChannels*
+  (void) memset(image->channel_map,0,MaxPixelChannels*
     sizeof(*image->channel_map));
   trait=UpdatePixelTrait;
   if (image->alpha_trait != UndefinedPixelTrait)
     trait=(PixelTrait) (trait | BlendPixelTrait);
   n=0;
-  if (image->colorspace == GRAYColorspace)
+  if ((image->colorspace == LinearGRAYColorspace) ||
+      (image->colorspace == GRAYColorspace))
     {
       SetPixelChannelAttributes(image,BluePixelChannel,trait,n);
       SetPixelChannelAttributes(image,GreenPixelChannel,trait,n);
@@ -5494,7 +5506,8 @@ MagickExport MagickBooleanType InterpolatePixelInfo(const Image *image,
   interpolate=method;
   if (interpolate == UndefinedInterpolatePixel)
     interpolate=image->interpolate;
-  (void) ResetMagickMemory(&pixels,0,sizeof(pixels));
+  GetPixelInfoPixel(image,(const Quantum *) NULL,pixel);
+  (void) memset(&pixels,0,sizeof(pixels));
   switch (interpolate)
   {
     case AverageInterpolatePixel:  /* nearest 4 neighbours */
@@ -5524,11 +5537,6 @@ MagickExport MagickBooleanType InterpolatePixelInfo(const Image *image,
           status=MagickFalse;
           break;
         }
-      pixel->red=0.0;
-      pixel->green=0.0;
-      pixel->blue=0.0;
-      pixel->black=0.0;
-      pixel->alpha=0.0;
       count*=count;  /* number of pixels - square of size */
       for (i=0; i < (ssize_t) count; i++)
       {
@@ -6182,7 +6190,8 @@ static void LogPixelChannels(const Image *image)
         name="red";
         if (image->colorspace == CMYKColorspace)
           name="cyan";
-        if (image->colorspace == GRAYColorspace)
+        if ((image->colorspace == LinearGRAYColorspace) ||
+            (image->colorspace == GRAYColorspace))
           name="gray";
         break;
       }

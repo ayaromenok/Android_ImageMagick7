@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -782,6 +782,10 @@ MagickExport MagickBooleanType GetMultilineTypeMetrics(Image *image,
   register ssize_t
     i;
 
+  size_t
+    height,
+    count;
+
   TypeMetric
     extent;
 
@@ -799,34 +803,53 @@ MagickExport MagickBooleanType GetMultilineTypeMetrics(Image *image,
   /*
     Convert newlines to multiple lines of text.
   */
-  textlist=StringToList(draw_info->text);
+  textlist=StringToStrings(draw_info->text,&count);
   if (textlist == (char **) NULL)
     return(MagickFalse);
   annotate_info->render=MagickFalse;
   annotate_info->direction=UndefinedDirection;
-  (void) ResetMagickMemory(metrics,0,sizeof(*metrics));
-  (void) ResetMagickMemory(&extent,0,sizeof(extent));
+  (void) memset(metrics,0,sizeof(*metrics));
+  (void) memset(&extent,0,sizeof(extent));
   /*
     Find the widest of the text lines.
   */
   annotate_info->text=textlist[0];
   status=GetTypeMetrics(image,annotate_info,&extent,exception);
   *metrics=extent;
-  for (i=1; textlist[i] != (char *) NULL; i++)
-  {
-    annotate_info->text=textlist[i];
-    status=GetTypeMetrics(image,annotate_info,&extent,exception);
-    if (extent.width > metrics->width)
-      *metrics=extent;
-  }
-  metrics->height=(double) (i*(size_t) (metrics->ascent-metrics->descent+0.5)+
-    (i-1)*draw_info->interline_spacing);
+  height=(count*(size_t) (metrics->ascent-metrics->descent+
+    0.5)+(count-1)*draw_info->interline_spacing);
+  if (AcquireMagickResource(HeightResource,height) == MagickFalse)
+    {
+      (void) ThrowMagickException(exception,GetMagickModule(),ImageError,
+        "WidthOrHeightExceedsLimit","`%s'",image->filename);
+      status=MagickFalse;
+    }
+  else
+    {
+      for (i=1; i < (ssize_t) count; i++)
+      {
+        annotate_info->text=textlist[i];
+        status=GetTypeMetrics(image,annotate_info,&extent,exception);
+        if (status == MagickFalse)
+          break;
+        if (extent.width > metrics->width)
+          *metrics=extent;
+        if (AcquireMagickResource(WidthResource,extent.width) == MagickFalse)
+          {
+            (void) ThrowMagickException(exception,GetMagickModule(),ImageError,
+              "WidthOrHeightExceedsLimit","`%s'",image->filename);
+            status=MagickFalse;
+            break;
+          }
+      }
+      metrics->height=(double) height;
+    }
   /*
     Relinquish resources.
   */
   annotate_info->text=(char *) NULL;
   annotate_info=DestroyDrawInfo(annotate_info);
-  for (i=0; textlist[i] != (char *) NULL; i++)
+  for (i=0; i < (ssize_t) count; i++)
     textlist[i]=DestroyString(textlist[i]);
   textlist=(char **) RelinquishMagickMemory(textlist);
   return(status);
@@ -900,7 +923,7 @@ MagickExport MagickBooleanType GetTypeMetrics(Image *image,
   annotate_info=CloneDrawInfo((ImageInfo *) NULL,draw_info);
   annotate_info->render=MagickFalse;
   annotate_info->direction=UndefinedDirection;
-  (void) ResetMagickMemory(metrics,0,sizeof(*metrics));
+  (void) memset(metrics,0,sizeof(*metrics));
   offset.x=0.0;
   offset.y=0.0;
   status=RenderType(image,annotate_info,&offset,metrics,exception);
@@ -989,8 +1012,29 @@ static MagickBooleanType RenderType(Image *image,const DrawInfo *draw_info,
   if ((type_info == (const TypeInfo *) NULL) &&
       (draw_info->family != (const char *) NULL))
     {
-      type_info=GetTypeInfoByFamily(draw_info->family,draw_info->style,
-        draw_info->stretch,draw_info->weight,exception);
+      char
+        **family;
+
+      int
+        number_families;
+
+      register ssize_t
+        i;
+
+      /*
+        Parse font family list.
+      */
+      family=StringToArgv(draw_info->family,&number_families);
+      for (i=1; i < (ssize_t) number_families; i++)
+      {
+        type_info=GetTypeInfoByFamily(family[i],draw_info->style,
+          draw_info->stretch,draw_info->weight,exception);
+        if (type_info != (const TypeInfo *) NULL)
+          break;
+      }
+      for (i=0; i < (ssize_t) number_families; i++)
+        family[i]=DestroyString(family[i]);
+      family=(char **) RelinquishMagickMemory(family);
       if (type_info == (const TypeInfo *) NULL)
         (void) ThrowMagickException(exception,GetMagickModule(),TypeWarning,
           "UnableToReadFont","`%s'",draw_info->family);

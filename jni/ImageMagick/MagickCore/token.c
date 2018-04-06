@@ -17,7 +17,7 @@
 %                              January 1993                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -300,7 +300,7 @@ MagickExport void GetNextToken(const char *start,const char **end,
     }
   }
   token[i]='\0';
-  if ((LocaleNCompare(token,"url(",4) == 0) && (strlen(token) > 4))
+  if ((LocaleNCompare(token,"url(",4) == 0) && (strlen(token) > 5))
     {
       ssize_t
         offset;
@@ -309,8 +309,11 @@ MagickExport void GetNextToken(const char *start,const char **end,
       if (token[offset] == '#')
         offset++;
       i=(ssize_t) strlen(token);
-      (void) CopyMagickString(token,token+offset,MagickPathExtent);
-      token[i-offset-1]='\0';
+      if (i > offset)
+        {
+          (void) CopyMagickString(token,token+offset,MagickPathExtent);
+          token[i-offset-1]='\0';
+        }
     }
   while (isspace((int) ((unsigned char) *p)) != 0)
     p++;

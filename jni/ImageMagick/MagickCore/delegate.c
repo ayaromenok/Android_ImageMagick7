@@ -16,7 +16,7 @@
 %                               October 1998                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -931,7 +931,7 @@ RestoreMSCWarning
   extent=MagickPathExtent;  /* allocated space in string */
   number=MagickFalse;  /* is last char a number? */
   for (q=interpret_text; *p!='\0';
-    number=isdigit(*p) ? MagickTrue : MagickFalse,p++)
+    number=isdigit((int) ((unsigned char) *p)) ? MagickTrue : MagickFalse,p++)
   {
     /*
       Interpret escape characters (e.g. Filename: %M).
@@ -2060,7 +2060,7 @@ static MagickBooleanType LoadDelegateCache(LinkedListInfo *cache,
           GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
-              if (depth > 200)
+              if (depth > MagickMaxRecursionDepth)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   ConfigureError,"IncludeElementNestedTooDeeply","`%s'",token);
               else
@@ -2096,7 +2096,7 @@ static MagickBooleanType LoadDelegateCache(LinkedListInfo *cache,
         */
         delegate_info=(DelegateInfo *) AcquireCriticalMemory(
           sizeof(*delegate_info));
-        (void) ResetMagickMemory(delegate_info,0,sizeof(*delegate_info));
+        (void) memset(delegate_info,0,sizeof(*delegate_info));
         delegate_info->path=ConstantString(filename);
         delegate_info->thread_support=MagickTrue;
         delegate_info->signature=MagickCoreSignature;

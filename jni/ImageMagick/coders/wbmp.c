@@ -17,7 +17,7 @@
 %                               January 2000                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -159,6 +159,7 @@ static Image *ReadWBMPImage(const ImageInfo *image_info,
       image=DestroyImageList(image);
       return((Image *) NULL);
     }
+  header=0;
   if (ReadBlob(image,2,(unsigned char *) &header) == 0)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   if (header != 0)
@@ -175,8 +176,6 @@ static Image *ReadWBMPImage(const ImageInfo *image_info,
   if (DiscardBlobBytes(image,image->offset) == MagickFalse)
     ThrowFileException(exception,CorruptImageError,"UnexpectedEndOfFile",
       image->filename);
-  if (AcquireImageColormap(image,2,exception) == MagickFalse)
-    ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
   if (image_info->ping != MagickFalse)
     {
       (void) CloseBlob(image);
@@ -185,6 +184,9 @@ static Image *ReadWBMPImage(const ImageInfo *image_info,
   status=SetImageExtent(image,image->columns,image->rows,exception);
   if (status == MagickFalse)
     return(DestroyImageList(image));
+  (void) SetImageBackgroundColor(image,exception);
+  if (AcquireImageColormap(image,2,exception) == MagickFalse)
+    ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
   /*
     Convert bi-level image to pixel packets.
   */
