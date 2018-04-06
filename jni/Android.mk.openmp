@@ -197,6 +197,7 @@ LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)coders/gray.c \
 	$(IMAGE_MAGICK)coders/hald.c \
 	$(IMAGE_MAGICK)coders/hdr.c \
+	$(IMAGE_MAGICK)coders/heic.c \
 	$(IMAGE_MAGICK)coders/histogram.c \
 	$(IMAGE_MAGICK)coders/hrz.c \
 	$(IMAGE_MAGICK)coders/html.c \
@@ -279,7 +280,6 @@ LOCAL_SRC_FILES := \
 	$(IMAGE_MAGICK)coders/ycbcr.c \
 	$(IMAGE_MAGICK)coders/yuv.c \
 	$(IMAGE_MAGICK)coders/djvu.c \
-	$(IMAGE_MAGICK)coders/fd.c \
 	$(IMAGE_MAGICK)coders/jnx.c \
 	$(IMAGE_MAGICK)coders/json.c \
 	$(IMAGE_MAGICK)coders/mask.c \
