@@ -27,8 +27,8 @@
  - GUI version published to [google play](https://play.google.com/store/apps/details?id=info.yaromenok.IM7Test) for armv7 and x86 
 
 # For C/C++ users
- - number of file formats disabled for now(tiff, exr, svg, jpeg2000, webp)
- - MagickWand and Magick++ added as separate Shared Objects
+ - number of file formats disabled for now(exr, svg, jpeg2000, webp)
+ - MagickWand added as separate Shared Object - need to be linked separately
  
 # For Java users
  Please, use https://github.com/paulasiimwe/Android-ImageMagick port of ImageMagick 6 - it's include Java interface
@@ -39,7 +39,7 @@
  
 # OpenMP 
  - depends from Application.mk details
- - Android NDK(current version 15) support OpenMP with both clang and gcc toolchain (binaries provided for both) 
+ - Android NDK(current version 17b1) support OpenMP with both clang and gcc toolchain (binaries provided for both) 
 
 # OpenCL
  - can me much faster on certain operation (blur etc)
