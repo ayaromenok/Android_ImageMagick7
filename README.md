@@ -44,3 +44,7 @@
 # OpenCL
  - can me much faster on certain operation (blur etc)
  - not working correctrly for now
+
+# License
+Licenses for ImageMagick and supported libs(libpng, libjpg, etc) can be found in corresponding jni/src dirs.
+All other covererd by MIT License
