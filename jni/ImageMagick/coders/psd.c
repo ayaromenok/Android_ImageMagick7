@@ -163,7 +163,7 @@ typedef struct _LayerInfo
   unsigned char
     clipping,
     flags,
-    name[256],
+    name[257],
     visible;
 
   unsigned short
@@ -829,7 +829,7 @@ static StringInfo *ParseImageResourceBlocks(Image *image,
       }
       case 0x0421:
       {
-        if ((count > 3) && (*(p+4) == 0))
+        if ((count > 4) && (*(p+4) == 0))
           *has_merged_image=MagickFalse;
         p+=count;
         break;
@@ -1235,6 +1235,9 @@ static MagickBooleanType ReadPSDChannelZip(Image *image,const size_t channels,
     (void) LogMagickEvent(CoderEvent,GetMagickModule(),
        "      layer data is ZIP compressed");
 
+  if ((MagickSizeType) compact_size > GetBlobSize(image))
+    ThrowBinaryException(CorruptImageError,"UnexpectedEndOfFile",
+      image->filename);
   compact_pixels=(unsigned char *) AcquireQuantumMemory(compact_size,
     sizeof(*compact_pixels));
   if (compact_pixels == (unsigned char *) NULL)
@@ -1609,15 +1612,16 @@ static MagickBooleanType ReadPSDLayersInternal(Image *image,
       */
       (void) ReadBlobLong(image);
       count=ReadBlob(image,4,(unsigned char *) type);
-      ReversePSDString(image,type,4);
-      status=MagickFalse;
-      if ((count == 0) || (LocaleNCompare(type,"8BIM",4) != 0))
+      if (count == 4)
+        ReversePSDString(image,type,count);
+      if ((count != 4) || (LocaleNCompare(type,"8BIM",4) != 0))
         return(MagickTrue);
       else
         {
           count=ReadBlob(image,4,(unsigned char *) type);
-          ReversePSDString(image,type,4);
-          if ((count != 0) && ((LocaleNCompare(type,"Lr16",4) == 0) ||
+          if (count == 4)
+            ReversePSDString(image,type,4);
+          if ((count == 4) && ((LocaleNCompare(type,"Lr16",4) == 0) ||
               (LocaleNCompare(type,"Lr32",4) == 0)))
             size=GetPSDSize(psd_info,image);
           else
@@ -1723,8 +1727,9 @@ static MagickBooleanType ReadPSDLayersInternal(Image *image,
               image->filename);
           }
         count=ReadBlob(image,4,(unsigned char *) type);
-        ReversePSDString(image,type,4);
-        if ((count == 0) || (LocaleNCompare(type,"8BIM",4) != 0))
+        if (count == 4)
+          ReversePSDString(image,type,4);
+        if ((count != 4) || (LocaleNCompare(type,"8BIM",4) != 0))
           {
             if (image->debug != MagickFalse)
               (void) LogMagickEvent(CoderEvent,GetMagickModule(),
@@ -1734,6 +1739,12 @@ static MagickBooleanType ReadPSDLayersInternal(Image *image,
               image->filename);
           }
         count=ReadBlob(image,4,(unsigned char *) layer_info[i].blendkey);
+        if (count != 4)
+          {
+            layer_info=DestroyLayerInfo(layer_info,number_layers);
+            ThrowBinaryException(CorruptImageError,"ImproperImageHeader",
+              image->filename);
+          }
         ReversePSDString(image,layer_info[i].blendkey,4);
         layer_info[i].opacity=(Quantum) ScaleCharToQuantum((unsigned char)
           ReadBlobByte(image));
@@ -2072,6 +2083,9 @@ static Image *ReadPSDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   register ssize_t
     i;
 
+  size_t
+    imageListLength;
+
   ssize_t
     count;
 
@@ -2102,7 +2116,7 @@ static Image *ReadPSDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   image->endian=MSBEndian;
   count=ReadBlob(image,4,(unsigned char *) psd_info.signature);
   psd_info.version=ReadBlobMSBShort(image);
-  if ((count == 0) || (LocaleNCompare(psd_info.signature,"8BPS",4) != 0) ||
+  if ((count != 4) || (LocaleNCompare(psd_info.signature,"8BPS",4) != 0) ||
       ((psd_info.version != 1) && (psd_info.version != 2)))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   (void) ReadBlob(image,6,psd_info.reserved);
@@ -2318,10 +2332,11 @@ static Image *ReadPSDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   if (image->debug != MagickFalse)
     (void) LogMagickEvent(CoderEvent,GetMagickModule(),
       "  reading the precombined layer");
-  if ((has_merged_image != MagickFalse) || (GetImageListLength(image) == 1))
+  imageListLength=GetImageListLength(image);
+  if ((has_merged_image != MagickFalse) || (imageListLength == 1))
     has_merged_image=(MagickBooleanType) ReadPSDMergedImage(image_info,image,
       &psd_info,exception);
-  if ((has_merged_image == MagickFalse) && (GetImageListLength(image) == 1) &&
+  if ((has_merged_image == MagickFalse) && (imageListLength == 1) &&
       (length != 0))
     {
       SeekBlob(image,offset,SEEK_SET);
@@ -2341,15 +2356,15 @@ static Image *ReadPSDImage(const ImageInfo *image_info,ExceptionInfo *exception)
       Image
         *merged;
 
-      if (GetImageListLength(image) == 1)
+      if (imageListLength == 1)
         {
           if (profile != (StringInfo *) NULL)
             profile=DestroyStringInfo(profile);
           ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
         }
-      SetImageAlphaChannel(image,TransparentAlphaChannel,exception);
       image->background_color.alpha=TransparentAlpha;
       image->background_color.alpha_trait=BlendPixelTrait;
+      (void) SetImageBackgroundColor(image,exception);
       merged=MergeImageLayers(image,FlattenLayer,exception);
       ReplaceImageInList(&image,merged);
     }
@@ -3350,7 +3365,7 @@ static MagickBooleanType WritePSDLayersInternal(Image *image,
     if (mask != (Image *) NULL)
       size+=WriteChannelSize(psd_info,image,-2);
     size+=WriteBlobString(image,image->endian == LSBEndian ? "MIB8" :"8BIM");
-    size+=WriteBlobString(image,CompositeOperatorToPSDBlendMode(image));
+    size+=WriteBlobString(image,CompositeOperatorToPSDBlendMode(next_image));
     property=GetImageArtifact(next_image,"psd:layer.opacity");
     if (property != (const char *) NULL)
       {

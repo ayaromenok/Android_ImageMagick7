@@ -376,14 +376,19 @@ MagickExport Image *ChannelFxImage(const Image *image,const char *expression,
               destination_image->alpha_trait=BlendPixelTrait;
               break;
             }
+            case CompositeMaskPixelChannel:
+            {
+              destination_image->channels|=CompositeMaskChannel;
+              break;
+            }
             case ReadMaskPixelChannel:
             {
-              destination_image->read_mask=MagickTrue;
+              destination_image->channels|=ReadMaskChannel;
               break;
             }
             case WriteMaskPixelChannel:
             {
-              destination_image->write_mask=MagickTrue;
+              destination_image->channels|=WriteMaskChannel;
               break;
             }
             case MetaPixelChannel:
@@ -772,14 +777,7 @@ MagickExport Image *SeparateImage(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(separate_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(separate_image);
-          continue;
-        }
-      SetPixelChannel(separate_image,GrayPixelChannel,0,q);
+      SetPixelChannel(separate_image,GrayPixelChannel,(Quantum) 0,q);
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -1026,11 +1024,6 @@ MagickExport MagickBooleanType SetImageAlphaChannel(Image *image,
           register ssize_t
             i;
 
-          if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-            {
-              q+=GetPixelChannels(image);
-              continue;
-            }
           gamma=QuantumScale*GetPixelAlpha(image,q);
           for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
           {
@@ -1152,11 +1145,6 @@ MagickExport MagickBooleanType SetImageAlphaChannel(Image *image,
           register ssize_t
             i;
 
-          if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-            {
-              q+=GetPixelChannels(image);
-              continue;
-            }
           Sa=QuantumScale*GetPixelAlpha(image,q);
           gamma=PerceptibleReciprocal(Sa);
           for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
@@ -1244,8 +1232,7 @@ MagickExport MagickBooleanType SetImageAlphaChannel(Image *image,
         for (x=0; x < (ssize_t) image->columns; x++)
         {
           FlattenPixelInfo(image,&image->background_color,
-            image->background_color.alpha,q,(double)
-            GetPixelAlpha(image,q),q);
+            image->background_color.alpha,q,(double) GetPixelAlpha(image,q),q);
           q+=GetPixelChannels(image);
         }
         if (SyncCacheViewAuthenticPixels(image_view,exception) == MagickFalse)

@@ -181,13 +181,15 @@ static MagickBooleanType IsWEBPImageLossless(const unsigned char *stream,
   /*
     Read simple header.
   */
+  if (length <= VP8_CHUNK_INDEX)
+    return(MagickFalse);
   if (stream[VP8_CHUNK_INDEX] != EXTENDED_HEADER)
     return(stream[VP8_CHUNK_INDEX] == LOSSLESS_FLAG ? MagickTrue : MagickFalse);
   /*
     Read extended header.
   */
   offset=RIFF_HEADER_SIZE+TAG_SIZE+CHUNK_SIZE_BYTES+VP8X_CHUNK_SIZE;
-  while (offset <= (ssize_t) (length-TAG_SIZE))
+  while (offset+TAG_SIZE <= (ssize_t) (length-TAG_SIZE))
   {
     uint32_t
       chunk_size,
@@ -296,8 +298,6 @@ static Image *ReadWEBPImage(const ImageInfo *image_info,
       image->depth=8;
       image->alpha_trait=features->has_alpha != 0 ? BlendPixelTrait :
         UndefinedPixelTrait;
-      if (IsWEBPImageLossless(stream,length) != MagickFalse)
-        image->quality=100;
       if (image_info->ping != MagickFalse)
         {
           stream=(unsigned char*) RelinquishMagickMemory(stream);
@@ -311,6 +311,8 @@ static Image *ReadWEBPImage(const ImageInfo *image_info,
           (void) CloseBlob(image);
           return(DestroyImageList(image));
         }
+      if (IsWEBPImageLossless(stream,length) != MagickFalse)
+        image->quality=100;
       webp_status=WebPDecode(stream,length,&configure);
     }
   if (webp_status != VP8_STATUS_OK)
@@ -755,11 +757,11 @@ static MagickBooleanType WriteWEBPImage(const ImageInfo *image_info,
       break;
     for (x=0; x < (ssize_t) image->columns; x++)
     {
-      *q++=(uint32_t) (image->alpha_trait != UndefinedPixelTrait ?
+      *q++=(uint32_t) (image->alpha_trait != UndefinedPixelTrait ? (uint32_t)
         ScaleQuantumToChar(GetPixelAlpha(image,p)) << 24 : 0xff000000) |
-        (ScaleQuantumToChar(GetPixelRed(image,p)) << 16) |
-        (ScaleQuantumToChar(GetPixelGreen(image,p)) << 8) |
-        (ScaleQuantumToChar(GetPixelBlue(image,p)));
+        ((uint32_t) ScaleQuantumToChar(GetPixelRed(image,p)) << 16) |
+        ((uint32_t) ScaleQuantumToChar(GetPixelGreen(image,p)) << 8) |
+        ((uint32_t) ScaleQuantumToChar(GetPixelBlue(image,p)));
       p+=GetPixelChannels(image);
     }
     status=SetImageProgress(image,SaveImageTag,(MagickOffsetType) y,

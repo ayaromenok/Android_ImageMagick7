@@ -292,7 +292,8 @@ static MagickBooleanType InsertRow(Image *image,unsigned char *p,ssize_t y,
           {
             index=((*p) & (0x80 >> bit) ? 0x01 : 0x00);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             q+=GetPixelChannels(image);
           }
           p++;
@@ -303,6 +304,8 @@ static MagickBooleanType InsertRow(Image *image,unsigned char *p,ssize_t y,
             {
               index=((*p) & (0x80 >> bit) ? 0x01 : 0x00);
               SetPixelIndex(image,index,q);
+              if (index < image->colors)
+                SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
               SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
               q+=GetPixelChannels(image);
             }
@@ -316,19 +319,23 @@ static MagickBooleanType InsertRow(Image *image,unsigned char *p,ssize_t y,
         {
             index=ConstrainColormapIndex(image,(*p >> 6) & 0x3,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             q+=GetPixelChannels(image);
             index=ConstrainColormapIndex(image,(*p >> 4) & 0x3,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             q+=GetPixelChannels(image);
             index=ConstrainColormapIndex(image,(*p >> 2) & 0x3,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             q+=GetPixelChannels(image);
             index=ConstrainColormapIndex(image,(*p) & 0x3,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             q+=GetPixelChannels(image);
             p++;
         }
@@ -336,20 +343,24 @@ static MagickBooleanType InsertRow(Image *image,unsigned char *p,ssize_t y,
           {
             index=ConstrainColormapIndex(image,(*p >> 6) & 0x3,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             q+=GetPixelChannels(image);
             if ((image->columns % 4) > 1)
               {
                 index=ConstrainColormapIndex(image,(*p >> 4) & 0x3,exception);
                 SetPixelIndex(image,index,q);
-                SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+                if (index < image->colors)
+                  SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
                 q+=GetPixelChannels(image);
                 if ((image->columns % 4) > 2)
                   {
                     index=ConstrainColormapIndex(image,(*p >> 2) & 0x3,
                       exception);
                     SetPixelIndex(image,index,q);
-                    SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+                    if (index < image->colors)
+                      SetPixelViaPixelInfo(image,image->colormap+(ssize_t)
+                        index,q);
                     q+=GetPixelChannels(image);
                   }
               }
@@ -364,11 +375,13 @@ static MagickBooleanType InsertRow(Image *image,unsigned char *p,ssize_t y,
           {
             index=ConstrainColormapIndex(image,(*p >> 4) & 0x0f,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             q+=GetPixelChannels(image);
             index=ConstrainColormapIndex(image,(*p) & 0x0f,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             p++;
             q+=GetPixelChannels(image);
           }
@@ -376,7 +389,8 @@ static MagickBooleanType InsertRow(Image *image,unsigned char *p,ssize_t y,
           {
             index=ConstrainColormapIndex(image,(*p >> 4) & 0x0f,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             p++;
             q+=GetPixelChannels(image);
           }
@@ -388,7 +402,8 @@ static MagickBooleanType InsertRow(Image *image,unsigned char *p,ssize_t y,
           {
             index=ConstrainColormapIndex(image,*p,exception);
             SetPixelIndex(image,index,q);
-            SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
+            if (index < image->colors)
+              SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
             p++;
             q+=GetPixelChannels(image);
           }
@@ -486,8 +501,11 @@ static int UnpackWPGRaster(Image *image,int bpp,ExceptionInfo *exception)
           }
         else {  /* repeat previous line runcount* */
           c=ReadBlobByte(image);
-          if (c < 0)
-            break;
+          if (c == EOF)
+            {
+              BImgBuff=(unsigned char *) RelinquishMagickMemory(BImgBuff);
+              return(-7);
+            }
           RunCount=(unsigned char) c;
           if(x) {    /* attempt to duplicate row from x position: */
             /* I do not know what to do here */
@@ -807,7 +825,8 @@ static Image *ExtractPostscript(Image *image,const ImageInfo *image_info,
 
     /* Read nested image */
   /*FormatString(clone_info->filename,"%s:%s",magic_info->name,postscript_file);*/
-  FormatLocaleString(clone_info->filename,MagickPathExtent,"%s",postscript_file);
+  FormatLocaleString(clone_info->filename,MagickPathExtent,"%.1024s:%.1024s",
+    clone_info->magick,postscript_file);
   image2=ReadImage(clone_info,exception);
 
   if (!image2)
@@ -1199,6 +1218,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                       image->colormap[i].red=ScaleCharToQuantum(WPG1_Palette[i].Red);
                       image->colormap[i].green=ScaleCharToQuantum(WPG1_Palette[i].Green);
                       image->colormap[i].blue=ScaleCharToQuantum(WPG1_Palette[i].Blue);
+                      image->colormap[i].alpha=OpaqueAlpha;
                     }
                 }
               else
@@ -1222,6 +1242,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                       image->colormap[1].red =
                         image->colormap[1].green =
                         image->colormap[1].blue = QuantumRange;
+                      image->colormap[1].alpha=OpaqueAlpha;
                     }
                 }
               if(!image_info->ping)
@@ -1279,7 +1300,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
               if (image->next == (Image *) NULL)
                 goto Finish;
               image=SyncNextImageInList(image);
-              image->columns=image->rows=1;
+              image->columns=image->rows=0;
               image->colors=0;
               break;
 
@@ -1348,6 +1369,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                     ReadBlobByte(image));
                   image->colormap[i].blue=ScaleCharToQuantum((char)
                     ReadBlobByte(image));
+                  image->colormap[i].alpha=OpaqueAlpha;
                   (void) ReadBlobByte(image);   /*Opacity??*/
                 }
               break;
@@ -1383,10 +1405,13 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                 }
               image->columns=Bitmap2Header1.Width;
               image->rows=Bitmap2Header1.Height;
+              if (image_info->ping != MagickFalse)
+                return(image);
               status=SetImageExtent(image,image->columns,image->rows,exception);
+              if (status != MagickFalse)
+                status=ResetImagePixels(image,exception);
               if (status == MagickFalse)
                 break;
-              (void) ResetImagePixels(image,exception);
               if ((image->colors == 0) && (bpp != 24))
                 {
                   image->colors=one << bpp;
@@ -1412,7 +1437,6 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                       ldblk+1,sizeof(*BImgBuff));
                     if (BImgBuff == (unsigned char *) NULL)
                       goto NoMemory;
-
                     for (i=0; i< (ssize_t) image->rows; i++)
                     {
                       ssize_t
@@ -1422,22 +1446,17 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                       if (count != ldblk)
                         break;
                       if (InsertRow(image,BImgBuff,i,bpp,exception) == MagickFalse)
-                        {
-                          if(BImgBuff)
-                            BImgBuff=(unsigned char *) RelinquishMagickMemory(BImgBuff);
-                          goto DecompressionFailed;
-                        }
+                        break;
                     }
-
-                    if(BImgBuff)
-                      BImgBuff=(unsigned char *) RelinquishMagickMemory(BImgBuff);
+                    BImgBuff=(unsigned char *) RelinquishMagickMemory(BImgBuff);
+                    if (i < (ssize_t) image->rows)
+                      goto DecompressionFailed;
                     break;
                   }
                 case 1:    /*RLE for WPG2 */
                   {
-                    if (!image->ping)
-                      if( UnpackWPG2Raster(image,bpp,exception) < 0)
-                        goto DecompressionFailed;
+                    if( UnpackWPG2Raster(image,bpp,exception) < 0)
+                      goto DecompressionFailed;
                     break;
                   }
                 }
@@ -1483,7 +1502,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
               if (image->next == (Image *) NULL)
                 goto Finish;
               image=SyncNextImageInList(image);
-              image->columns=image->rows=1;
+              image->columns=image->rows=0;
               image->colors=0;
               break;
 

@@ -1012,32 +1012,37 @@ static MagickBooleanType RenderType(Image *image,const DrawInfo *draw_info,
   if ((type_info == (const TypeInfo *) NULL) &&
       (draw_info->family != (const char *) NULL))
     {
-      char
-        **family;
-
-      int
-        number_families;
-
-      register ssize_t
-        i;
-
-      /*
-        Parse font family list.
-      */
-      family=StringToArgv(draw_info->family,&number_families);
-      for (i=1; i < (ssize_t) number_families; i++)
-      {
-        type_info=GetTypeInfoByFamily(family[i],draw_info->style,
-          draw_info->stretch,draw_info->weight,exception);
-        if (type_info != (const TypeInfo *) NULL)
-          break;
-      }
-      for (i=0; i < (ssize_t) number_families; i++)
-        family[i]=DestroyString(family[i]);
-      family=(char **) RelinquishMagickMemory(family);
+      type_info=GetTypeInfoByFamily(draw_info->family,draw_info->style,
+        draw_info->stretch,draw_info->weight,exception);
       if (type_info == (const TypeInfo *) NULL)
-        (void) ThrowMagickException(exception,GetMagickModule(),TypeWarning,
-          "UnableToReadFont","`%s'",draw_info->family);
+        {
+          char
+            **family;
+
+          int
+            number_families;
+
+          register ssize_t
+            i;
+
+          /*
+            Parse font family list.
+          */
+          family=StringToArgv(draw_info->family,&number_families);
+          for (i=1; i < (ssize_t) number_families; i++)
+          {
+            type_info=GetTypeInfoByFamily(family[i],draw_info->style,
+              draw_info->stretch,draw_info->weight,exception);
+            if (type_info != (const TypeInfo *) NULL)
+              break;
+          }
+          for (i=0; i < (ssize_t) number_families; i++)
+            family[i]=DestroyString(family[i]);
+          family=(char **) RelinquishMagickMemory(family);
+          if (type_info == (const TypeInfo *) NULL)
+            (void) ThrowMagickException(exception,GetMagickModule(),TypeWarning,
+              "UnableToReadFont","`%s'",draw_info->family);
+        }
     }
   if (type_info == (const TypeInfo *) NULL)
     type_info=GetTypeInfoByFamily("Arial",draw_info->style,
@@ -1760,7 +1765,7 @@ static MagickBooleanType RenderFreetype(Image *image,const DrawInfo *draw_info,
                 double
                   Sa,
                   Da;
-                
+
                 Da=1.0-(QuantumScale*GetPixelAlpha(image,q));
                 Sa=fill_opacity;
                 fill_opacity=(1.0-RoundToUnity(Sa+Da-Sa*Da))*QuantumRange;
@@ -1790,7 +1795,8 @@ static MagickBooleanType RenderFreetype(Image *image,const DrawInfo *draw_info,
             annotate_info->affine.tx=offset->x;
             annotate_info->affine.ty=offset->y;
             (void) ConcatenateString(&annotate_info->primitive,"'");
-            (void) DrawImage(image,annotate_info,exception);
+            if (strlen(annotate_info->primitive) > 7)
+              (void) DrawImage(image,annotate_info,exception);
             (void) CloneString(&annotate_info->primitive,"path '");
           }
       }

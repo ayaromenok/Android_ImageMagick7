@@ -215,7 +215,8 @@ MagickExport MagickInfo *AcquireMagickInfo(const char *module,const char *name,
 */
 MagickExport DecodeImageHandler *GetImageDecoder(const MagickInfo *magick_info)
 {
-  assert(magick_info != (MagickInfo *) NULL);
+  if (magick_info == (MagickInfo *) NULL)
+    return((DecodeImageHandler *) NULL);
   assert(magick_info->signature == MagickCoreSignature);
   return(magick_info->decoder);
 }
@@ -244,7 +245,8 @@ MagickExport DecodeImageHandler *GetImageDecoder(const MagickInfo *magick_info)
 */
 MagickExport EncodeImageHandler *GetImageEncoder(const MagickInfo *magick_info)
 {
-  assert(magick_info != (MagickInfo *) NULL);
+  if (magick_info == (MagickInfo *) NULL)
+    return((EncodeImageHandler *) NULL);
   assert(magick_info->signature == MagickCoreSignature);
   return(magick_info->encoder);
 }

@@ -567,9 +567,10 @@ static Image *ReadPDFImage(const ImageInfo *image_info,ExceptionInfo *exception)
           name[i++]=(char) c;
         }
         name[i]='\0';
-        value=AcquireString(name);
+        value=ConstantString(name);
         (void) SubstituteString(&value,"#20"," ");
-        (void) SetImageProperty(image,property,value,exception);
+        if (*value != '\0')
+          (void) SetImageProperty(image,property,value,exception);
         value=DestroyString(value);
         continue;
       }
@@ -730,7 +731,7 @@ static Image *ReadPDFImage(const ImageInfo *image_info,ExceptionInfo *exception)
         passphrase[MagickPathExtent];
 
       (void) FormatLocaleString(passphrase,MagickPathExtent,
-        "'-sPDFPassword=%s' ",option);
+        "\"-sPDFPassword=%s\" ",option);
       (void) ConcatenateMagickString(options,passphrase,MagickPathExtent);
     }
   read_info=CloneImageInfo(image_info);
@@ -1319,6 +1320,7 @@ RestoreMSCWarning
 
   size_t
     channels,
+    imageListLength,
     info_id,
     length,
     object,
@@ -1449,12 +1451,11 @@ RestoreMSCWarning
       if (value != (const char *) NULL)
         (void) CopyMagickString(create_date,value,MagickPathExtent);
       (void) FormatMagickTime(time((time_t *) NULL),MagickPathExtent,timestamp);
-      url=GetMagickHomeURL();
+      url=MagickAuthoritativeURL;
       escape=EscapeParenthesis(basename);
       i=FormatLocaleString(xmp_profile,MagickPathExtent,XMPProfile,
         XMPProfileMagick,modify_date,create_date,timestamp,url,escape,url);
       escape=DestroyString(escape);
-      url=DestroyString(url);
       (void) FormatLocaleString(buffer,MagickPathExtent,"/Length %.20g\n",
         (double) i);
       (void) WriteBlobString(image,buffer);
@@ -1511,6 +1512,7 @@ RestoreMSCWarning
   (void) WriteBlobString(image,">>\n");
   (void) WriteBlobString(image,"endobj\n");
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     MagickBooleanType
@@ -2939,8 +2941,7 @@ RestoreMSCWarning
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);
@@ -2978,11 +2979,10 @@ RestoreMSCWarning
   (void) WriteBlobString(image,buffer);
   (void) FormatLocaleString(buffer,MagickPathExtent,"/ModDate (%s)\n",date);
   (void) WriteBlobString(image,buffer);
-  url=GetMagickHomeURL();
+  url=MagickAuthoritativeURL;
   escape=EscapeParenthesis(url);
   (void) FormatLocaleString(buffer,MagickPathExtent,"/Producer (%s)\n",escape);
   escape=DestroyString(escape);
-  url=DestroyString(url);
   (void) WriteBlobString(image,buffer);
   (void) WriteBlobString(image,">>\n");
   (void) WriteBlobString(image,"endobj\n");

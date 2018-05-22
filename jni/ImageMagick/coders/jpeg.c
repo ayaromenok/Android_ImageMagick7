@@ -1265,7 +1265,7 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
   if (option != (const char *) NULL)
     jpeg_info.do_fancy_upsampling=IsStringTrue(option) != MagickFalse ? TRUE :
       FALSE;
-  (void) jpeg_start_decompress(&jpeg_info);
+  jpeg_calc_output_dimensions(&jpeg_info);
   image->columns=jpeg_info.output_width;
   image->rows=jpeg_info.output_height;
   image->depth=(size_t) jpeg_info.data_precision;
@@ -1301,7 +1301,10 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
   option=GetImageOption(image_info,"jpeg:colors");
   if (option != (const char *) NULL)
     if (AcquireImageColormap(image,StringToUnsignedLong(option),exception) == MagickFalse)
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      {
+        jpeg_destroy_decompress(&jpeg_info);
+        ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      }
   if ((jpeg_info.output_components == 1) && (jpeg_info.quantize_colors == 0))
     {
       size_t
@@ -1309,7 +1312,10 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
 
       colors=(size_t) GetQuantumRange(image->depth)+1;
       if (AcquireImageColormap(image,colors,exception) == MagickFalse)
-        ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+        {
+          jpeg_destroy_decompress(&jpeg_info);
+          ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+        }
     }
   if (image->debug != MagickFalse)
     {
@@ -1341,6 +1347,7 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
       jpeg_destroy_decompress(&jpeg_info);
       return(DestroyImageList(image));
     }
+  (void) jpeg_start_decompress(&jpeg_info);
   if ((jpeg_info.output_components != 1) &&
       (jpeg_info.output_components != 3) && (jpeg_info.output_components != 4))
     {
@@ -1466,8 +1473,11 @@ static Image *ReadJPEGImage(const ImageInfo *image_info,
       if (jpeg_info.output_components == 1)
         for (x=0; x < (ssize_t) image->columns; x++)
         {
-          index=(Quantum) ConstrainColormapIndex(image,(ssize_t) GETJSAMPLE(*p),
-            exception);
+          ssize_t
+            pixel;
+
+          pixel=(ssize_t) GETJSAMPLE(*p);
+          index=(Quantum) ConstrainColormapIndex(image,pixel,exception);
           SetPixelIndex(image,index,q);
           SetPixelViaPixelInfo(image,image->colormap+(ssize_t) index,q);
           p++;

@@ -671,7 +671,7 @@ static Image *ReadBMPImage(const ImageInfo *image_info,ExceptionInfo *exception)
               bmp_info.height);
             (void) LogMagickEvent(CoderEvent,GetMagickModule(),
               "  Bits per pixel: %.20g",(double) bmp_info.bits_per_pixel);
-            switch ((int) bmp_info.compression)
+            switch (bmp_info.compression)
             {
               case BI_RGB:
               {
@@ -1509,12 +1509,14 @@ ModuleExport size_t RegisterBMPImage(void)
   entry->flags|=CoderDecoderSeekableStreamFlag;
   (void) RegisterMagickInfo(entry);
   entry=AcquireMagickInfo("BMP","BMP2","Microsoft Windows bitmap image (V2)");
+  entry->decoder=(DecodeImageHandler *) ReadBMPImage;
   entry->encoder=(EncodeImageHandler *) WriteBMPImage;
   entry->magick=(IsImageFormatHandler *) IsBMP;
   entry->flags^=CoderAdjoinFlag;
   entry->flags|=CoderDecoderSeekableStreamFlag;
   (void) RegisterMagickInfo(entry);
   entry=AcquireMagickInfo("BMP","BMP3","Microsoft Windows bitmap image (V3)");
+  entry->decoder=(DecodeImageHandler *) ReadBMPImage;
   entry->encoder=(EncodeImageHandler *) WriteBMPImage;
   entry->magick=(IsImageFormatHandler *) IsBMP;
   entry->flags^=CoderAdjoinFlag;
@@ -1615,6 +1617,7 @@ static MagickBooleanType WriteBMPImage(const ImageInfo *image_info,Image *image,
 
   size_t
     bytes_per_line,
+    imageListLength,
     type;
 
   ssize_t
@@ -1644,13 +1647,11 @@ static MagickBooleanType WriteBMPImage(const ImageInfo *image_info,Image *image,
   else
     if (LocaleCompare(image_info->magick,"BMP3") == 0)
       type=3;
-
   option=GetImageOption(image_info,"bmp:format");
   if (option != (char *) NULL)
     {
       (void) LogMagickEvent(CoderEvent,GetMagickModule(),
           "  Format=%s",option);
-
       if (LocaleCompare(option,"bmp2") == 0)
         type=2;
       if (LocaleCompare(option,"bmp3") == 0)
@@ -1658,8 +1659,8 @@ static MagickBooleanType WriteBMPImage(const ImageInfo *image_info,Image *image,
       if (LocaleCompare(option,"bmp4") == 0)
         type=4;
     }
-
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     /*
@@ -2345,8 +2346,7 @@ static MagickBooleanType WriteBMPImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

@@ -63,6 +63,7 @@
 #include "MagickCore/profile.h"
 #include "MagickCore/property.h"
 #include "MagickCore/quantum-private.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/semaphore.h"
 #include "MagickCore/static.h"
 #include "MagickCore/statistic.h"
@@ -267,9 +268,6 @@ static Image *ReadJP2Image(const ImageInfo *image_info,ExceptionInfo *exception)
   opj_codec_t
     *jp2_codec;
 
-  opj_codestream_index_t
-    *codestream_index = (opj_codestream_index_t *) NULL;
-
   opj_dparameters_t
     parameters;
 
@@ -366,7 +364,15 @@ static Image *ReadJP2Image(const ImageInfo *image_info,ExceptionInfo *exception)
           ThrowReaderException(DelegateError,"UnableToDecodeImageFile");
         }
     }
-   if ((image_info->number_scenes != 0) && (image_info->scene != 0))
+  if ((AcquireMagickResource(WidthResource,(size_t) jp2_image->comps[0].w) == MagickFalse) ||
+      (AcquireMagickResource(HeightResource,(size_t) jp2_image->comps[0].h) == MagickFalse))
+    {
+      opj_stream_destroy(jp2_stream);
+      opj_destroy_codec(jp2_codec);
+      opj_image_destroy(jp2_image);
+      ThrowReaderException(DelegateError,"UnableToDecodeImageFile");
+    }
+  if ((image_info->number_scenes != 0) && (image_info->scene != 0))
     jp2_status=opj_get_decoded_tile(jp2_codec,jp2_stream,jp2_image,
       (unsigned int) image_info->scene-1);
   else
@@ -402,9 +408,6 @@ static Image *ReadJP2Image(const ImageInfo *image_info,ExceptionInfo *exception)
   image->columns=(size_t) jp2_image->comps[0].w;
   image->rows=(size_t) jp2_image->comps[0].h;
   image->depth=jp2_image->comps[0].prec;
-  status=SetImageExtent(image,image->columns,image->rows,exception);
-  if (status == MagickFalse)
-    return(DestroyImageList(image));
   image->compression=JPEG2000Compression;
   if (jp2_image->numcomps == 1)
     SetImageColorspace(image,GRAYColorspace,exception);
@@ -428,14 +431,23 @@ static Image *ReadJP2Image(const ImageInfo *image_info,ExceptionInfo *exception)
       profile=BlobToStringInfo(jp2_image->icc_profile_buf,
         jp2_image->icc_profile_len);
       if (profile != (StringInfo *) NULL)
-        SetImageProfile(image,"icc",profile,exception);
+        {
+          SetImageProfile(image,"icc",profile,exception);
+          profile=DestroyStringInfo(profile);
+        }
     }
   if (image->ping != MagickFalse)
     {
       opj_destroy_codec(jp2_codec);
       opj_image_destroy(jp2_image);
-      opj_destroy_cstr_index(&codestream_index);
       return(GetFirstImageInList(image));
+    }
+  status=SetImageExtent(image,image->columns,image->rows,exception);
+  if (status == MagickFalse)
+    {
+      opj_destroy_codec(jp2_codec);
+      opj_image_destroy(jp2_image);
+      return(DestroyImageList(image));
     }
   for (y=0; y < (ssize_t) image->rows; y++)
   {
@@ -450,9 +462,6 @@ static Image *ReadJP2Image(const ImageInfo *image_info,ExceptionInfo *exception)
       break;
     for (x=0; x < (ssize_t) image->columns; x++)
     {
-      register ssize_t
-        i;
-
       for (i=0; i < (ssize_t) jp2_image->numcomps; i++)
       {
         double
@@ -515,7 +524,6 @@ static Image *ReadJP2Image(const ImageInfo *image_info,ExceptionInfo *exception)
   */
   opj_destroy_codec(jp2_codec);
   opj_image_destroy(jp2_image);
-  opj_destroy_cstr_index(&codestream_index);
   (void) CloseBlob(image);
   return(GetFirstImageInList(image));
 }
@@ -1060,17 +1068,19 @@ static MagickBooleanType WriteJP2Image(const ImageInfo *image_info,Image *image,
   opj_set_error_handler(jp2_codec,JP2ErrorHandler,exception);
   opj_setup_encoder(jp2_codec,&parameters,jp2_image);
   jp2_stream=opj_stream_create(OPJ_J2K_STREAM_CHUNK_SIZE,OPJ_FALSE);
+  if (jp2_stream == (opj_stream_t *) NULL)
+    {
+      opj_destroy_codec(jp2_codec);
+      opj_image_destroy(jp2_image);
+      ThrowWriterException(DelegateError,"UnableToEncodeImageFile");
+    }
   opj_stream_set_read_function(jp2_stream,JP2ReadHandler);
   opj_stream_set_write_function(jp2_stream,JP2WriteHandler);
   opj_stream_set_seek_function(jp2_stream,JP2SeekHandler);
   opj_stream_set_skip_function(jp2_stream,JP2SkipHandler);
   opj_stream_set_user_data(jp2_stream,image,NULL);
-  if (jp2_stream == (opj_stream_t *) NULL)
-    ThrowWriterException(DelegateError,"UnableToEncodeImageFile");
   jp2_status=opj_start_compress(jp2_codec,jp2_image,jp2_stream);
-  if (jp2_status == 0)
-    ThrowWriterException(DelegateError,"UnableToEncodeImageFile");
-  if ((opj_encode(jp2_codec,jp2_stream) == 0) ||
+  if ((jp2_status == 0) || (opj_encode(jp2_codec,jp2_stream) == 0) ||
       (opj_end_compress(jp2_codec,jp2_stream) == 0))
     {
       opj_stream_destroy(jp2_stream);

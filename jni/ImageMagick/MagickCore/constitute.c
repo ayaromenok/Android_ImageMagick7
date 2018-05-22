@@ -372,6 +372,9 @@ MagickExport Image *ReadImage(const ImageInfo *image_info,
   const MagickInfo
     *magick_info;
 
+  DecodeImageHandler
+    *decoder;
+
   ExceptionInfo
     *sans_exception;
 
@@ -477,8 +480,8 @@ MagickExport Image *ReadImage(const ImageInfo *image_info,
       image=DestroyImage(image);
     }
   image=NewImageList();
-  if ((magick_info == (const MagickInfo *) NULL) ||
-      (GetImageDecoder(magick_info) == (DecodeImageHandler *) NULL))
+  decoder=GetImageDecoder(magick_info);
+  if (decoder == (DecodeImageHandler *) NULL)
     {
       delegate_info=GetDelegateInfo(read_info->magick,(char *) NULL,exception);
       if (delegate_info == (const DelegateInfo *) NULL)
@@ -487,14 +490,14 @@ MagickExport Image *ReadImage(const ImageInfo *image_info,
           (void) CopyMagickString(read_info->filename,filename,
             MagickPathExtent);
           magick_info=GetMagickInfo(read_info->magick,exception);
+          decoder=GetImageDecoder(magick_info);
         }
     }
-  if ((magick_info != (const MagickInfo *) NULL) &&
-      (GetImageDecoder(magick_info) != (DecodeImageHandler *) NULL))
+  if (decoder != (DecodeImageHandler *) NULL)
     {
       if (GetMagickDecoderThreadSupport(magick_info) == MagickFalse)
         LockSemaphoreInfo(magick_info->semaphore);
-      image=GetImageDecoder(magick_info)(read_info,exception);
+      image=decoder(read_info,exception);
       if (GetMagickDecoderThreadSupport(magick_info) == MagickFalse)
         UnlockSemaphoreInfo(magick_info->semaphore);
     }
@@ -537,8 +540,8 @@ MagickExport Image *ReadImage(const ImageInfo *image_info,
       if (status != MagickFalse)
         (void) SetImageInfo(read_info,0,exception);
       magick_info=GetMagickInfo(read_info->magick,exception);
-      if ((magick_info == (const MagickInfo *) NULL) ||
-          (GetImageDecoder(magick_info) == (DecodeImageHandler *) NULL))
+      decoder=GetImageDecoder(magick_info);
+      if (decoder == (DecodeImageHandler *) NULL)
         {
           if (IsPathAccessible(read_info->filename) != MagickFalse)
             (void) ThrowMagickException(exception,GetMagickModule(),
@@ -552,7 +555,7 @@ MagickExport Image *ReadImage(const ImageInfo *image_info,
         }
       if (GetMagickDecoderThreadSupport(magick_info) == MagickFalse)
         LockSemaphoreInfo(magick_info->semaphore);
-      image=(Image *) (GetImageDecoder(magick_info))(read_info,exception);
+      image=(Image *) (decoder)(read_info,exception);
       if (GetMagickDecoderThreadSupport(magick_info) == MagickFalse)
         UnlockSemaphoreInfo(magick_info->semaphore);
     }
@@ -989,6 +992,9 @@ MagickExport MagickBooleanType WriteImage(const ImageInfo *image_info,
   const MagickInfo
     *magick_info;
 
+  EncodeImageHandler
+    *encoder;
+
   ExceptionInfo
     *sans_exception;
 
@@ -1107,15 +1113,15 @@ MagickExport MagickBooleanType WriteImage(const ImageInfo *image_info,
           (void) CloseBlob(image);
         }
     }
-  if ((magick_info != (const MagickInfo *) NULL) &&
-      (GetImageEncoder(magick_info) != (EncodeImageHandler *) NULL))
+  encoder=GetImageEncoder(magick_info);
+  if (encoder != (EncodeImageHandler *) NULL)
     {
       /*
         Call appropriate image writer based on image type.
       */
       if (GetMagickEncoderThreadSupport(magick_info) == MagickFalse)
         LockSemaphoreInfo(magick_info->semaphore);
-      status=GetImageEncoder(magick_info)(write_info,image,exception);
+      status=encoder(write_info,image,exception);
       if (GetMagickEncoderThreadSupport(magick_info) == MagickFalse)
         UnlockSemaphoreInfo(magick_info->semaphore);
     }
@@ -1148,8 +1154,8 @@ MagickExport MagickBooleanType WriteImage(const ImageInfo *image_info,
                 MagickPathExtent);
               magick_info=GetMagickInfo(write_info->magick,exception);
             }
-          if ((magick_info == (const MagickInfo *) NULL) ||
-              (GetImageEncoder(magick_info) == (EncodeImageHandler *) NULL))
+          encoder=GetImageEncoder(magick_info);
+          if (encoder == (EncodeImageHandler *) NULL)
             {
               char
                 extension[MagickPathExtent];
@@ -1161,30 +1167,25 @@ MagickExport MagickBooleanType WriteImage(const ImageInfo *image_info,
                 magick_info=GetMagickInfo(image->magick,exception);
               (void) CopyMagickString(image->filename,filename,
                 MagickPathExtent);
+              encoder=GetImageEncoder(magick_info);
             }
-          if ((magick_info == (const MagickInfo *) NULL) ||
-              (GetImageEncoder(magick_info) == (EncodeImageHandler *) NULL))
+          if (encoder == (EncodeImageHandler *) NULL)
             {
               magick_info=GetMagickInfo(image->magick,exception);
-              if ((magick_info == (const MagickInfo *) NULL) ||
-                  (GetImageEncoder(magick_info) == (EncodeImageHandler *) NULL))
+              encoder=GetImageEncoder(magick_info);
+              if (encoder == (EncodeImageHandler *) NULL)
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   MissingDelegateError,"NoEncodeDelegateForThisImageFormat",
                   "`%s'",write_info->magick);
-              else
-                (void) ThrowMagickException(exception,GetMagickModule(),
-                  MissingDelegateWarning,"NoEncodeDelegateForThisImageFormat",
-                  "`%s'",write_info->magick);
             }
-          if ((magick_info != (const MagickInfo *) NULL) &&
-              (GetImageEncoder(magick_info) != (EncodeImageHandler *) NULL))
+          if (encoder != (EncodeImageHandler *) NULL)
             {
               /*
                 Call appropriate image writer based on image type.
               */
               if (GetMagickEncoderThreadSupport(magick_info) == MagickFalse)
                 LockSemaphoreInfo(magick_info->semaphore);
-              status=GetImageEncoder(magick_info)(write_info,image,exception);
+              status=encoder(write_info,image,exception);
               if (GetMagickEncoderThreadSupport(magick_info) == MagickFalse)
                 UnlockSemaphoreInfo(magick_info->semaphore);
             }

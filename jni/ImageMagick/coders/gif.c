@@ -633,6 +633,7 @@ static MagickBooleanType EncodeImage(const ImageInfo *image_info,Image *image,
   /*
     Initialize GIF encoder.
   */
+  (void) memset(packet,0,256*sizeof(*packet));
   (void) memset(hash_code,0,MaxHashTable*sizeof(*hash_code));
   (void) memset(hash_prefix,0,MaxHashTable*sizeof(*hash_prefix));
   (void) memset(hash_suffix,0,MaxHashTable*sizeof(*hash_suffix));
@@ -1522,6 +1523,7 @@ static MagickBooleanType WriteGIFImage(const ImageInfo *image_info,Image *image,
   size_t
     bits_per_pixel,
     delay,
+    imageListLength,
     length,
     one;
 
@@ -1597,6 +1599,7 @@ static MagickBooleanType WriteGIFImage(const ImageInfo *image_info,Image *image,
     write_info->interlace=NoInterlace;
   scene=0;
   one=1;
+  imageListLength=GetImageListLength(image);
   do
   {
     (void) TransformImageColorspace(image,sRGBColorspace,exception);
@@ -1924,8 +1927,7 @@ static MagickBooleanType WriteGIFImage(const ImageInfo *image_info,Image *image,
       break;
     image=SyncNextImageInList(image);
     scene++;
-    status=SetImageProgress(image,SaveImagesTag,scene,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene,imageListLength);
     if (status == MagickFalse)
       break;
   } while (write_info->adjoin != MagickFalse);

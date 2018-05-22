@@ -2394,6 +2394,9 @@ static void LoadOpenCLDevices(MagickCLEnv clEnv)
 MagickPrivate MagickBooleanType InitializeOpenCL(MagickCLEnv clEnv,
   ExceptionInfo *exception)
 {
+  register
+    size_t i;
+
   LockSemaphoreInfo(clEnv->lock);
   if (clEnv->initialized != MagickFalse)
     {
@@ -2408,6 +2411,12 @@ MagickPrivate MagickBooleanType InitializeOpenCL(MagickCLEnv clEnv,
         AutoSelectOpenCLDevices(clEnv);
     }
   clEnv->initialized=MagickTrue;
+  /* NVIDIA is disabled by default due to reported access violation */
+  for (i=0; i < (ssize_t) clEnv->number_devices; i++)
+  {
+    if (strncmp(clEnv->devices[i]->platform_name,"NVIDIA",6) == 0)
+        clEnv->enabled=MagickFalse;
+  }
   UnlockSemaphoreInfo(clEnv->lock);
   return(HasOpenCLDevices(clEnv,exception));
 }
@@ -2897,6 +2906,7 @@ static void CL_API_CALL DestroyMagickCLCacheInfoAndPixels(
       }
   }
   pixels=info->pixels;
+  RelinquishMagickResource(MemoryResource,info->length);
   DestroyMagickCLCacheInfo(info);
   (void) RelinquishAlignedMemory(pixels);
 }

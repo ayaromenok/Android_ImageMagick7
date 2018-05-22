@@ -226,8 +226,9 @@ static Image *ReadIPLImage(const ImageInfo *image_info,ExceptionInfo *exception)
     Determine endianness 
    If we get back "iiii", we have LSB,"mmmm", MSB
    */
-  count=ReadBlob(image,4,magick); 
-  (void) count;
+  count=ReadBlob(image,4,magick);
+  if (count != 4)
+    ThrowReaderException(CorruptImageError, "ImproperImageHeader");
   if((LocaleNCompare((char *) magick,"iiii",4) == 0))  
     image->endian=LSBEndian;
   else{
@@ -243,7 +244,7 @@ static Image *ReadIPLImage(const ImageInfo *image_info,ExceptionInfo *exception)
    Excellent, now we read the header unimpeded.
    */
   count=ReadBlob(image,4,magick); 
-  if((LocaleNCompare((char *) magick,"data",4) != 0))  
+  if((count != 4) || (LocaleNCompare((char *) magick,"data",4) != 0))
     ThrowReaderException(CorruptImageError, "ImproperImageHeader");
   ipl_info.size=ReadBlobLong(image); 
   ipl_info.width=ReadBlobLong(image); 
@@ -523,6 +524,9 @@ static MagickBooleanType WriteIPLImage(const ImageInfo *image_info,Image *image,
   QuantumInfo
     *quantum_info;
 
+  size_t
+    imageListLength;
+
   ssize_t
     y;
   
@@ -579,7 +583,8 @@ static MagickBooleanType WriteIPLImage(const ImageInfo *image_info,Image *image,
     break;
     
   }
-  ipl_info.z = (unsigned int) GetImageListLength(image);
+  imageListLength=GetImageListLength(image);
+  ipl_info.z = (unsigned int) imageListLength;
   /* There is no current method for detecting whether we have T or Z stacks */
   ipl_info.time = 1;
   ipl_info.width = (unsigned int) image->columns;
@@ -679,8 +684,7 @@ static MagickBooleanType WriteIPLImage(const ImageInfo *image_info,Image *image,
   if (GetNextImageInList(image) == (Image *) NULL)
     break;
       image=SyncNextImageInList(image);
-      status=SetImageProgress(image,SaveImagesTag,scene++,
-        GetImageListLength(image));
+      status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
       if (status == MagickFalse)
         break;
     }while (image_info->adjoin != MagickFalse);

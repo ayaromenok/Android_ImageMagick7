@@ -11,11 +11,11 @@
  - all binaries moved to [github release section](https://github.com/ayaromenok/Android_ImageMagick7/releases)
 
 # General
- - MagickCore 7.0.7.28 (actual at 2018.03)
+ - MagickCore 7.0.7.35 (actual at 2018.05)
  - 3rd party libs actual at 2017.03
  - OpenMP build by default (with gcc 4.9 and clang 5.0.3)
  - MagickWand
- - Magick++ disable due to crash, sources removed
+ - Magick++ disable due to crash, sources removed (looks like nobody used it anyway)
 
 # Why? 
  - ImageMagick7 is not fully compatible with early(6) version
@@ -23,6 +23,7 @@
  - smaller binary size in case of using only MagickCore
 
 # Test for ImageMagick 7/Android
+ - test app code exist in ./prj/IM7Test. It can be used as example for C\C++\qmake project.
  - demonstrtate OpenMP advantage on multi-core CPU in modern smartphones
  - GUI version published to [google play](https://play.google.com/store/apps/details?id=info.yaromenok.IM7Test) for armv7 and x86 
 

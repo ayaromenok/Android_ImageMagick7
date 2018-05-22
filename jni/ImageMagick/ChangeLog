@@ -1,3 +1,47 @@
+2018-05-21  7.0.7-35 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-35, GIT revision 14356:13507412c:20180521.
+
+2018-05-21  7.0.7-35  <quetzlzacatenango@image...>
+  * Fixed memory corruption for MVG paths.
+
+2018-05-20  7.0.7-34 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-34, GIT revision 14348:ac9ff6ba1:20180520.
+
+2018-05-20  7.0.7-34 Dirk Lemstra <dirk@lem.....org>
+  * Added support for reading eXIf chunks to the PNG coder.
+
+2018-05-19  7.0.7-34  <quetzlzacatenango@image...>
+  * Fixed numerous use of uninitialized values, integer overflow, memory
+    exceeded, and timeouts (credit to OSS Fuzz).
+  * Improved clip / composite mask handling.
+
+2018-05-16  7.0.7-33 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-33, GIT revision 14326:58c2e4972:20180516.
+
+2018-05-03  7.0.7-33  <quetzlzacatenango@image...>
+  * Restore SetImageAlpha() behavior.
+  * Fix -clip and -mask options.
+
+2018-05-13  7.0.7-32 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-32, GIT revision 14307:f61f674e3:20180513.
+
+2018-05-03  7.0.7-31  <quetzlzacatenango@image...>
+  * Fixed numerous use of uninitialized values, integer overflow, memory
+    exceeded, and timeouts (credit to OSS Fuzz).
+
+2018-05-01  7.0.7-30 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-30, GIT revision 14242:730f1d1d3:20180501.
+
+2018-05-01  7.0.7-30  <quetzlzacatenango@image...>
+  * Missing break when checking "compliance" element.
+
+2018-04-30  7.0.7-29 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-29, GIT revision 14225:41edbdcea:20180430.
+
+2018-03-26  7.0.7-29  <quetzlzacatenango@image...>
+  * Fixed numerous use of uninitialized values, integer overflow, memory
+    exceeded, and timeouts (credit to OSS Fuzz).
+
 2018-03-24  7.0.7-28 Cristy  <quetzlzacatenango@image...>
   * Release ImageMagick version 7.0.7-28, GIT revision 23615:edd71782e:20180325.
 

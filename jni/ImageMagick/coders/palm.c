@@ -421,6 +421,8 @@ static Image *ReadPALMImage(const ImageInfo *image_info,
             one_row=(unsigned char *) RelinquishMagickMemory(one_row);
             ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
           }
+         (void) memset(last_row,0,MagickMax(bytes_per_row,2*image->columns)*
+           sizeof(*last_row));
       }
     mask=(size_t) (1U << bits_per_pixel)-1;
     for (y=0; y < (ssize_t) image->rows; y++)
@@ -717,6 +719,7 @@ static MagickBooleanType WritePALMImage(const ImageInfo *image_info,
     count,
     bits_per_pixel,
     bytes_per_row,
+    imageListLength,
     nextDepthOffset,
     one;
 
@@ -761,6 +764,7 @@ static MagickBooleanType WritePALMImage(const ImageInfo *image_info,
   one=1;
   version=0;
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     (void) TransformImageColorspace(image,sRGBColorspace,exception);
@@ -1020,8 +1024,7 @@ static MagickBooleanType WritePALMImage(const ImageInfo *image_info,
     currentOffset=(MagickOffsetType) GetBlobSize(image);
     offset=SeekBlob(image,currentOffset,SEEK_SET);
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

@@ -1,5 +1,5 @@
 /*
-  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
   
   You may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ extern "C" {
   Define declarations.
 */
 #define MagickPackageName "ImageMagick"
-#define MagickCopyright  "© 1999-2017 ImageMagick Studio LLC"
+#define MagickCopyright  "© 1999-2018 ImageMagick Studio LLC"
 #define MagickLibVersion  0x707
 #define MagickLibVersionText  "7.0.7"
-#define MagickLibVersionNumber  4,0,0
-#define MagickLibAddendum  "-10"
-#define MagickLibInterface  4
-#define MagickLibMinInterface  4
+#define MagickLibVersionNumber  6,0,0
+#define MagickLibAddendum  "-35"
+#define MagickLibInterface  6
+#define MagickLibMinInterface  6
 #if defined(_WINDOWS)
 #  if defined(_WIN64)
 #    define MagickPlatform "x64"
@@ -43,14 +43,14 @@ extern "C" {
 #define MagickPlatform  "x86_64"
 #endif
 #define MagickppLibVersionText  "7.0.7"
-#define MagickppLibVersionNumber  3:0:0
-#define MagickppLibAddendum  "-10"
-#define MagickppLibInterface  3
-#define MagickppLibMinInterface  3
-#define MagickReleaseDate  "2017-11-05"
+#define MagickppLibVersionNumber  4:0:0
+#define MagickppLibAddendum  "-35"
+#define MagickppLibInterface  4
+#define MagickppLibMinInterface  4
+#define MagickReleaseDate  "2018-05-21"
 #define MagickAuthoritativeLicense  \
-  "http://www.imagemagick.org/script/license.php"
-#define MagickAuthoritativeURL  "http://www.imagemagick.org"
+  "https://www.imagemagick.org/script/license.php"
+#define MagickAuthoritativeURL  "https://www.imagemagick.org"
 #define MagickHomeURL  "file:///usr/share/doc/ImageMagick-7/index.html"
 #if (MAGICKCORE_QUANTUM_DEPTH == 8)
 #define MagickQuantumDepth  "Q8"

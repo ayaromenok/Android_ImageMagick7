@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -143,9 +143,10 @@ static Image *ReadMTVImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Read MTV image.
   */
+  (void) memset(buffer,0,sizeof(buffer));
   (void) ReadBlobString(image,buffer);
   count=(ssize_t) sscanf(buffer,"%lu %lu\n",&columns,&rows);
-  if (count <= 0)
+  if (count != 2)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   do
   {
@@ -212,7 +213,8 @@ static Image *ReadMTVImage(const ImageInfo *image_info,ExceptionInfo *exception)
       if (image->scene >= (image_info->scene+image_info->number_scenes-1))
         break;
     *buffer='\0';
-    (void) ReadBlobString(image,buffer);
+    if (ReadBlobString(image,buffer) == (char *) NULL)
+      break;
     count=(ssize_t) sscanf(buffer,"%lu %lu\n",&columns,&rows);
     if (count > 0)
       {
@@ -344,6 +346,9 @@ static MagickBooleanType WriteMTVImage(const ImageInfo *image_info,Image *image,
   register unsigned char
     *q;
 
+  size_t
+    imageListLength;
+
   ssize_t
     y;
 
@@ -365,6 +370,7 @@ static MagickBooleanType WriteMTVImage(const ImageInfo *image_info,Image *image,
   if (status == MagickFalse)
     return(status);
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     /*
@@ -407,8 +413,7 @@ static MagickBooleanType WriteMTVImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene,imageListLength);
     if (status == MagickFalse)
       break;
     scene++;

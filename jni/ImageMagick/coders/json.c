@@ -723,6 +723,7 @@ static ssize_t PrintChannelStatistics(FILE *file,const PixelChannel channel,
     GetMagickPrecision(),(double) ClampToQuantum(scale*
     channel_statistics[channel].maxima),GetMagickPrecision(),scale*
     channel_statistics[channel].mean,GetMagickPrecision(),scale*
+    IsNaN(channel_statistics[channel].standard_deviation) != 0 ? MagickEpsilon :
     channel_statistics[channel].standard_deviation,GetMagickPrecision(),
     channel_statistics[channel].kurtosis,GetMagickPrecision(),
     channel_statistics[channel].skewness,GetMagickPrecision(),
@@ -1691,6 +1692,9 @@ static MagickBooleanType WriteJSONImage(const ImageInfo *image_info,
   MagickOffsetType
     scene;
 
+  size_t
+    imageListLength;
+
   /*
     Open output image file.
   */
@@ -1707,6 +1711,7 @@ static MagickBooleanType WriteJSONImage(const ImageInfo *image_info,
   if (file == (FILE *) NULL)
     file=stdout;
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     if (scene == 0)
@@ -1721,8 +1726,7 @@ static MagickBooleanType WriteJSONImage(const ImageInfo *image_info,
       }
     (void) WriteBlobString(image,",\n");
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

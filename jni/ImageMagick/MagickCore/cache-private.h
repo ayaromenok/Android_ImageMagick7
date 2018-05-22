@@ -137,9 +137,8 @@ typedef struct _CacheInfo
   PixelTrait
     alpha_trait;
 
-  MagickBooleanType
-    read_mask,
-    write_mask;
+  ChannelType
+    channels;
 
   size_t
     columns,
@@ -224,6 +223,9 @@ typedef struct _CacheInfo
 
   MagickCLCacheInfo
     opencl;
+
+  MagickBooleanType
+    composite_mask;
 } CacheInfo;
 
 extern MagickPrivate Cache

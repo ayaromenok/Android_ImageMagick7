@@ -366,8 +366,7 @@ MagickExport Image *AddNoiseImage(const Image *image,const NoiseType noise_type,
         if ((traits == UndefinedPixelTrait) ||
             (noise_traits == UndefinedPixelTrait))
           continue;
-        if (((noise_traits & CopyPixelTrait) != 0) ||
-            (GetPixelWriteMask(image,p) <= (QuantumRange/2)))
+        if ((noise_traits & CopyPixelTrait) != 0)
           {
             SetPixelChannel(noise_image,channel,p[i],q);
             continue;
@@ -771,8 +770,7 @@ MagickExport Image *ColorizeImage(const Image *image,const char *blend,
           (PixelChannel) i);
         if (traits == UndefinedPixelTrait)
           continue;
-        if (((traits & CopyPixelTrait) != 0) ||
-            (GetPixelWriteMask(colorize_image,q) <= (QuantumRange/2)))
+        if ((traits & CopyPixelTrait) != 0)
           continue;
         SetPixelChannel(colorize_image,(PixelChannel) i,ClampToQuantum(
           Colorize(q[i],GetPixelInfoChannel(&blend_percentage,(PixelChannel) i),
@@ -1250,12 +1248,11 @@ static inline const char *FxSubexpression(const char *expression,
 }
 
 static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
-  const ssize_t x,const ssize_t y,const char *expression,
+  const ssize_t x,const ssize_t y,const char *expression,const size_t depth,
   ExceptionInfo *exception)
 {
   char
     *q,
-    subexpression[MagickPathExtent],
     symbol[MagickPathExtent];
 
   const char
@@ -1282,7 +1279,6 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
     i;
 
   size_t
-    length,
     level;
 
   p=expression;
@@ -1292,6 +1288,10 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
   point.y=(double) y;
   if (isalpha((int) ((unsigned char) *(p+1))) == 0)
     {
+      char
+        *subexpression;
+
+      subexpression=AcquireString(expression);
       if (strchr("suv",(int) *p) != (char *) NULL)
         {
           switch (*p)
@@ -1325,7 +1325,7 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
               }
               *q='\0';
               alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,
-                0,&beta,exception);
+                depth,&beta,exception);
               i=(ssize_t) alpha;
               if (*p != '\0')
                 p++;
@@ -1355,7 +1355,7 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
               }
               *q='\0';
               alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,
-                0,&beta,exception);
+                depth,&beta,exception);
               point.x=alpha;
               point.y=beta;
               if (*p != '\0')
@@ -1381,7 +1381,7 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
                 }
                 *q='\0';
                 alpha=FxEvaluateSubexpression(fx_info,channel,x,y,subexpression,
-                  0,&beta,exception);
+                  depth,&beta,exception);
                 point.x+=alpha;
                 point.y+=beta;
                 if (*p != '\0')
@@ -1390,12 +1390,8 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
           if (*p == '.')
             p++;
         }
+      subexpression=DestroyString(subexpression);
     }
-  length=GetImageListLength(fx_info->images);
-  while (i < 0)
-    i+=(ssize_t) length;
-  if (length != 0)
-    i%=length;
   image=GetImageFromList(fx_info->images,i);
   if (image == (Image *) NULL)
     {
@@ -1403,6 +1399,7 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
         "NoSuchImage","`%s'",expression);
       return(0.0);
     }
+  i=GetImageIndexInList(image);
   GetPixelInfo(image,&pixel);
   status=InterpolatePixelInfo(image,fx_info->view[i],image->interpolate,
     point.x,point.y,&pixel,exception);
@@ -1821,7 +1818,7 @@ static double FxGetSymbol(FxInfo *fx_info,const PixelChannel channel,
     case 'z':
     {
       if (LocaleCompare(symbol,"z") == 0)
-        return((double)GetImageDepth(image, fx_info->exception));
+        return((double) GetImageDepth(image,fx_info->exception));
       break;
     }
     default:
@@ -2098,7 +2095,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
   ExceptionInfo *exception)
 {
 #define FxMaxParenthesisDepth  58
-#define FxMaxSubexpressionDepth  600
+#define FxMaxSubexpressionDepth  200
 #define FxReturn(value) \
 { \
   subexpression=DestroyString(subexpression); \
@@ -2474,14 +2471,14 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn(atan(alpha));
         }
       if (LocaleCompare(expression,"a") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'B':
     case 'b':
     {
       if (LocaleCompare(expression,"b") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'C':
@@ -2516,7 +2513,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn(cos(alpha));
         }
       if (LocaleCompare(expression,"c") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'D':
@@ -2548,7 +2545,10 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
               case AlphaPixelChannel: type="opacity"; break;
               default: type="unknown"; break;
             }
-          (void) CopyMagickString(subexpression,expression+6,MagickPathExtent);
+          *subexpression='\0';
+          if (strlen(expression) > 6)
+            (void) CopyMagickString(subexpression,expression+6,
+              MagickPathExtent);
           if (strlen(subexpression) > 1)
             subexpression[strlen(subexpression)-1]='\0';
           if (fx_info->file != (FILE *) NULL)
@@ -2621,16 +2621,16 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn((double) gcd);
         }
       if (LocaleCompare(expression,"g") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'H':
     case 'h':
     {
       if (LocaleCompare(expression,"h") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       if (LocaleCompare(expression,"hue") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       if (LocaleNCompare(expression,"hypot",5) == 0)
         {
           alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+5,
@@ -2643,14 +2643,14 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
     case 'k':
     {
       if (LocaleCompare(expression,"k") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'I':
     case 'i':
     {
       if (LocaleCompare(expression,"intensity") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       if (LocaleNCompare(expression,"int",3) == 0)
         {
           alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
@@ -2664,14 +2664,14 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn((double) !!IsNaN(alpha));
         }
       if (LocaleCompare(expression,"i") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'J':
     case 'j':
     {
       if (LocaleCompare(expression,"j") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
 #if defined(MAGICKCORE_HAVE_J0)
       if (LocaleNCompare(expression,"j0",2) == 0)
         {
@@ -2723,7 +2723,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn(log10(alpha));
         }
       if (LocaleCompare(expression,"lightness") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'M':
@@ -2751,11 +2751,11 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
         {
           alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+3,
             depth+1,beta,exception);
-          gamma=alpha-floor((alpha/(*beta)))*(*beta);
+          gamma=alpha-floor((alpha*PerceptibleReciprocal(*beta)))*(*beta);
           FxReturn(gamma);
         }
       if (LocaleCompare(expression,"m") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'N':
@@ -2768,7 +2768,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn((double) (alpha < MagickEpsilon));
         }
       if (LocaleCompare(expression,"n") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'O':
@@ -2777,7 +2777,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
       if (LocaleCompare(expression,"Opaque") == 0)
         FxReturn(1.0);
       if (LocaleCompare(expression,"o") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'P':
@@ -2794,7 +2794,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn(pow(alpha,*beta));
         }
       if (LocaleCompare(expression,"p") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'Q':
@@ -2824,14 +2824,14 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn(floor(alpha+0.5));
         }
       if (LocaleCompare(expression,"r") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'S':
     case 's':
     {
       if (LocaleCompare(expression,"saturation") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       if (LocaleNCompare(expression,"sign",4) == 0)
         {
           alpha=FxEvaluateSubexpression(fx_info,channel,x,y,expression+4,
@@ -2872,7 +2872,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn((1.0/(1.0+exp(-alpha))));
         }
       if (LocaleCompare(expression,"s") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'T':
@@ -2901,21 +2901,21 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn(ceil(alpha));
         }
       if (LocaleCompare(expression,"t") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'U':
     case 'u':
     {
       if (LocaleCompare(expression,"u") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'V':
     case 'v':
     {
       if (LocaleCompare(expression,"v") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'W':
@@ -2931,21 +2931,21 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
           FxReturn(*beta);
         }
       if (LocaleCompare(expression,"w") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'Y':
     case 'y':
     {
       if (LocaleCompare(expression,"y") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     case 'Z':
     case 'z':
     {
       if (LocaleCompare(expression,"z") == 0)
-        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+        FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
       break;
     }
     default:
@@ -2955,7 +2955,7 @@ static double FxEvaluateSubexpression(FxInfo *fx_info,
   q=(char *) expression;
   alpha=InterpretSiPrefixValue(expression,&q);
   if (q == expression)
-    FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,exception));
+    FxReturn(FxGetSymbol(fx_info,channel,x,y,expression,depth+1,exception));
   FxReturn(alpha);
 }
 
@@ -3183,8 +3183,7 @@ MagickExport Image *FxImage(const Image *image,const char *expression,
         if ((traits == UndefinedPixelTrait) ||
             (fx_traits == UndefinedPixelTrait))
           continue;
-        if (((fx_traits & CopyPixelTrait) != 0) ||
-            (GetPixelWriteMask(image,p) <= (QuantumRange/2)))
+        if ((fx_traits & CopyPixelTrait) != 0)
           {
             SetPixelChannel(fx_image,channel,p[i],q);
             continue;
@@ -3378,13 +3377,6 @@ MagickExport Image *ImplodeImage(const Image *image,const double amount,
       /*
         Determine if the pixel is within an ellipse.
       */
-      if (GetPixelWriteMask(canvas,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(implode_image,q);
-          p+=GetPixelChannels(canvas);
-          q+=GetPixelChannels(implode_image);
-          continue;
-        }
       delta.x=scale.x*(double) (x-center.x);
       distance=delta.x*delta.x+delta.y*delta.y;
       if (distance >= (radius*radius))
@@ -3624,8 +3616,7 @@ MagickExport Image *MorphImages(const Image *image,const size_t number_frames,
             if ((traits == UndefinedPixelTrait) ||
                 (morph_traits == UndefinedPixelTrait))
               continue;
-            if (((morph_traits & CopyPixelTrait) != 0) ||
-                (GetPixelWriteMask(morph_images,p) <= (QuantumRange/2)))
+            if ((morph_traits & CopyPixelTrait) != 0)
               {
                 SetPixelChannel(morph_image,channel,p[i],q);
                 continue;
@@ -4567,11 +4558,6 @@ MagickExport Image *SketchImage(const Image *image,const double radius,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(random_image,q) <= (QuantumRange/2))
-        {
-          q+=GetPixelChannels(random_image);
-          continue;
-        }
       value=GetPseudoRandomValue(random_info[id]);
       for (i=0; i < (ssize_t) GetPixelChannels(random_image); i++)
       {
@@ -4730,11 +4716,6 @@ MagickExport MagickBooleanType SolarizeImage(Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-        {
-          q+=GetPixelChannels(image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -5227,13 +5208,6 @@ MagickExport Image *SwirlImage(const Image *image,double degrees,
       /*
         Determine if the pixel is within an ellipse.
       */
-      if (GetPixelWriteMask(canvas,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(swirl_image,q);
-          p+=GetPixelChannels(canvas);
-          q+=GetPixelChannels(swirl_image);
-          continue;
-        }
       delta.x=scale.x*(double) (x-center.x);
       distance=delta.x*delta.x+delta.y*delta.y;
       if (distance >= (radius*radius))
@@ -5455,13 +5429,6 @@ MagickExport Image *TintImage(const Image *image,const char *blend,
         weight;
 
       GetPixelInfo(image,&pixel);
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          SetPixelViaPixelInfo(tint_image,&pixel,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(tint_image);
-          continue;
-        }
       weight=QuantumScale*GetPixelRed(image,p)-0.5;
       pixel.red=(MagickRealType) GetPixelRed(image,p)+color_vector.red*
         (1.0-(4.0*(weight*weight)));

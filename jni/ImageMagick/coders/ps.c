@@ -658,11 +658,12 @@ static Image *ReadPSImage(const ImageInfo *image_info,ExceptionInfo *exception)
         for (q=command; *q != '\0'; q++)
           if (isspace((int) (unsigned char) *q) != 0)
             break;
-        value=AcquireString(q);
+        value=ConstantString(q);
         (void) SubstituteString(&value,"(","");
         (void) SubstituteString(&value,")","");
         (void) StripString(value);
-        (void) SetImageProperty(image,property,value,exception);
+        if (*value != '\0')
+          (void) SetImageProperty(image,property,value,exception);
         value=DestroyString(value);
         continue;
       }
@@ -1551,6 +1552,7 @@ static MagickBooleanType WritePSImage(const ImageInfo *image_info,Image *image,
   size_t
     bit,
     byte,
+    imageListLength,
     length,
     page,
     text_size;
@@ -1585,6 +1587,7 @@ static MagickBooleanType WritePSImage(const ImageInfo *image_info,Image *image,
     compression=image_info->compression;
   page=1;
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     /*
@@ -1741,9 +1744,9 @@ RestoreMSCWarning
             */
             (void) WriteBlobString(image,"%%Orientation: Portrait\n");
             (void) WriteBlobString(image,"%%PageOrder: Ascend\n");
-            (void) FormatLocaleString(buffer,MagickPathExtent,"%%%%Pages: %.20g\n",
-              image_info->adjoin != MagickFalse ? (double)
-              GetImageListLength(image) : 1.0);
+            (void) FormatLocaleString(buffer,MagickPathExtent,
+              "%%%%Pages: %.20g\n",image_info->adjoin != MagickFalse ?
+              (double) imageListLength : 1.0);
             (void) WriteBlobString(image,buffer);
           }
         (void) WriteBlobString(image,"%%EndComments\n");
@@ -2291,8 +2294,7 @@ RestoreMSCWarning
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

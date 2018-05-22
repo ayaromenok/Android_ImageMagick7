@@ -355,6 +355,15 @@ struct _Image
 
   PixelInfo
     matte_color;        /* current mattecolor attribute */
+
+  MagickBooleanType
+    composite_mask;
+
+  PixelTrait
+    mask_trait;       /* apply the clip or composite mask */
+
+  ChannelType
+    channels;
 };
 
 /*

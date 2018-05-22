@@ -58,6 +58,7 @@
 #include "MagickCore/option.h"
 #include "MagickCore/property.h"
 #include "MagickCore/quantum-private.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/static.h"
 #include "MagickCore/string_.h"
 #include "MagickCore/string-private.h"
@@ -96,7 +97,6 @@ static Image *ReadCAPTIONImage(const ImageInfo *image_info,
   char
     *caption,
     geometry[MagickPathExtent],
-    *property,
     *text;
 
   const char
@@ -140,21 +140,26 @@ static Image *ReadCAPTIONImage(const ImageInfo *image_info,
   */
   option=GetImageOption(image_info,"filename");
   if (option == (const char *) NULL)
-    property=InterpretImageProperties((ImageInfo *) image_info,image,
+    caption=InterpretImageProperties((ImageInfo *) image_info,image,
       image_info->filename,exception);
   else
     if (LocaleNCompare(option,"caption:",8) == 0)
-      property=InterpretImageProperties((ImageInfo *) image_info,image,option+8,
+      caption=InterpretImageProperties((ImageInfo *) image_info,image,option+8,
         exception);
     else
-      property=InterpretImageProperties((ImageInfo *) image_info,image,option,
+      caption=InterpretImageProperties((ImageInfo *) image_info,image,option,
         exception);
-  if (property == (char *) NULL)
+  if (caption == (char *) NULL)
     return(DestroyImageList(image));
-  (void) SetImageProperty(image,"caption",property,exception);
-  property=DestroyString(property);
-  caption=ConstantString(GetImageProperty(image,"caption",exception));
+  (void) SetImageProperty(image,"caption",caption,exception);
   draw_info=CloneDrawInfo(image_info,(DrawInfo *) NULL);
+  width=(size_t) floor(draw_info->pointsize*strlen(caption)+0.5);
+  if (AcquireMagickResource(WidthResource,width) == MagickFalse)
+    {
+      caption=DestroyString(caption);
+      draw_info=DestroyDrawInfo(draw_info);
+      ThrowReaderException(ImageError,"WidthOrHeightExceedsLimit");
+    }
   (void) CloneString(&draw_info->text,caption);
   gravity=GetImageOption(image_info,"gravity");
   if (gravity != (char *) NULL)
@@ -284,8 +289,9 @@ static Image *ReadCAPTIONImage(const ImageInfo *image_info,
   */
   i=FormatMagickCaption(image,draw_info,split,&metrics,&caption,exception);
   (void) CloneString(&draw_info->text,caption);
+  caption=DestroyString(caption);
   (void) FormatLocaleString(geometry,MagickPathExtent,"%+g%+g",MagickMax(
-    draw_info->direction == RightToLeftDirection ? image->columns-
+    draw_info->direction == RightToLeftDirection ? (double) image->columns-
     metrics.bounds.x2 : -metrics.bounds.x1,0.0),draw_info->gravity ==
     UndefinedGravity ? metrics.ascent : 0.0);
   (void) CloneString(&draw_info->geometry,geometry);
@@ -300,7 +306,6 @@ static Image *ReadCAPTIONImage(const ImageInfo *image_info,
       (void) SetImageProperty(image,"caption:pointsize",pointsize,exception);
     }
   draw_info=DestroyDrawInfo(draw_info);
-  caption=DestroyString(caption);
   if (status == MagickFalse)
     {
       image=DestroyImageList(image);

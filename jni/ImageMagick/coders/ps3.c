@@ -866,6 +866,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     bounds;
 
   size_t
+    imageListLength,
     length,
     page,
     pixel,
@@ -933,6 +934,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
   (void) memset(&bounds,0,sizeof(bounds));
   page=0;
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     /*
@@ -960,8 +962,8 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
       }
     if (image->units == PixelsPerCentimeterResolution)
       {
-        resolution.x=(size_t) (100.0*2.54*resolution.x+0.5)/100.0;
-        resolution.y=(size_t) (100.0*2.54*resolution.y+0.5)/100.0;
+        resolution.x=(size_t) ((100.0*2.54*resolution.x+0.5)/100.0);
+        resolution.y=(size_t) ((100.0*2.54*resolution.y+0.5)/100.0);
       }
     SetGeometry(image,&geometry);
     (void) FormatLocaleString(page_geometry,MagickPathExtent,"%.20gx%.20g",
@@ -1070,7 +1072,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
               (void) CopyMagickString(buffer,"%%Pages: 1\n",MagickPathExtent);
             else
               (void) FormatLocaleString(buffer,MagickPathExtent,
-                "%%%%Pages: %.20g\n",(double) GetImageListLength(image));
+                "%%%%Pages: %.20g\n",(double) imageListLength);
             (void) WriteBlobString(image,buffer);
           }
         if (image->colorspace == CMYKColorspace)
@@ -1153,7 +1155,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     /*
       PS clipping path from Photoshop clipping path.
     */
-    if ((image->read_mask != MagickFalse) ||
+    if (((image->channels & WriteMaskChannel) != 0) ||
         (LocaleNCompare("8BIM:",image->magick_filename,5) != 0))
       (void) WriteBlobString(image,"/ClipImage {} def\n");
     else
@@ -1233,7 +1235,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     /*
       Photoshop clipping path active?
     */
-    if ((image->read_mask != MagickFalse) &&
+    if (((image->channels & WriteMaskChannel) != 0) &&
         (LocaleNCompare("8BIM:",image->magick_filename,5) == 0))
         (void) WriteBlobString(image,"true\n");
       else
@@ -1600,8 +1602,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

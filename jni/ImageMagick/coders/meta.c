@@ -1208,16 +1208,31 @@ static Image *ReadMETAImage(const ImageInfo *image_info,
           buff=DestroyImage(buff);
           ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
         }
+      (void) memset(blob,0,length);
       AttachBlob(buff->blob,blob,length);
       if (LocaleCompare(image_info->magick,"8BIMTEXT") == 0)
         {
           length=(size_t) parse8BIM(image, buff);
+          if (length == 0)
+            {
+              blob=DetachBlob(buff->blob);
+              blob=(unsigned char *) RelinquishMagickMemory(blob);
+              buff=DestroyImage(buff);
+              ThrowReaderException(CorruptImageError,"CorruptImage");
+            }
           if (length & 1)
             (void) WriteBlobByte(buff,0x0);
         }
       else if (LocaleCompare(image_info->magick,"8BIMWTEXT") == 0)
         {
           length=(size_t) parse8BIMW(image, buff);
+          if (length == 0)
+            {
+              blob=DetachBlob(buff->blob);
+              blob=(unsigned char *) RelinquishMagickMemory(blob);
+              buff=DestroyImage(buff);
+              ThrowReaderException(CorruptImageError,"CorruptImage");
+            }
           if (length & 1)
             (void) WriteBlobByte(buff,0x0);
         }
@@ -1945,8 +1960,8 @@ static int formatIPTC(Image *ifile, Image *ofile)
     if (taglen < 0)
       return(-1);
     /* make a buffer to hold the tag datand snag it from the input stream */
-    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+MagickPathExtent),
-      sizeof(*str));
+    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+
+      MagickPathExtent),sizeof(*str));
     if (str == (unsigned char *) NULL)
       return(0);
     for (tagindx=0; tagindx<taglen; tagindx++)
@@ -2078,15 +2093,21 @@ static int formatIPTCfromBuffer(Image *ofile, char *s, ssize_t len)
     if (taglen > 65535)
       return(-1);
     /* make a buffer to hold the tag datand snag it from the input stream */
-    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+MagickPathExtent),
-      sizeof(*str));
+    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+
+      MagickPathExtent),sizeof(*str));
     if (str == (unsigned char *) NULL)
-      printf("MemoryAllocationFailed");
+      {
+        (void) printf("MemoryAllocationFailed");
+        return 0;
+      }
     for (tagindx=0; tagindx<taglen; tagindx++)
     {
       c = *s++; len--;
       if (len < 0)
-        return(-1);
+        {
+          str=(unsigned char *) RelinquishMagickMemory(str);
+          return(-1);
+        }
       str[tagindx]=(unsigned char) c;
     }
     str[taglen]=0;

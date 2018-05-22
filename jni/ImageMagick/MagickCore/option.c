@@ -1127,6 +1127,7 @@ static const OptionInfo
   {
     { "Undefined", UndefinedCompliance, UndefinedOptionFlag, MagickTrue },
     { "CSS", CSSCompliance, UndefinedOptionFlag, MagickFalse },
+    { "MVG", MVGCompliance, UndefinedOptionFlag, MagickFalse },
     { "No", NoCompliance, UndefinedOptionFlag, MagickFalse },
     { "SVG", SVGCompliance, UndefinedOptionFlag, MagickFalse },
     { "X11", X11Compliance, UndefinedOptionFlag, MagickFalse },
@@ -1768,6 +1769,7 @@ static const OptionInfo
     { "Blue", BluePixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Cb", CbPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Composite", CompositePixelChannel, UndefinedOptionFlag, MagickFalse },
+    { "CompositeMask", CompositeMaskPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "C", CyanPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Cr", CrPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Cyan", CyanPixelChannel, UndefinedOptionFlag, MagickFalse },

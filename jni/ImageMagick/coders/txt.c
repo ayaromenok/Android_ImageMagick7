@@ -239,6 +239,8 @@ static Image *ReadTEXTImage(const ImageInfo *image_info,
   image->rows=(size_t) floor((((double) page.height*image->resolution.y)/
     delta.y)+0.5);
   status=SetImageExtent(image,image->columns,image->rows,exception);
+  if (status != MagickFalse)
+    status=ResetImagePixels(image,exception);
   if (status == MagickFalse)
     return(DestroyImageList(image));
   image->page.x=0;
@@ -382,12 +384,12 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
     colorspace[MagickPathExtent],
     text[MagickPathExtent];
 
-  Image
-    *image;
-
-  long
+  double
     x_offset,
     y_offset;
+
+  Image
+    *image;
 
   PixelInfo
     pixel;
@@ -437,8 +439,8 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
   (void) ReadBlobString(image,text);
   if (LocaleNCompare((char *) text,MagickID,strlen(MagickID)) != 0)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
-  x_offset=(-1);
-  y_offset=(-1);
+  x_offset=(-1.0);
+  y_offset=(-1.0);
   do
   {
     width=0;
@@ -456,6 +458,8 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
     for (depth=1; (GetQuantumRange(depth)+1) < max_value; depth++) ;
     image->depth=depth;
     status=SetImageExtent(image,image->columns,image->rows,exception);
+    if (status != MagickFalse)
+      status=ResetImagePixels(image,exception);
     if (status == MagickFalse)
       return(DestroyImageList(image));
     LocaleLower(colorspace);
@@ -504,29 +508,29 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
           {
             if (image->alpha_trait != UndefinedPixelTrait)
               {
-                count=(ssize_t) sscanf(text,"%ld,%ld: (%lf%*[%,]%lf%*[%,]",
+                count=(ssize_t) sscanf(text,"%lf,%lf: (%lf%*[%,]%lf%*[%,]",
                   &x_offset,&y_offset,&red,&alpha);
                 green=red;
                 blue=red;
                 break;
               }
-            count=(ssize_t) sscanf(text,"%ld,%ld: (%lf%*[%,]",&x_offset,
+            count=(ssize_t) sscanf(text,"%lf,%lf: (%lf%*[%,]",&x_offset,
               &y_offset,&red);
             green=red;
             blue=red;
-            break;       
+            break;
           }
           case CMYKColorspace:
           {
             if (image->alpha_trait != UndefinedPixelTrait)
               {
                 count=(ssize_t) sscanf(text,
-                  "%ld,%ld: (%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]",
+                  "%lf,%lf: (%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]",
                   &x_offset,&y_offset,&red,&green,&blue,&black,&alpha);
                 break;
               }
             count=(ssize_t) sscanf(text,
-              "%ld,%ld: (%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]",&x_offset,
+              "%lf,%lf: (%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]",&x_offset,
               &y_offset,&red,&green,&blue,&black);
             break;
           }
@@ -535,14 +539,13 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
             if (image->alpha_trait != UndefinedPixelTrait)
               {
                 count=(ssize_t) sscanf(text,
-                  "%ld,%ld: (%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]",
+                  "%lf,%lf: (%lf%*[%,]%lf%*[%,]%lf%*[%,]%lf%*[%,]",
                   &x_offset,&y_offset,&red,&green,&blue,&alpha);
                 break;
               }
-            count=(ssize_t) sscanf(text,
-              "%ld,%ld: (%lf%*[%,]%lf%*[%,]%lf%*[%,]",&x_offset,
-              &y_offset,&red,&green,&blue);
-            break;       
+            count=(ssize_t) sscanf(text,"%lf,%lf: (%lf%*[%,]%lf%*[%,]%lf%*[%,]",
+              &x_offset,&y_offset,&red,&green,&blue);
+            break;
           }
         }
         if (strchr(text,'%') != (char *) NULL)
@@ -729,6 +732,9 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
   register ssize_t
     x;
 
+  size_t
+    imageListLength;
+
   ssize_t
     y;
 
@@ -745,6 +751,7 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
   if (status == MagickFalse)
     return(status);
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     ComplianceType
@@ -857,8 +864,7 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

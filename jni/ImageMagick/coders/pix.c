@@ -17,7 +17,7 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2017 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -159,6 +159,9 @@ static Image *ReadPIXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
       return(DestroyImageList(image));
+    status=ResetImagePixels(image,exception);
+    if (status == MagickFalse)
+      return(DestroyImageList(image));
     /*
       Convert PIX raster image to pixel packets.
     */
@@ -176,7 +179,13 @@ static Image *ReadPIXImage(const ImageInfo *image_info,ExceptionInfo *exception)
       {
         if (length == 0)
           {
-            length=(size_t) ReadBlobByte(image);
+            int
+              c;
+
+            c=ReadBlobByte(image);
+            if ((c == 0) || (c == EOF))
+              break;
+            length=(size_t) c;
             if (bits_per_pixel == 8)
               index=ScaleCharToQuantum((unsigned char) ReadBlobByte(image));
             else
@@ -194,6 +203,8 @@ static Image *ReadPIXImage(const ImageInfo *image_info,ExceptionInfo *exception)
         length--;
         q+=GetPixelChannels(image);
       }
+      if (x < (ssize_t) image->columns)
+        break;
       if (SyncAuthenticPixels(image,exception) == MagickFalse)
         break;
       if (image->previous == (Image *) NULL)

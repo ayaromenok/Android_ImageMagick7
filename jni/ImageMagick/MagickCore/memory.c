@@ -582,19 +582,6 @@ MagickExport MemoryInfo *AcquireVirtualMemory(const size_t count,
 
   if (HeapOverflowSanityCheck(count,quantum) != MagickFalse)
     return((MemoryInfo *) NULL);
-  if (max_memory_request == 0)
-    {
-      max_memory_request=(size_t) MagickULLConstant(~0);
-      value=GetPolicyValue("system:max-memory-request");
-      if (value != (char *) NULL)
-        {
-          /*
-            The security policy sets a max memory request limit.
-          */
-          max_memory_request=StringToSizeType(value,100.0);
-          value=DestroyString(value);
-        }
-    }
   if (virtual_anonymous_memory == 0)
     {
       virtual_anonymous_memory=1;
@@ -619,7 +606,7 @@ MagickExport MemoryInfo *AcquireVirtualMemory(const size_t count,
   memory_info->length=extent;
   memory_info->signature=MagickCoreSignature;
   if ((virtual_anonymous_memory == 1) &&
-      ((count*quantum) <= (size_t) max_memory_request))
+      ((count*quantum) <= GetMaxMemoryRequest()))
     {
       memory_info->blob=AcquireAlignedMemory(1,extent);
       if (memory_info->blob != NULL)
@@ -631,7 +618,7 @@ MagickExport MemoryInfo *AcquireVirtualMemory(const size_t count,
         Acquire anonymous memory map.
       */
       memory_info->blob=NULL;
-      if ((count*quantum) <= (size_t) max_memory_request)
+      if ((count*quantum) <= GetMaxMemoryRequest())
         memory_info->blob=MapBlob(-1,IOMode,0,extent);
       if (memory_info->blob != NULL)
         memory_info->type=MapVirtualMemory;
@@ -894,6 +881,45 @@ MagickExport void GetMagickMemoryMethods(
   *acquire_memory_handler=memory_methods.acquire_memory_handler;
   *resize_memory_handler=memory_methods.resize_memory_handler;
   *destroy_memory_handler=memory_methods.destroy_memory_handler;
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
++   G e t M a x M e m o r y R e q u e s t                                     %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  GetMaxMemoryRequest() returns the max_memory_request value.
+%
+%  The format of the GetMaxMemoryRequest method is:
+%
+%      size_t GetMaxMemoryRequest(void)
+%
+*/
+MagickExport size_t GetMaxMemoryRequest(void)
+{
+  if (max_memory_request == 0)
+    {
+      char
+        *value;
+
+      max_memory_request=(size_t) MagickULLConstant(~0);
+      value=GetPolicyValue("system:max-memory-request");
+      if (value != (char *) NULL)
+        {
+          /*
+            The security policy sets a max memory request limit.
+          */
+          max_memory_request=StringToSizeType(value,100.0);
+          value=DestroyString(value);
+        }
+    }
+  return(max_memory_request);
 }
 
 /*
@@ -1167,7 +1193,7 @@ MagickExport void *ResetMagickMemory(void *memory,int byte,const size_t size)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  ResetMaxMemoryRequest() resets the anonymous_memory value.
+%  ResetMaxMemoryRequest() resets the max_memory_request value.
 %
 %  The format of the ResetMaxMemoryRequest method is:
 %
@@ -1190,7 +1216,7 @@ MagickPrivate void ResetMaxMemoryRequest(void)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  ResetVirtualAnonymousMemory() resets the anonymous_memory value.
+%  ResetVirtualAnonymousMemory() resets the virtual_anonymous_memory value.
 %
 %  The format of the ResetVirtualAnonymousMemory method is:
 %
