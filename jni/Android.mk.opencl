@@ -515,7 +515,6 @@ LOCAL_C_INCLUDES  :=  \
 	$(IMAGE_MAGICK) \
 	$(IMAGE_MAGICK)MagickCore \
 	$(IMAGE_MAGICK)MagickWand \
-	$(IMAGE_MAGICK)Magick++/lib \
 	${PNG_SRC_PATH} \
 	${JPEG_SRC_PATH} \
 	${OPENCL_PATH}/include
@@ -523,7 +522,7 @@ LOCAL_C_INCLUDES  :=  \
 
 LOCAL_LDLIBS    := -L$(SYSROOT)/usr/lib -llog -lz
 LOCAL_SRC_FILES := \
-	$(IMAGE_MAGICK)utilites/magick.c \
+	$(IMAGE_MAGICK)utilities/magick.c \
 
 LOCAL_SHARED_LIBRARIES := \
     MagickCore-7 \
@@ -531,6 +530,6 @@ LOCAL_SHARED_LIBRARIES := \
     OpenCL
 
 
-#include $(BUILD_EXECUTABLE)	
+include $(BUILD_EXECUTABLE)	
 
 #---------------
