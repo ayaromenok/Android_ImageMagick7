@@ -121,7 +121,7 @@ SOURCES += \
     ../../jni/ImageMagick/coders/ycbcr.c \
     ../../jni/ImageMagick/coders/yuv.c \
     ../../jni/ImageMagick/coders/djvu.c \
-    ../../jni/ImageMagick/coders/fd.c \
+  #  ../../jni/ImageMagick/coders/fd.c \
     ../../jni/ImageMagick/coders/jnx.c \
     ../../jni/ImageMagick/coders/json.c \
     ../../jni/ImageMagick/coders/mask.c \
