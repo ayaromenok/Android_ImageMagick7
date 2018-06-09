@@ -3,8 +3,8 @@ QT       -= core gui
 
 TARGET = MagickCore
 TEMPLATE = lib
-QMAKE_CFLAGS += -fopenmp
-QMAKE_LFLAGS += -fopenmp
+#QMAKE_CFLAGS += -fopenmp
+#QMAKE_LFLAGS += -fopenmp
 DEFINES += LIBCORE_LIBRARY
 DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += MAGICKCORE_HDRI_ENABLE=0
@@ -16,8 +16,8 @@ INCLUDEPATH += ../../jni/ImageMagick/filters
 INCLUDEPATH += ../../jni/ImageMagick/MagickCore
 
 #linux:!android {
-    LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
-    LIBS += -L../libcoders -lcoders
+    LIBS += -L../libpng -lpng -L../libjpeg -ljpeg -L../libtiff -ltiff
+    LIBS += -L../libcoders -lcoders -lz
 #}
 #android {
 #    contains(ANDROID_TARGET_ARCH,armeabi-v7a) {

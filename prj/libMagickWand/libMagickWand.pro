@@ -15,8 +15,9 @@ INCLUDEPATH += ../../jni/ImageMagick/filters
 INCLUDEPATH += ../../jni/ImageMagick/MagickCore
 INCLUDEPATH += ../../jni/ImageMagick/MagickWand
 
-LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
-LIBS += -L../libcoders -lcoders -L../libMagickCore -lMagickCore
+#LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
+#LIBS += -L../libcoders -lcoders
+LIBS += -L../libMagickCore -lMagickCore
 
 include(../include/files_wand.pri)
 

@@ -21,13 +21,13 @@ android {
             ../libMagickCore/libMagickCore.so \
             ../libMagickWand/libMagickWand.so
     }
-}
+}b
 
 #linux:!android {
 
     INCLUDEPATH += ../../jni/ImageMagick/
     LIBS += -L../libMagickCore -L../libMagickWand
     LIBS += -lMagickCore -lMagickWand -lz
-    LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
+    #LIBS += -L../libjpeg -ljpeg -L../libpng -lpng -L../libtiff -ltiff
     #LIBS += -L../libcoders -lcoders
 #}
