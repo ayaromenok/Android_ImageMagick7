@@ -18,6 +18,6 @@ cd ../..
 $ANDROID_SDK_PATH/ndk-bundle/ndk-build -j 4
 
 cd ..
-mv lib lib.clang
+mv libs lib.clang
 ln -s lib.clang lib
 cd ./jni

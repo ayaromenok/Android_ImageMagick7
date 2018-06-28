@@ -18,6 +18,6 @@ cd ../..
 $ANDROID_SDK_PATH/ndk-bundle/ndk-build -j 4
 
 cd ..
-mv lib lib.gcc.opencl
+mv libs lib.gcc.opencl
 ln -s lib.gcc.opencl lib
 cd ./jni
