@@ -98,20 +98,20 @@ typedef struct
   char identific[124];
   unsigned short Version;
   char EndianIndicator[2];
-  unsigned long DataType;
+  unsigned int DataType;
   unsigned int ObjectSize;
-  unsigned long unknown1;
-  unsigned long unknown2;
+  unsigned int unknown1;
+  unsigned int unknown2;
 
   unsigned short unknown5;
   unsigned char StructureFlag;
   unsigned char StructureClass;
-  unsigned long unknown3;
-  unsigned long unknown4;
-  unsigned long DimFlag;
+  unsigned int unknown3;
+  unsigned int unknown4;
+  unsigned int DimFlag;
 
-  unsigned long SizeX;
-  unsigned long SizeY;
+  unsigned int SizeX;
+  unsigned int SizeY;
   unsigned short Flag1;
   unsigned short NameFlag;
 }
@@ -958,6 +958,8 @@ MATLAB_KO:
   while(!EOFBlob(image)) /* object parser loop */
   {
     Frames = 1;
+    if (filepos != (unsigned int) filepos)
+      break;
     if(SeekBlob(image,filepos,SEEK_SET) != filepos) break;
     /* printf("pos=%X\n",TellBlob(image)); */
 
@@ -967,7 +969,7 @@ MATLAB_KO:
     if(EOFBlob(image)) break;
     if((MagickSizeType) (MATLAB_HDR.ObjectSize+filepos) > GetBlobSize(image))
       goto MATLAB_KO;
-    filepos += MATLAB_HDR.ObjectSize + 4 + 4;
+    filepos += (MagickOffsetType) MATLAB_HDR.ObjectSize + 4 + 4;
 
     if (clone_info != (ImageInfo *) NULL)
       clone_info=DestroyImageInfo(clone_info);
@@ -1092,7 +1094,7 @@ MATLAB_KO:
     {
       case 0:
         size = ReadBlobXXXLong(image2);  /* Object name string size */
-        size = 4 * (ssize_t) ((size + 3 + 1) / 4);
+        size = 4 * (((size_t) size + 3 + 1) / 4);
         (void) SeekBlob(image2, size, SEEK_CUR);
         break;
       case 1:
@@ -1183,7 +1185,7 @@ RestoreMSCWarning
     image->colors = GetQuantumRange(image->depth);
     if (image->columns == 0 || image->rows == 0)
       goto MATLAB_KO;
-    if((unsigned long)ldblk*MATLAB_HDR.SizeY > MATLAB_HDR.ObjectSize)
+    if((unsigned int)ldblk*MATLAB_HDR.SizeY > MATLAB_HDR.ObjectSize)
       goto MATLAB_KO;
     /* Image is gray when no complex flag is set and 2D Matrix */
     if ((MATLAB_HDR.DimFlag == 8) &&

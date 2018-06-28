@@ -1792,7 +1792,7 @@ Magick_png_read_raw_profile(png_struct *ping,Image *image,
   StringInfo
     *profile;
 
-  const unsigned char
+  static const unsigned char
     unhex[103]={0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,
                  0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,
                  0,0,0,0,0,0,0,0,0,1, 2,3,4,5,6,7,8,9,0,0,
@@ -1952,8 +1952,10 @@ static void read_eXIf_chunk(Image *image,png_struct *ping,png_info *info,
   png_bytep
     data;
 
+#if PNG_LIBPNG_VER > 10631
   if (png_get_eXIf_1(ping,info,&size,&data))
     (void) PNGSetExifProfile(image,size,data,exception);
+#endif
 }
 #endif
 
@@ -2424,12 +2426,31 @@ static Image *ReadOnePNGImage(MngInfo *mng_info,
 #endif
 
 #ifdef PNG_SET_USER_LIMITS_SUPPORTED
-  /* Reject images with too many rows or columns */
-  png_set_user_limits(ping,
-    (png_uint_32) MagickMin(0x7fffffffL,
-        GetMagickResourceLimit(WidthResource)),
-    (png_uint_32) MagickMin(0x7fffffffL,
-        GetMagickResourceLimit(HeightResource)));
+  {
+    const char
+      *option;
+
+    /* Reject images with too many rows or columns */
+    png_set_user_limits(ping,(png_uint_32) MagickMin(PNG_UINT_31_MAX,
+      GetMagickResourceLimit(WidthResource)),(png_uint_32)
+      MagickMin(PNG_UINT_31_MAX,GetMagickResourceLimit(HeightResource)));
+
+#if (PNG_LIBPNG_VER >= 10400)
+    option=GetImageOption(image_info,"png:chunk-cache-max");
+    if (option != (const char *) NULL)
+      png_set_chunk_cache_max(ping,(png_uint_32) MagickMin(PNG_UINT_32_MAX,
+        StringToLong(option)));
+    else
+      png_set_chunk_cache_max(ping,32767);
+#endif
+
+#if (PNG_LIBPNG_VER >= 10401)
+    option=GetImageOption(image_info,"png:chunk-malloc-max");
+    if (option != (const char *) NULL)
+      png_set_chunk_malloc_max(ping,(png_alloc_size_t) MagickMin(PNG_SIZE_MAX,
+        StringToLong(option)));
+#endif
+  }
 #endif /* PNG_SET_USER_LIMITS_SUPPORTED */
 
   /*
@@ -2518,15 +2539,6 @@ static Image *ReadOnePNGImage(MngInfo *mng_info,
      (int)sizeof(unused_chunks)/5);
   /* Callback for other unknown chunks */
   png_set_read_user_chunk_fn(ping, image, read_user_chunk_callback);
-#endif
-
-#ifdef PNG_SET_USER_LIMITS_SUPPORTED
-#  if (PNG_LIBPNG_VER >= 10400)
-    /* Limit the size of the chunk storage cache used for sPLT, text,
-     * and unknown chunks.
-     */
-    png_set_chunk_cache_max(ping, 32767);
-#  endif
 #endif
 
 #ifdef PNG_READ_CHECK_FOR_INVALID_INDEX_SUPPORTED
@@ -4034,6 +4046,8 @@ static Image *ReadOnePNGImage(MngInfo *mng_info,
         ((int) ping_color_type == PNG_COLOR_TYPE_GRAY_ALPHA) ||
         (png_get_valid(ping,ping_info,PNG_INFO_tRNS))) ?
         BlendPixelTrait : UndefinedPixelTrait;
+    if (image->alpha_trait == BlendPixelTrait)
+      (void) SetImageStorageClass(image,DirectClass,exception);
 
 #if 0  /* I'm not sure what's wrong here but it does not work. */
     if (image->alpha_trait != UndefinedPixelTrait)
@@ -4244,14 +4258,14 @@ static Image *ReadPNGImage(const ImageInfo *image_info,
   status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
 
   if (status == MagickFalse)
-    ThrowReaderException(FileOpenError,"UnableToOpenFile");
+    return(DestroyImageList(image));
 
   /*
     Verify PNG signature.
   */
   count=ReadBlob(image,8,(unsigned char *) magic_number);
 
-  if (count < 8 || memcmp(magic_number,"\211PNG\r\n\032\n",8) != 0)
+  if ((count < 8) || (memcmp(magic_number,"\211PNG\r\n\032\n",8) != 0))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
 
   /*
@@ -4795,7 +4809,8 @@ static Image *ReadOneJNGImage(MngInfo *mng_info,
       {
         /* Copy chunk data to alpha_image->blob */
 
-        if (alpha_image != NULL && image_info->ping == MagickFalse)
+        if ((alpha_image != NULL) && (image_info->ping == MagickFalse) &&
+            (length != 0))
           {
             if (logging != MagickFalse)
               (void) LogMagickEvent(CoderEvent,GetMagickModule(),
@@ -4969,13 +4984,15 @@ static Image *ReadOneJNGImage(MngInfo *mng_info,
     {
       assert(color_image == (Image *) NULL);
       assert(alpha_image == (Image *) NULL);
+      if (color_image != (Image *) NULL)
+        color_image=DestroyImageList(color_image);
       return(DestroyImageList(image));
     }
 
   if (color_image == (Image *) NULL)
     {
       assert(alpha_image == (Image *) NULL);
-      return(DestroyImageList(image));
+      ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
     }
 
   (void) SeekBlob(color_image,0,SEEK_SET);
@@ -5210,7 +5227,7 @@ static Image *ReadJNGImage(const ImageInfo *image_info,
   status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
 
   if (status == MagickFalse)
-    return((Image *) NULL);
+    return(DestroyImageList(image));
 
   if (LocaleCompare(image_info->magick,"JNG") != 0)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -5219,7 +5236,7 @@ static Image *ReadJNGImage(const ImageInfo *image_info,
 
   count=(size_t) ReadBlob(image,8,(unsigned char *) magic_number);
 
-  if (count < 8 || memcmp(magic_number,"\213JNG\r\n\032\n",8) != 0)
+  if ((count < 8) || (memcmp(magic_number,"\213JNG\r\n\032\n",8) != 0))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
 
   /*
@@ -5378,7 +5395,7 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
 
       /* Verify MNG signature.  */
       count=(size_t) ReadBlob(image,8,(unsigned char *) magic_number);
-      if (memcmp(magic_number,"\212MNG\r\n\032\n",8) != 0)
+      if ((count < 8) || (memcmp(magic_number,"\212MNG\r\n\032\n",8) != 0))
         ThrowReaderException(CorruptImageError,"ImproperImageHeader");
 
       /* Initialize some nonzero members of the MngInfo structure.  */
@@ -5436,13 +5453,8 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
            "  Reading MNG chunk type %c%c%c%c, length: %.20g",
            type[0],type[1],type[2],type[3],(double) length);
 
-        if (length > PNG_UINT_31_MAX)
-          {
-            status=MagickFalse;
-            break;
-          }
-
-        if (count == 0)
+        if ((length > PNG_UINT_31_MAX) || (length > GetBlobSize(image)) ||
+            (count < 4))
           ThrowReaderException(CorruptImageError,"CorruptImage");
 
         p=NULL;
@@ -5450,9 +5462,6 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
 
         if (length != 0)
           {
-            if (length > GetBlobSize(image))
-              ThrowReaderException(CorruptImageError,
-                "InsufficientImageDataInFile");
             chunk=(unsigned char *) AcquireQuantumMemory(length,sizeof(*chunk));
 
             if (chunk == (unsigned char *) NULL)
@@ -5611,7 +5620,7 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
             if (length != 0)
               repeat=p[0];
 
-            if (repeat == 3 && length > 8)
+            if (repeat == 3 && length > 9)
               {
                 final_delay=(png_uint_32) mng_get_long(&p[2]);
                 mng_iterations=(png_uint_32) mng_get_long(&p[6]);
@@ -5657,7 +5666,7 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
                 CoderError,"Nonzero object_id in MNG-LC datastream","`%s'",
                 image->filename);
 
-            if (object_id > MNG_MAX_OBJECTS)
+            if (object_id >= MNG_MAX_OBJECTS)
               {
                 /*
                   Instead of using a warning we should allocate a larger
@@ -5665,7 +5674,7 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
                 */
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   CoderError,"object id too large","`%s'",image->filename);
-                object_id=MNG_MAX_OBJECTS;
+                object_id=MNG_MAX_OBJECTS-1;
               }
 
             if (mng_info->exists[object_id])
@@ -5769,6 +5778,8 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
 
             if (length && (length < 769))
               {
+                /* Read global PLTE.  */
+
                 if (mng_info->global_plte == (png_colorp) NULL)
                   mng_info->global_plte=(png_colorp) AcquireQuantumMemory(256,
                     sizeof(*mng_info->global_plte));
@@ -5777,7 +5788,6 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
                   {
                     mng_info->global_plte_length=0;
                     chunk=(unsigned char *) RelinquishMagickMemory(chunk);
-                    mng_info=MngInfoFreeStruct(mng_info);
                     ThrowReaderException(ResourceLimitError,
                       "MemoryAllocationFailed");
                   }
@@ -6131,7 +6141,7 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
           {
             /* Read DISC or SEEK.  */
 
-            if ((length == 0) || !memcmp(type,mng_SEEK,4))
+            if ((length == 0) || (length % 2) || !memcmp(type,mng_SEEK,4))
               {
                 for (i=1; i < MNG_MAX_OBJECTS; i++)
                   MngInfoDiscardObject(mng_info,i);
@@ -7730,7 +7740,7 @@ static Image *ReadMNGImage(const ImageInfo *image_info,
   status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
 
   if (status == MagickFalse)
-    return((Image *) NULL);
+    return(DestroyImageList(image));
 
   /* Allocate a MngInfo structure.  */
 
@@ -10191,27 +10201,20 @@ static MagickBooleanType WriteOnePNGImage(MngInfo *mng_info,
              (void) LogMagickEvent(CoderEvent,GetMagickModule(),
              "  Selecting PNG colortype:");
 
-          ping_color_type=(png_byte) ((matte != MagickFalse)?
-            PNG_COLOR_TYPE_RGB_ALPHA:PNG_COLOR_TYPE_RGB);
-
           if (image_info->type == TrueColorType)
             {
               ping_color_type=(png_byte) PNG_COLOR_TYPE_RGB;
               image_matte=MagickFalse;
             }
-
-          if (image_info->type == TrueColorAlphaType)
+          else if (image_info->type == TrueColorAlphaType)
             {
               ping_color_type=(png_byte) PNG_COLOR_TYPE_RGB_ALPHA;
               image_matte=MagickTrue;
             }
-
-          if (image_info->type == PaletteType ||
-              image_info->type == PaletteAlphaType)
+          else if (image_info->type == PaletteType ||
+                   image_info->type == PaletteAlphaType)
             ping_color_type=(png_byte) PNG_COLOR_TYPE_PALETTE;
-
-          if (mng_info->write_png_colortype == 0 &&
-             image_info->type == UndefinedType)
+          else
             {
               if (ping_have_color == MagickFalse)
                 {

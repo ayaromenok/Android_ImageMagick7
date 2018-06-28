@@ -1700,6 +1700,9 @@ static Cache GetImagePixelCache(Image *image,const MagickBooleanType clone,
 #if defined(ECANCELED)
       errno=ECANCELED;
 #endif
+      cache_info=(CacheInfo *) image->cache;
+      if (cache_info->file != -1)
+        (void) ClosePixelCacheOnDisk(cache_info);
       ThrowFatalException(ResourceLimitFatalError,"TimeLimitExceeded");
     }
   LockSemaphoreInfo(image->semaphore);
@@ -1760,7 +1763,7 @@ static Cache GetImagePixelCache(Image *image,const MagickBooleanType clone,
         {
           status=OpenPixelCache(image,IOMode,exception);
           cache_info=(CacheInfo *) image->cache;
-          if (cache_info->type == DiskCache)
+          if (cache_info->file != -1)
             (void) ClosePixelCacheOnDisk(cache_info);
         }
     }
@@ -2698,7 +2701,8 @@ static inline MagickModulo VirtualPixelModulo(const ssize_t offset,
   modulo.quotient=offset/(ssize_t) extent;
   if (offset < 0L)
     modulo.quotient--;
-  modulo.remainder=offset-modulo.quotient*(ssize_t) extent;
+  modulo.remainder=(ssize_t) (offset-(MagickOffsetType) modulo.quotient*
+    (ssize_t) extent);
   return(modulo);
 }
 

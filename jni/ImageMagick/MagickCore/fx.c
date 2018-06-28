@@ -305,7 +305,7 @@ MagickExport Image *AddNoiseImage(const Image *image,const NoiseType noise_type,
   if (noise_image != (Image *) NULL)
     return(noise_image);
 #endif
-  noise_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  noise_image=CloneImage(image,0,0,MagickTrue,exception);
   if (noise_image == (Image *) NULL)
     return((Image *) NULL);
   if (SetImageStorageClass(noise_image,DirectClass,exception) == MagickFalse)
@@ -461,7 +461,7 @@ MagickExport Image *BlueShiftImage(const Image *image,const double factor,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
-  shift_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  shift_image=CloneImage(image,0,0,MagickTrue,exception);
   if (shift_image == (Image *) NULL)
     return((Image *) NULL);
   if (SetImageStorageClass(shift_image,DirectClass,exception) == MagickFalse)
@@ -1125,7 +1125,8 @@ static double FxChannelStatistics(FxInfo *fx_info,Image *image,
       if (option >= 0)
         {
           channel=(PixelChannel) option;
-          channel_mask=SetPixelChannelMask(image,(ChannelType) (1 << channel));
+          channel_mask=SetPixelChannelMask(image,(ChannelType)
+            (1UL << channel));
         }
     }
   (void) FormatLocaleString(key,MagickPathExtent,"%p.%.20g.%s",(void *) image,
@@ -3121,7 +3122,7 @@ MagickExport Image *FxImage(const Image *image,const char *expression,
   fx_info=AcquireFxThreadSet(image,expression,exception);
   if (fx_info == (FxInfo **) NULL)
     return((Image *) NULL);
-  fx_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  fx_image=CloneImage(image,0,0,MagickTrue,exception);
   if (fx_image == (Image *) NULL)
     {
       fx_info=DestroyFxThreadSet(fx_info);
@@ -5346,7 +5347,7 @@ MagickExport Image *TintImage(const Image *image,const char *blend,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
-  tint_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  tint_image=CloneImage(image,0,0,MagickTrue,exception);
   if (tint_image == (Image *) NULL)
     return((Image *) NULL);
   if (SetImageStorageClass(tint_image,DirectClass,exception) == MagickFalse)
@@ -5965,7 +5966,7 @@ MagickExport Image *WaveletDenoiseImage(const Image *image,
 
         p=kernel+id*image->columns;
         q=pixels+y*image->columns;
-        HatTransform(q+high_pass,1,image->columns,(size_t) (1 << level),p);
+        HatTransform(q+high_pass,1,image->columns,(size_t) (1UL << level),p);
         q+=low_pass;
         for (x=0; x < (ssize_t) image->columns; x++)
           *q++=(*p++);
@@ -5988,7 +5989,7 @@ MagickExport Image *WaveletDenoiseImage(const Image *image,
 
         p=kernel+id*image->rows;
         q=pixels+x+low_pass;
-        HatTransform(q,image->columns,image->rows,(size_t) (1 << level),p);
+        HatTransform(q,image->columns,image->rows,(size_t) (1UL << level),p);
         for (y=0; y < (ssize_t) image->rows; y++)
         {
           *q=(*p++);

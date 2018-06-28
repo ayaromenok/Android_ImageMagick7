@@ -185,7 +185,7 @@ MagickExport Image *ConnectedComponentsImage(const Image *image,
   assert(exception->signature == MagickCoreSignature);
   if (objects != (CCObjectInfo **) NULL)
     *objects=(CCObjectInfo *) NULL;
-  component_image=CloneImage(image,image->columns,image->rows,MagickTrue,
+  component_image=CloneImage(image,0,0,MagickTrue,
     exception);
   if (component_image == (Image *) NULL)
     return((Image *) NULL);
@@ -585,6 +585,7 @@ MagickExport Image *ConnectedComponentsImage(const Image *image,
         if (object[i].census != 0)
           continue;
         component_image->alpha_trait=BlendPixelTrait;
+        component_image->colormap[i].alpha_trait=BlendPixelTrait;
         component_image->colormap[i].alpha=(MagickRealType) TransparentAlpha;
       }
     }
@@ -614,6 +615,7 @@ MagickExport Image *ConnectedComponentsImage(const Image *image,
         for ( ; first != (last+step); first+=step)
         {
           component_image->alpha_trait=BlendPixelTrait;
+          component_image->colormap[first].alpha_trait=BlendPixelTrait;
           component_image->colormap[first].alpha=(MagickRealType)
             TransparentAlpha;
         }

@@ -1190,7 +1190,7 @@ static void TIFFReadPhotoshopLayers(Image* image,const ImageInfo *image_info,
   custom_stream=TIFFAcquireCustomStreamForReading(&photoshop_profile,exception);
   if (custom_stream == (CustomStreamInfo *) NULL)
     return;
-  layers=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  layers=CloneImage(image,0,0,MagickTrue,exception);
   if (layers == (Image *) NULL)
     {
       custom_stream=DestroyCustomStreamInfo(custom_stream);
@@ -1764,6 +1764,8 @@ RestoreMSCWarning
       method=ReadTileMethod;
     quantum_info->endian=LSBEndian;
     quantum_type=RGBQuantum;
+    if (TIFFScanlineSize(tiff) <= 0)
+      ThrowTIFFException(ResourceLimitError,"MemoryAllocationFailed");
     if (((MagickSizeType) TIFFScanlineSize(tiff)) > GetBlobSize(image))
       ThrowTIFFException(CorruptImageError,"InsufficientImageDataInFile");
     number_pixels=MagickMax(TIFFScanlineSize(tiff),MagickMax((ssize_t) 
@@ -1811,7 +1813,7 @@ RestoreMSCWarning
           register Quantum
             *magick_restrict q;
 
-         tiff_status=TIFFReadPixels(tiff,0,y,(char *) tiff_pixels);
+          tiff_status=TIFFReadPixels(tiff,0,y,(char *) tiff_pixels);
           if (tiff_status == -1)
             break;
           q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
@@ -2961,6 +2963,11 @@ static MagickBooleanType GetTIFFInfo(const ImageInfo *image_info,
   (void) TIFFSetField(tiff,TIFFTAG_TILELENGTH,tile_rows);
   tiff_info->tile_geometry.width=tile_columns;
   tiff_info->tile_geometry.height=tile_rows;
+  if ((TIFFScanlineSize(tiff) <= 0) || (TIFFTileSize(tiff) <= 0))
+    {
+      DestroyTIFFInfo(tiff_info);
+      return(MagickFalse);
+    }
   tiff_info->scanlines=(unsigned char *) AcquireQuantumMemory((size_t)
     tile_rows*TIFFScanlineSize(tiff),sizeof(*tiff_info->scanlines));
   tiff_info->pixels=(unsigned char *) AcquireQuantumMemory((size_t)
@@ -3426,7 +3433,8 @@ static MagickBooleanType WriteTIFFImage(const ImageInfo *image_info,
     bits_per_sample,
     compress_tag,
     endian,
-    photometric;
+    photometric,
+    predictor;
 
   unsigned char
     *pixels;
@@ -3768,6 +3776,7 @@ static MagickBooleanType WriteTIFFImage(const ImageInfo *image_info,
       if ((image_info->interlace == PlaneInterlace) ||
           (image_info->interlace == PartitionInterlace))
         (void) TIFFSetField(tiff,TIFFTAG_PLANARCONFIG,PLANARCONFIG_SEPARATE);
+    predictor=0;
     switch (compress_tag)
     {
       case COMPRESSION_JPEG:
@@ -3830,7 +3839,7 @@ static MagickBooleanType WriteTIFFImage(const ImageInfo *image_info,
         if (((photometric == PHOTOMETRIC_RGB) ||
              (photometric == PHOTOMETRIC_MINISBLACK)) &&
             ((bits_per_sample == 8) || (bits_per_sample == 16)))
-          (void) TIFFSetField(tiff,TIFFTAG_PREDICTOR,PREDICTOR_HORIZONTAL);
+          predictor=PREDICTOR_HORIZONTAL;
         (void) TIFFSetField(tiff,TIFFTAG_ZIPQUALITY,(long) (
           image_info->quality == UndefinedCompressionQuality ? 7 :
           MagickMin((ssize_t) image_info->quality/10,9)));
@@ -3852,7 +3861,7 @@ static MagickBooleanType WriteTIFFImage(const ImageInfo *image_info,
         if (((photometric == PHOTOMETRIC_RGB) ||
              (photometric == PHOTOMETRIC_MINISBLACK)) &&
             ((bits_per_sample == 8) || (bits_per_sample == 16)))
-          (void) TIFFSetField(tiff,TIFFTAG_PREDICTOR,PREDICTOR_HORIZONTAL);
+          predictor=PREDICTOR_HORIZONTAL;
         (void) TIFFSetField(tiff,TIFFTAG_LZMAPRESET,(long) (
           image_info->quality == UndefinedCompressionQuality ? 7 :
           MagickMin((ssize_t) image_info->quality/10,9)));
@@ -3866,12 +3875,17 @@ static MagickBooleanType WriteTIFFImage(const ImageInfo *image_info,
         if (((photometric == PHOTOMETRIC_RGB) ||
              (photometric == PHOTOMETRIC_MINISBLACK)) &&
             ((bits_per_sample == 8) || (bits_per_sample == 16)))
-          (void) TIFFSetField(tiff,TIFFTAG_PREDICTOR,PREDICTOR_HORIZONTAL);
+          predictor=PREDICTOR_HORIZONTAL;
         break;
       }
       default:
         break;
     }
+    option=GetImageOption(image_info,"tiff:predictor");
+    if (option != (const char * ) NULL)
+      predictor=(size_t) strtol(option,(char **) NULL,10);
+    if (predictor != 0)
+      (void) TIFFSetField(tiff,TIFFTAG_PREDICTOR,predictor);
     if ((image->resolution.x != 0.0) && (image->resolution.y != 0.0))
       {
         unsigned short

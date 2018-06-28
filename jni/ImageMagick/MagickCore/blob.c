@@ -53,6 +53,7 @@
 #include "MagickCore/delegate.h"
 #include "MagickCore/exception.h"
 #include "MagickCore/exception-private.h"
+#include "MagickCore/geometry.h"
 #include "MagickCore/image-private.h"
 #include "MagickCore/list.h"
 #include "MagickCore/locale_.h"
@@ -124,6 +125,9 @@ struct _BlobInfo
   MagickBooleanType
     mapped,
     eof;
+
+  int
+    error;
 
   MagickOffsetType
     offset;
@@ -656,6 +660,7 @@ MagickExport MagickBooleanType CloseBlob(Image *image)
   blob_info->size=GetBlobSize(image);
   image->extent=blob_info->size;
   blob_info->eof=MagickFalse;
+  blob_info->error=0;
   blob_info->mode=UndefinedBlobMode;
   if (blob_info->exempt != MagickFalse)
     {
@@ -1001,6 +1006,7 @@ MagickExport void *DetachBlob(BlobInfo *blob_info)
   blob_info->length=0;
   blob_info->offset=0;
   blob_info->eof=MagickFalse;
+  blob_info->error=0;
   blob_info->exempt=MagickFalse;
   blob_info->type=UndefinedStream;
   blob_info->file_info.file=(FILE *) NULL;
@@ -1208,7 +1214,9 @@ MagickExport int EOFBlob(const Image *image)
     }
     case ZipStream:
     {
-      blob_info->eof=MagickFalse;
+#if defined(MAGICKCORE_ZLIB_DELEGATE)
+      blob_info->eof=gzeof(blob_info->file_info.gzfile);
+#endif
       break;
     }
     case BZipStream:
@@ -1234,6 +1242,79 @@ MagickExport int EOFBlob(const Image *image)
       break;
   }
   return((int) blob_info->eof);
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
++  E r r o r B l o b                                                          %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ErrorBlob() returns a non-zero value when an error has been detected reading
+%  from a blob or file.
+%
+%  The format of the ErrorBlob method is:
+%
+%      int ErrorBlob(const Image *image)
+%
+%  A description of each parameter follows:
+%
+%    o image: the image.
+%
+*/
+MagickExport int ErrorBlob(const Image *image)
+{
+  BlobInfo
+    *magick_restrict blob_info;
+
+  assert(image != (Image *) NULL);
+  assert(image->signature == MagickCoreSignature);
+  if (image->debug != MagickFalse)
+    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
+  assert(image->blob != (BlobInfo *) NULL);
+  assert(image->blob->type != UndefinedStream);
+  blob_info=image->blob;
+  switch (blob_info->type)
+  {
+    case UndefinedStream:
+    case StandardStream:
+      break;
+    case FileStream:
+    case PipeStream:
+    {
+      blob_info->error=ferror(blob_info->file_info.file);
+      break;
+    }
+    case ZipStream:
+    {
+#if defined(MAGICKCORE_ZLIB_DELEGATE)
+      (void) gzerror(blob_info->file_info.gzfile,&blob_info->error);
+#endif
+      break;
+    }
+    case BZipStream:
+    {
+#if defined(MAGICKCORE_BZLIB_DELEGATE)
+      (void) BZ2_bzerror(blob_info->file_info.bzfile,&blob_info->error);
+#endif
+      break;
+    }
+    case FifoStream:
+    {
+      blob_info->error=0;
+      break;
+    }
+    case BlobStream:
+      break;
+    case CustomStream:
+      break;
+  }
+  return(blob_info->error);
 }
 
 /*
@@ -3142,7 +3223,8 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
       blob_info->exempt=MagickTrue;
       return(SetStreamBuffering(image_info,image));
     }
-  if (LocaleNCompare(filename,"fd:",3) == 0)
+  if ((LocaleNCompare(filename,"fd:",3) == 0) &&
+      (IsGeometry(filename+3) != MagickFalse))
     {
       char
         fileMode[MagickPathExtent];
@@ -3644,8 +3726,21 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
       {
         default:
         {
-          count=(ssize_t) gzread(blob_info->file_info.gzfile,q,
-            (unsigned int) length);
+          register ssize_t
+            i;
+
+          for (i=0; i < (ssize_t) length; i+=count)
+          {
+            count=(ssize_t) gzread(blob_info->file_info.gzfile,q+i,
+              (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
+            if (count <= 0)
+              {
+                count=0;
+                if (errno != EINTR)
+                  break;
+              }
+          }
+          count=i;
           break;
         }
         case 4:
@@ -3689,7 +3784,21 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
     case BZipStream:
     {
 #if defined(MAGICKCORE_BZLIB_DELEGATE)
-      count=(ssize_t) BZ2_bzread(blob_info->file_info.bzfile,q,(int) length);
+      register ssize_t
+        i;
+
+      for (i=0; i < (ssize_t) length; i+=count)
+      {
+        count=(ssize_t) BZ2_bzread(blob_info->file_info.bzfile,q+i,
+          (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
+        if (count <= 0)
+          {
+            count=0;
+            if (errno != EINTR)
+              break;
+          }
+      }
+      count=i;
 #endif
       break;
     }
@@ -5390,6 +5499,9 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
   register const unsigned char
     *p;
 
+  register unsigned char
+    *q;
+
   ssize_t
     count;
 
@@ -5403,6 +5515,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
   blob_info=image->blob;
   count=0;
   p=(const unsigned char *) data;
+  q=(unsigned char *) data;
   switch (blob_info->type)
   {
     case UndefinedStream:
@@ -5459,8 +5572,21 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
       {
         default:
         {
-          count=(ssize_t) gzwrite(blob_info->file_info.gzfile,(void *) data,
-            (unsigned int) length);
+          register ssize_t
+            i;
+
+          for (i=0; i < (ssize_t) length; i+=count)
+          {
+            count=(ssize_t) gzwrite(blob_info->file_info.gzfile,q+i,
+              (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
+            if (count <= 0)
+              {
+                count=0;
+                if (errno != EINTR)
+                  break;
+              }
+          }
+          count=i;
           break;
         }
         case 4:
@@ -5500,8 +5626,21 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
     case BZipStream:
     {
 #if defined(MAGICKCORE_BZLIB_DELEGATE)
-      count=(ssize_t) BZ2_bzwrite(blob_info->file_info.bzfile,(void *) data,
-        (int) length);
+      register ssize_t
+        i;
+
+      for (i=0; i < (ssize_t) length; i+=count)
+      {
+        count=(ssize_t) BZ2_bzwrite(blob_info->file_info.bzfile,q+i,
+          (int) MagickMin(length-i,MagickMaxBufferExtent));
+        if (count <= 0)
+          {
+            count=0;
+            if (errno != EINTR)
+              break;
+          }
+      }
+      count=i;
 #endif
       break;
     }

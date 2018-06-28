@@ -1,3 +1,63 @@
+2018-06-24  7.0.8-3 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.8-3, GIT revision 14489:c63c504e8:20180624.
+
+2018-06-24  7.0.8-3 Cristy  <quetzlzacatenango@image...>
+  * Apply translate component of SVG transform rotate.
+
+2018-06-18  7.0.8-2 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.8-2, GIT revision 14476:cda11d81d:20180618.
+
+2018-06-18  7.0.8-2 Cristy  <quetzlzacatenango@image...>
+  * More robust SVG text handling.
+
+2018-06-16  7.0.8-1 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.8-1, GIT revision 14468:94cb08785:20180616.
+
+2018-06-16  7.0.8-1 Cristy  <quetzlzacatenango@image...>
+  * Fixed numerous use of uninitialized values, integer overflow, memory
+    exceeded, and timeouts (credit to OSS Fuzz).
+  * Fixed an issue with stroke and label: (reference
+    https://www.imagemagick.org/discourse-server/viewtopic.php?f=3&t=34142).
+  * PNG: set storage class to DirectClass if alpha enabled (reference
+    https://www.imagemagick.org/discourse-server/viewtopic.php?f=3&t=34121).
+
+2018-06-12  7.0.8-0 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.8-0, GIT revision 14459:d7c892d5a:20180612.
+
+2018-06-11  7.0.8-0  <quetzlzacatenango@image...>
+  * Fixed numerous use of uninitialized values, integer overflow, memory
+    exceeded, and timeouts (credit to OSS Fuzz).
+
+2018-06-11  7.0.7-39 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-39, GIT revision 14445:cc962acde:20180611.
+
+2018-06-06  7.0.7-39  <quetzlzacatenango@image...>
+  * Fixed numerous use of uninitialized values, integer overflow, memory
+    exceeded, and timeouts (credit to OSS Fuzz).
+
+2018-06-02  7.0.7-38 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-38, GIT revision 14409:01e395a73:20180602.
+
+2018-05-30  7.0.7-38  <quetzlzacatenango@image...>
+  * Heap buffer overflow fix (reference
+    https://github.com/ImageMagick/ImageMagick/issues/1156).
+  * Boundary issues with -gamma option when HDRI is enabled (reference
+    https://github.com/ImageMagick/ImageMagick/issues/1151).
+  * Fixed numerous use of uninitialized values, integer overflow, memory
+    exceeded, and timeouts (credit to OSS Fuzz).
+
+2018-05-29  7.0.7-37 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-37, GIT revision 14393:61d7e8b17:20180529.
+
+2018-05-29  7.0.7-37  <quetzlzacatenango@image...>
+  * Properly initialize SVG color style.
+
+2018-05-28  7.0.7-36 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-36, GIT revision 14390:3a6bd703f:20180528.
+
+2018-05-28  7.0.7-36  <quetzlzacatenango@image...>
+  * A SVG rectangle with a width and height of 1 is a point.
+
 2018-05-21  7.0.7-35 Cristy  <quetzlzacatenango@image...>
   * Release ImageMagick version 7.0.7-35, GIT revision 14356:13507412c:20180521.
 
