@@ -1,25 +1,26 @@
 # ImageMagick 7 port to Android.
 ## Binaries 
- - latest binaries for arm-v7a/arm64-v8a/x86/x86-64: [v0.4.70735.17](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70735.17)
- - latest binaries for mips32/misp64 and armv5: [v0.4.70710](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70710)
+ - latest binaries for `arm-v7a/arm64-v8a/x86/x86-64`: [v0.4.7083.17](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.7083.17)
+ - latest binaries for `mips32/misp64` and `armv5`: [v0.4.70710](https://github.com/ayaromenok/Android_ImageMagick7/releases/tag/v0.4.70710)
  - release number pattern is follow: vX.X.YYYYY.ZZ, where X.X - major\minor number for build, YYYYY - ImageMagick version(i.e. 70735 is 7.0.7.35), ZZ - NDK version (i.e. 17b1 - NDK17beta1) 
 
 ## Last changes
- - Image Magick updated to latest version
+ - return build of magick utility by default
+ - Image Magick updated to latest version (7.0.8.3)
  - clang toolchain supported. 
 	required Android NDK r15 to build (early versions had issues with OpenMP support)
- - NDK r17 and new not support mips32/64 and arm v5. 
+ - NDK r17 and later drop support for mips32/64 and arm v5. 
  - all binaries moved to [github release section](https://github.com/ayaromenok/Android_ImageMagick7/releases)
 
 # General
- - MagickCore 7.0.7.35 (actual at 2018.05.21)
+ - MagickCore 7.0.8.3 (actual at 2018.06.28)
  - MagickWand
  - 3rd party libs actual at 2017.03
  - OpenMP build by default (with gcc 4.9 and clang 5.0.3)
  - Magick++ disable due to crash, sources removed (looks like nobody used it anyway)
 
 # Why? 
- - ImageMagick7 is not fully compatible with early(6) version
+ - ImageMagick7 is not fully compatible with early(ImageMagick6) version
  - build with OpenMP (DistortImage on 4core/armv7a get 3.597 speedup factor)
  - smaller binary size in case of using only MagickCore
 
