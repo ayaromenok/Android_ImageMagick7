@@ -1,8 +1,8 @@
 #/bin/sh
 cd  ..
 rm -f -r obj
-rm -f -r libs.gcc.opencl
-rm -f -r libs
+rm -f -r lib.gcc.opencl
+rm -f -r lib
 cd ./jni
 
 rm -f ./Application.mk
@@ -18,6 +18,6 @@ cd ../..
 $ANDROID_SDK_PATH/ndk-bundle/ndk-build -j 4
 
 cd ..
-mv libs libs.gcc.opencl
-ln -s libs.gcc.opencl libs
+mv lib lib.gcc.opencl
+ln -s lib.gcc.opencl lib
 cd ./jni

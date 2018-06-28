@@ -1,8 +1,8 @@
 #/bin/sh
 cd  ..
 rm -f -r obj
-rm -f -r libs.clang
-rm -f -r libs
+rm -f -r lib.clang
+rm -f -r lib
 cd ./jni
 
 rm -f ./Application.mk
@@ -18,6 +18,6 @@ cd ../..
 $ANDROID_SDK_PATH/ndk-bundle/ndk-build -j 4
 
 cd ..
-mv libs libs.clang
-ln -s libs.clang libs
+mv lib lib.clang
+ln -s lib.clang lib
 cd ./jni
