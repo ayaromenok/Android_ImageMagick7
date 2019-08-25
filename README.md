@@ -32,11 +32,11 @@
 # For C/C++ users
  - number of file formats disabled for now(exr, svg, jpeg2000, webp) and not planed to enable back (looks like nobody use it)
  - MagickWand added as separate Shared Object - need to be linked separately
- - If you need additional file formats(for bigger size), plz use (cherryleafroad port)[https://github.com/cherryleafroad/Android-ImageMagick7]
+ - If you need additional file formats, ICU, plz use [cherryleafroad port](https://github.com/cherryleafroad/Android-ImageMagick7)(currently only for amr64)
  
 # For Java users
- Please, use (cherryleafroad port)[https://github.com/cherryleafroad/Android-ImageMagick7] of ImageMagick7 with optional JMagick support (currently only for amr64)
- Please, use (paulasiimwe port)[https://github.com/paulasiimwe/Android-ImageMagick] of ImageMagick 6 - it's include Java interface (JMagick)
+ Please, use [cherryleafroad port](https://github.com/cherryleafroad/Android-ImageMagick7) of ImageMagick7 with optional JMagick support (currently only for amr64)
+ Please, use [paulasiimwe port](https://github.com/paulasiimwe/Android-ImageMagick) of ImageMagick 6 - it's include Java interface (JMagick)
 
 # Rebuild 
  - change directory to Android_ImageMagick7/jni
